@@ -1,0 +1,30 @@
+[package]
+name = "creation-tool"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "^2.0.0-rc.12", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0-rc.15", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.5", features = ["sqlite", "runtime-tokio-native-tls", "offline", "macros", "chrono"] }
+tokio = { version = "1.40.0", features = ["full"] }
+shared = { path = "../../shared" }
+dotenv = "0.15.0"
+futures = "0.3.30"
+specta = "=2.0.0-rc.20"
+specta-typescript = "0.0.7"
+tauri-specta = "=2.0.0-rc.20"
+chrono = "0.4.38"
+#tauri-plugin-sql = { version = "2.0.0-rc", features = ["sqlite"] }
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

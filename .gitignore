@@ -1,0 +1,44 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Parcel
+.cache/
+dist/
+.parcel-cache/
+
+# Logs
+logs/
+*.log
+*.log.*
+pids/
+*.pid
+*.pid.lock
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Tauri
+/src-tauri/target/
+src-tauri/target/
+src-tauri/.cargo/
+
+# React
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Linux
+*.swp

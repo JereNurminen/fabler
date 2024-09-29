@@ -1,0 +1,33 @@
+ALTER TABLE story_nodes
+RENAME TO pages;
+
+ALTER TABLE pages
+ADD COLUMN story_id INTEGER REFERENCES stories(id);
+
+ALTER TABLE pages
+ADD COLUMN name TEXT NOT NULL;
+
+ALTER TABLE pages
+ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE pages
+ADD COLUMN last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE pages
+DROP COLUMN title;
+
+ALTER TABLE pages
+DROP COLUMN next_node;
+
+CREATE TABLE IF NOT EXISTS stories (
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    start_page INTEGER REFERENCES pages(id)
+);
+
+CREATE TABLE IF NOT EXISTS choices (
+    id INTEGER PRIMARY KEY,
+    page_id INTEGER NOT NULL REFERENCES pages(id),
+    target_page_id INTEGER REFERENCES pages(id),
+    text TEXT NOT NULL DEFAULT ''
+);
