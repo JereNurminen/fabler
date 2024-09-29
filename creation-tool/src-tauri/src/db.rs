@@ -2,8 +2,17 @@ use sqlx::sqlite::{SqlitePool, SqliteQueryResult};
 use sqlx::Row;
 use futures::stream::FuturesUnordered;
 use futures::StreamExt;
+use serde::{Deserialize, Serialize};
+use specta::Type;
 
 use shared::models::{Page, Story, StoryListing, Choice, StoryId};
+
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct PagePatch {
+    pub id: i64,
+    pub name: Option<String>,
+    pub body: Option<String>
+}
 
 pub struct Database {
     pub pool: SqlitePool,
@@ -163,5 +172,36 @@ impl Database {
             body: page_from_db.get(3),
             options: choices,
         })
+    }
+
+    pub async fn patch_page(&self, id: i64, patch: PagePatch) -> SqliteQueryResult {
+        let mut query = "UPDATE pages SET ".to_string();
+        let mut binds = Vec::new();
+
+        if let Some(title) = patch.name {
+            query.push_str("name = ?, ");
+            binds.push(title);
+        }
+
+        if let Some(body) = patch.body {
+            query.push_str("content = ?, ");
+            binds.push(body);
+        }
+
+        query.truncate(query.len() - 2);
+
+        query.push_str(" WHERE id = ?;");
+        binds.push(id.to_string());
+
+        let mut query_builder = sqlx::query(&query);
+
+        for bind in binds {
+            query_builder = query_builder.bind(bind);
+        }
+
+        query_builder
+            .execute(&self.pool)
+            .await
+            .expect("Failed to patch page")
     }
 }

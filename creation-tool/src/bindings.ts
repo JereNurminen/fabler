@@ -44,6 +44,14 @@ async getPage(id: number) : Promise<Result<Page, null>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async patchPage(patch: PagePatch) : Promise<Result<null, null>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("patch_page", { patch }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -59,6 +67,7 @@ async getPage(id: number) : Promise<Result<Page, null>> {
 
 export type Choice = { id: number; page_id: number; text: string; target_page: number }
 export type Page = { id: number; story_id: number; name: string; body: string; options: Choice[] }
+export type PagePatch = { id: number; name: string | null; body: string | null }
 export type Story = { id: number; title: string; pages: Page[]; start_page: number }
 export type StoryListing = { id: number; title: string }
 

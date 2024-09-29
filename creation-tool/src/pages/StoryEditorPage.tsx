@@ -1,46 +1,77 @@
 import { useEffect } from "react";
-import { handleLoadable, useStoryContext } from "../StoryContext";
+import { handleLoadable, isLoadedAndSuccess, useStoryContext } from "../StoryContext";
 import styled from "styled-components";
+import LoadingSpinner from "../components/LoadingSpinner";
+import PageCard from "../components/PageCard";
+import style from "../style";
+import { useRoute } from "wouter";
+import { pageRoute } from "../utilities/routing";
+import PageLink from "../components/PageLink";
 
 interface StoryEditorPageProps {
-  idParam: string;
+  storyIdParam: string;
+  pageIdParam?: string;
 }
 
-export default ({ idParam }: StoryEditorPageProps) => {
-  const id = parseInt(idParam);
+export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
+  const storyId = parseInt(storyIdParam);
+  const pageId = pageIdParam !== undefined ? parseInt(pageIdParam) : undefined;
+
+  console.debug(storyId, pageId)
 
   const { story, pages, loadStory } = useStoryContext()
 
   useEffect(() => {
-    void loadStory(id)
-  }, [id])
-
-  console.debug({story, pages})
+    void loadStory(storyId)
+  }, [storyId])
 
   return handleLoadable(
     story,
-    () => <LoadingIndicator />,
+    () => <LoadingSpinner />,
     (story) =>
       <>
-        <StoryHeading>{story.data.title}</StoryHeading>
-        <PageList>
-          {Array.from(pages.values()).map((page) =>
-            handleLoadable(
-              page,
-              () => <LoadingIndicator />,
-              ({ data }) => <PageCard>
-                <PageTitle>{data.name}</PageTitle>
-                <PageBody>{data.body}</PageBody>
-              </PageCard>,
-              (error) => <p>Error: {error.error}</p>
-            ))}
-        </PageList>
+        <StoryPage>
+          <Sidebar>
+            <StoryHeading>{story.data.title}</StoryHeading>
+            <PageList>
+              {Array.from(pages.values())
+                .filter(isLoadedAndSuccess)
+                .map((page) => <PageLink key={page.value.data.id} storyId={storyId} pageId={page.value.data.id}>{page.value.data.name}</PageLink>)
+              }
+            </PageList>
+          </Sidebar>
+          <Main>
+            {pageId ? (
+              <PageCard pageId={pageId} />
+            ) : <></>}
+          </Main>
+        </StoryPage>
       </>,
     (err) => <p>Error: {err.error}</p>
   )
 }
 
-const LoadingIndicator = () => <p>Loading...</p>
+const StoryPage = styled.div`
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: fit-content(20%) auto;
+  grid-template-rows: auto;
+`
+
+const Sidebar = styled.div`
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  flex-gap: ${style.spacing.m};
+  border-right: 1px solid black;
+`
+
+const Main = styled.div`
+  grid-column: 2;
+  grid-row: 1;
+`
 
 const StoryHeading = styled.h1`
   font-size: 1.5em;
@@ -49,22 +80,5 @@ const StoryHeading = styled.h1`
 `;
 
 const PageList = styled.div`
-  list-style-type: none;
   padding: 0;
-`;
-
-const PageCard = styled.div`
-  margin: 10px;
-  padding: 10px;
-  border: 1px solid black;
-  border-radius: 5px;
-`;
-
-const PageTitle = styled.h2`
-  font-size: 1.2em;
-  color: palevioletred;
-`;
-
-const PageBody = styled.p`
-  color: black;
 `;

@@ -5,7 +5,7 @@
 
 mod db;
 
-use db::Database;
+use db::{ Database, PagePatch };
 use shared::models::{ StoryId, Story, StoryListing, Page };
 
 use std::path::PathBuf;
@@ -59,9 +59,17 @@ async fn get_page(id: i64, db: State<'_, Database>) -> Result<Page, ()> {
     }
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), ()> {
+    db.patch_page(patch.id, patch).await;
+    Ok(())
+}
+
+
 fn main() {
     let mut builder = Builder::<tauri::Wry>::new()
-        .commands(collect_commands![get_stories, add_story, get_story, delete_story, get_page]);
+        .commands(collect_commands![get_stories, add_story, get_story, delete_story, get_page, patch_page]);
    
     builder
         .export(Typescript::default().bigint(BigIntExportBehavior::Number), "../src/bindings.ts")
@@ -88,7 +96,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_stories, get_story, add_story, delete_story, get_page])
+        .invoke_handler(tauri::generate_handler![get_stories, get_story, add_story, delete_story, get_page, patch_page])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

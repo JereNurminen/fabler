@@ -4,7 +4,7 @@ import api from "../api";
 import { handleResult, Loadable } from "../StoryContext";
 import styled from "styled-components";
 import { Link } from "wouter";
-import { getLinkToStoryPage } from "../main";
+import { getLinkToStoryPage } from "../utilities/routing";
 
 export const StartPage = () => {
   const [stories, setStories] = useState<Loadable<StoryListing[]>>({ status: 'not-loaded' });
@@ -39,9 +39,11 @@ export const StartPage = () => {
           stories.value,
           (ok) =>
             <StoryList>
-              {ok.data.map((story) => <StoryListItem key={story.id} href={getLinkToStoryPage(story.id)}>
-                {`${story.id}: ${story.title}`}
-              </StoryListItem>)}
+              {ok.data.map((story) =>
+                <StoryListItem key={story.id} href={getLinkToStoryPage(story.id)}>
+                  {`${story.id}: ${story.title}`}
+                </StoryListItem>)
+              }
             </StoryList>,
           (err) => <p>Error: {err.error}</p>);
     }

@@ -5,6 +5,7 @@ const api = {
     createStory: commands.addStory,
     getStory: commands.getStory,
     getPage: commands.getPage,
+    patchPage: commands.patchPage,
 }
 
 export default api

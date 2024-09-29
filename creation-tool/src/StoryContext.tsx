@@ -1,19 +1,26 @@
 import { createContext, useCallback, useContext, useState } from "react";
-import { Story, Page } from "./bindings";
+import { Story, Page, PagePatch } from "./bindings";
 import api, { Result as ApiResult } from "./api";
+import useMap from "./hooks/use-map";
 
 type Result<T> = ApiResult<T, any>
 type OkResult<T> = ApiResult<T, any> & { status: 'ok' }
 type ErrorResult = ApiResult<any, any> & { status: 'error' }
 
+type SuccessfullyLoaded<T> = { status: 'loaded', value: OkResult<T> }
 export type Loadable<T> = { isDirty?: boolean } &
   (
     { status: 'not-loaded' } |
     { status: 'loading' } |
-    { status: 'loaded', value: Result<T> }
+    SuccessfullyLoaded<T> |
+    { status: 'loaded', value: ErrorResult}
   )
 
 export const notLoaded = <T,>(): Loadable<T> => ({ status: 'not-loaded' });
+export const isLoadedAndSuccess = <T,>(loadable: Loadable<T>): loadable is SuccessfullyLoaded<T> =>
+  loadable.status === 'loaded' && loadable.value.status === 'ok'
+export const loadedResult = <T,>(result: OkResult<T>): SuccessfullyLoaded<T> => ({ status: 'loaded', value: result })
+export const errorResult = <T,>(result: ErrorResult): Loadable<T> => ({ status: 'loaded', value: result })
 
 export const handleResult = <T, K extends any>(
   result: Result<T>,
@@ -48,11 +55,11 @@ type StoryContextType = {
   pages: Pages;
 
   loadStory: (id: number) => Promise<void>;
+  getPage: (pageId: number) => Promise<Loadable<Page>>;
+  patchPage: (patch: PagePatch) => Promise<Result<null>>;
   /*
-  getPage: (pageId: number) => Promise<Result<Page>>;
   reloadPage: (pageId: number) => Promise<void>;
   deletePage: (pageId: number) => Promise<void>;
-  updatePage: (pageId: number, page: Partial<Page>) => Promise<Result<Page>>;
   */
 };
 
@@ -60,25 +67,60 @@ const StoryContext = createContext<StoryContextType | undefined>(undefined);
 
 export const StoryProvider: React.FC<StoryContextProps> = ({ children }) => {
   const [story, setStory] = useState<Loadable<StoryInfo>>(notLoaded<Story>());
-  const [pages, setPages] = useState<Pages>(new Map());
+  const pageMap = useMap<number, Loadable<Page>>([])
 
   const loadStory = useCallback(async (id: number) => {
     setStory({ status: 'loading' });
     const storyResult = await api.getStory(id);
     handleResult(storyResult,
       (ok) => {
-        const pageMap: Pages = new Map();
-        ok.data.pages.forEach(page => pageMap.set(page.id, { status: 'loaded', value: { status: 'ok', data: page } }));
+        ok.data.pages.forEach(
+          page => pageMap.set(page.id, { status: 'loaded', value: { status: 'ok', data: page } })
+        )
         setStory({ status: 'loaded', value: { status: 'ok', data: ok.data }})
-        console.log('setPages', pageMap)
-        setPages(pageMap)
       },
       (err) => { setStory({ status: 'loaded', value: err }) }
     );
   }, [])
 
+  const getPage = useCallback(async (pageId: number) => {
+    const page = pageMap.get(pageId);
+    if (page && !page.isDirty && isLoadedAndSuccess(page)) {
+      return page;
+    }
+
+    const pageResult = await api.getPage(pageId);
+
+    return handleResult<Page, Loadable<Page>>(pageResult,
+      (ok) => {
+        const newValue: Loadable<Page> = {
+          status: 'loaded',
+          value: { status: 'ok', data: ok.data }
+        }
+        pageMap.set(pageId, newValue)
+        return newValue
+      },
+      (err) => {
+        const errorValue: Loadable<Page> = { status: 'loaded', value: err }
+        pageMap.set(pageId, errorValue)
+        return errorValue
+      }
+    );
+  }, [])
+
+  const patchPage = useCallback(async (patch: PagePatch) => {
+    const result = await api.patchPage(patch);
+    if (result.status === 'ok') {
+      const loadedPage = await getPage(patch.id);
+      if (isLoadedAndSuccess(loadedPage)) {
+        pageMap.set(patch.id, loadedPage);
+      }
+    }
+    return result;
+  }, [getPage])
+
   return <StoryContext.Provider value={
-    { story, pages, loadStory }
+    { story, pages: pageMap.map, loadStory, getPage, patchPage }
   }>
     {children}
   </StoryContext.Provider>
