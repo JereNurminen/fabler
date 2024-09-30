@@ -1,8 +1,13 @@
 import { useEffect } from "react";
-import { handleLoadable, isLoadedAndSuccess, useStoryContext } from "../StoryContext";
+import {
+  handleLoadable,
+  isLoadedAndSuccess,
+  useStoryContext,
+} from "../StoryContext";
 import styled from "styled-components";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
+import NewPageButton from "../components/NewPageButton";
 import style from "../style";
 import { useRoute } from "wouter";
 import { pageRoute } from "../utilities/routing";
@@ -17,39 +22,45 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
   const storyId = parseInt(storyIdParam);
   const pageId = pageIdParam !== undefined ? parseInt(pageIdParam) : undefined;
 
-  console.debug(storyId, pageId)
+  console.debug(storyId, pageId);
 
-  const { story, pages, loadStory } = useStoryContext()
+  const { story, pages, loadStory } = useStoryContext();
 
   useEffect(() => {
-    void loadStory(storyId)
-  }, [storyId])
+    void loadStory(storyId);
+  }, [storyId]);
 
   return handleLoadable(
     story,
     () => <LoadingSpinner />,
-    (story) =>
+    (story) => (
       <>
         <StoryPage>
           <Sidebar>
             <StoryHeading>{story.data.title}</StoryHeading>
             <PageList>
-              {Array.from(pages.values())
+              {pages
                 .filter(isLoadedAndSuccess)
-                .map((page) => <PageLink key={page.value.data.id} storyId={storyId} pageId={page.value.data.id}>{page.value.data.name}</PageLink>)
-              }
+                .sort((a, b) => a.value.data.id - b.value.data.id)
+                .map((page) => (
+                  <PageLink
+                    key={page.value.data.id}
+                    storyId={storyId}
+                    pageId={page.value.data.id}
+                  >
+                    {page.value.data.name}
+                  </PageLink>
+                ))}
+              <NewPageButton />
             </PageList>
           </Sidebar>
-          <Main>
-            {pageId ? (
-              <PageCard pageId={pageId} />
-            ) : <></>}
-          </Main>
+          <Main>{pageId ? <PageCard pageId={pageId} /> : <></>}</Main>
         </StoryPage>
-      </>,
-    (err) => <p>Error: {err.error}</p>
-  )
-}
+      </>
+    ),
+    (err) => <p>Error: {err.error}</p>,
+  );
+};
 
 const StoryPage = styled.div`
   width: 100vw;
@@ -57,7 +68,7 @@ const StoryPage = styled.div`
   display: grid;
   grid-template-columns: fit-content(20%) auto;
   grid-template-rows: auto;
-`
+`;
 
 const Sidebar = styled.div`
   grid-column: 1;
@@ -66,12 +77,12 @@ const Sidebar = styled.div`
   flex-direction: column;
   flex-gap: ${style.spacing.m};
   border-right: 1px solid black;
-`
+`;
 
 const Main = styled.div`
   grid-column: 2;
   grid-row: 1;
-`
+`;
 
 const StoryHeading = styled.h1`
   font-size: 1.5em;
@@ -81,4 +92,6 @@ const StoryHeading = styled.h1`
 
 const PageList = styled.div`
   padding: 0;
+  display: flex;
+  flex-direction: column;
 `;

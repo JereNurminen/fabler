@@ -52,6 +52,14 @@ async patchPage(patch: PagePatch) : Promise<Result<null, null>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async createPage(storyId: number, name: string) : Promise<Result<number, null>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("create_page", { storyId, name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 

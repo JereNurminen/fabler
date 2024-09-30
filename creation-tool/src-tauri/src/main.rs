@@ -5,15 +5,15 @@
 
 mod db;
 
-use db::{ Database, PagePatch };
-use shared::models::{ StoryId, Story, StoryListing, Page };
+use db::{Database, PagePatch};
+use shared::models::{Page, Story, StoryId, StoryListing};
 
+use specta_typescript::BigIntExportBehavior;
+use specta_typescript::Typescript;
 use std::path::PathBuf;
 use tauri::async_runtime::spawn;
 use tauri::Manager;
 use tauri::State;
-use specta_typescript::Typescript;
-use specta_typescript::BigIntExportBehavior;
 use tauri_specta::{collect_commands, Builder};
 
 #[tauri::command]
@@ -66,15 +66,30 @@ async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), ()>
     Ok(())
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn create_page(story_id: StoryId, name: String, db: State<'_, Database>) -> Result<i64, ()> {
+    Ok(db.create_page(story_id, name).await)
+}
 
 fn main() {
-    let mut builder = Builder::<tauri::Wry>::new()
-        .commands(collect_commands![get_stories, add_story, get_story, delete_story, get_page, patch_page]);
-   
+    let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+        get_stories,
+        add_story,
+        get_story,
+        delete_story,
+        get_page,
+        patch_page,
+        create_page
+    ]);
+
     builder
-        .export(Typescript::default().bigint(BigIntExportBehavior::Number), "../src/bindings.ts")
+        .export(
+            Typescript::default().bigint(BigIntExportBehavior::Number),
+            "../src/bindings.ts",
+        )
         .expect("Failed to export typescript bindings");
-   
+
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -90,13 +105,24 @@ fn main() {
 
             spawn(async move {
                 let db = Database::new(&db_url).await;
-                sqlx::migrate!("./migrations").run(&db.pool).await.expect("Failed to run migrations");
+                sqlx::migrate!("./migrations")
+                    .run(&db.pool)
+                    .await
+                    .expect("Failed to run migrations");
                 app_handle.manage(db);
             });
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_stories, get_story, add_story, delete_story, get_page, patch_page])
+        .invoke_handler(tauri::generate_handler![
+            get_stories,
+            get_story,
+            add_story,
+            delete_story,
+            get_page,
+            patch_page,
+            create_page
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
