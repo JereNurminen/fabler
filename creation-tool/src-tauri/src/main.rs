@@ -6,74 +6,102 @@
 mod db;
 
 use db::{Database, PagePatch};
+use serde::Serialize;
 use shared::models::{Page, Story, StoryId, StoryListing};
-
-use specta_typescript::BigIntExportBehavior;
-use specta_typescript::Typescript;
+use specta::Type;
+use specta_typescript::{BigIntExportBehavior, Typescript};
 use std::path::PathBuf;
-use tauri::async_runtime::spawn;
-use tauri::Manager;
-use tauri::State;
+use tauri::{async_runtime::spawn, Manager, State};
 use tauri_specta::{collect_commands, Builder};
 
+#[derive(Debug, Serialize, Type)]
+pub struct CommandError {
+    message: String,
+}
+
 #[tauri::command]
 #[specta::specta]
-async fn get_story(id: i64, db: State<'_, Database>) -> Result<Story, ()> {
-    let node = db.get_story(id).await;
-    match node {
-        Some(node) => Ok(node),
-        None => Err(()),
+async fn get_story(id: i64, db: State<'_, Database>) -> Result<Story, String> {
+    db.get_story(id).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn get_stories(db: State<'_, Database>) -> Result<Vec<StoryListing>, String> {
+    db.get_story_list().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn add_story(name: String, db: State<'_, Database>) -> Result<StoryId, String> {
+    db.add_story(&name).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn delete_story(id: i64, db: State<'_, Database>) -> Result<(), String> {
+    db.delete_story(id)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn get_page(id: i64, db: State<'_, Database>) -> Result<Page, String> {
+    match db.get_page(id).await {
+        Ok(Some(page)) => Ok(page),
+        Ok(None) => Err("Page not found".to_string()),
+        Err(e) => Err(e.to_string()),
     }
 }
 
 #[tauri::command]
 #[specta::specta]
-async fn get_stories(db: State<'_, Database>) -> Result<Vec<StoryListing>, ()> {
-    let nodes = db.get_story_list().await;
-    match nodes {
-        Some(nodes) => Ok(nodes),
-        None => Err(()),
-    }
+async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), String> {
+    db.patch_page(patch.id, patch)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 #[specta::specta]
-async fn add_story(name: String, db: State<'_, Database>) -> Result<StoryId, ()> {
-    Ok(db.add_story(&name).await)
+async fn create_page(
+    story_id: StoryId,
+    name: String,
+    db: State<'_, Database>,
+) -> Result<i64, String> {
+    db.create_page(story_id, name)
+        .await
+        .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-#[specta::specta]
-async fn delete_story(id: i64, db: State<'_, Database>) -> Result<(), ()> {
-    db.delete_story(id).await;
-    Ok(())
-}
+async fn setup_database(
+    app_handle: &tauri::AppHandle,
+) -> Result<Database, Box<dyn std::error::Error>> {
+    let db_dir = app_handle
+        .path()
+        .app_data_dir()
+        .expect("failed to get path to database");
 
-#[tauri::command]
-#[specta::specta]
-async fn get_page(id: i64, db: State<'_, Database>) -> Result<Page, ()> {
-    let node = db.get_page(id).await;
-    match node {
-        Some(node) => Ok(node),
-        None => Err(()),
-    }
-}
+    std::fs::create_dir_all(&db_dir)?;
 
-#[tauri::command]
-#[specta::specta]
-async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), ()> {
-    db.patch_page(patch.id, patch).await;
-    Ok(())
-}
+    let db_path: PathBuf = db_dir.join("story_nodes.db");
+    let db_url = format!(
+        "sqlite://{}?mode=rwc",
+        db_path.to_str().ok_or("Invalid database path")?
+    );
 
-#[tauri::command]
-#[specta::specta]
-async fn create_page(story_id: StoryId, name: String, db: State<'_, Database>) -> Result<i64, ()> {
-    Ok(db.create_page(story_id, name).await)
+    let database = Database::new(&db_url).await?;
+
+    sqlx::migrate!("./migrations").run(&database.pool).await?;
+
+    Ok(database)
 }
 
 fn main() {
-    let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+    let commands = collect_commands![
         get_stories,
         add_story,
         get_story,
@@ -81,9 +109,10 @@ fn main() {
         get_page,
         patch_page,
         create_page
-    ]);
+    ];
 
-    builder
+    Builder::<tauri::Wry>::new()
+        .commands(commands)
         .export(
             Typescript::default().bigint(BigIntExportBehavior::Number),
             "../src/bindings.ts",
@@ -92,25 +121,20 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
-            let app_handle = app.handle().clone();
-            let db_dir = app_handle
-                .path()
-                .app_data_dir()
-                .expect("Failed to get app data directory");
-            std::fs::create_dir_all(&db_dir).expect("Failed to create database directory");
+            let handle = app.handle();
 
-            let db_path: PathBuf = db_dir.join("story_nodes.db");
-
-            let db_url = format!("sqlite://{}?mode=rwc", db_path.to_str().unwrap());
-
-            spawn(async move {
-                let db = Database::new(&db_url).await;
-                sqlx::migrate!("./migrations")
-                    .run(&db.pool)
-                    .await
-                    .expect("Failed to run migrations");
-                app_handle.manage(db);
-            });
+            tauri::async_runtime::block_on(async {
+                match setup_database(&handle).await {
+                    Ok(db) => {
+                        handle.manage(db);
+                        Ok::<(), Box<dyn std::error::Error>>(())
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to setup database: {}", e);
+                        Err(e.into())
+                    }
+                }
+            })?;
 
             Ok(())
         })

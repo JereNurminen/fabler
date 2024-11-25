@@ -2,8 +2,10 @@ use futures::stream::FuturesUnordered;
 use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use sqlx::sqlite::{SqlitePool, SqliteQueryResult};
-use sqlx::Row;
+use sqlx::{
+    sqlite::{SqlitePool, SqliteQueryResult},
+    Error, Row,
+};
 
 use shared::models::{Choice, Page, Story, StoryId, StoryListing};
 
@@ -19,197 +21,167 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(db_url: &String) -> Self {
-        // Connect to the SQLite database
-        let pool = SqlitePool::connect(db_url)
-            .await
-            .expect("Failed to connect to the database");
-
-        Database { pool }
+    pub async fn new(db_url: &str) -> Result<Self, Error> {
+        let pool = SqlitePool::connect(db_url).await?;
+        Ok(Self { pool })
     }
 
-    pub async fn get_story_list(&self) -> Option<Vec<StoryListing>> {
-        let story_listings_from_db = sqlx::query("SELECT id, title FROM stories;")
+    pub async fn get_story_list(&self) -> Result<Vec<StoryListing>, Error> {
+        let rows = sqlx::query("SELECT id, title FROM stories")
             .fetch_all(&self.pool)
-            .await
-            .ok()?;
+            .await?;
 
-        Some(
-            story_listings_from_db
-                .iter()
-                .map(|row| StoryListing {
-                    id: row.get(0),
-                    title: row.get(1),
-                })
-                .collect(),
-        )
+        Ok(rows
+            .iter()
+            .map(|row| StoryListing {
+                id: row.get("id"),
+                title: row.get("title"),
+            })
+            .collect())
     }
 
-    pub async fn create_page(&self, story_id: StoryId, name: String) -> i64 {
-        sqlx::query("INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?);")
-            .bind(name)
+    pub async fn create_page(&self, story_id: StoryId, name: String) -> Result<i64, Error> {
+        let result = sqlx::query("INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?)")
+            .bind(&name)
             .bind("")
             .bind(story_id)
             .execute(&self.pool)
-            .await
-            .expect("Failed to insert new page")
-            .last_insert_rowid()
+            .await?;
+
+        Ok(result.last_insert_rowid())
     }
 
-    pub async fn add_story(&self, title: &String) -> StoryId {
-        let story_id =
-            sqlx::query("INSERT INTO stories (title, created_at) VALUES (?, CURRENT_TIMESTAMP);")
+    pub async fn add_story(&self, title: &str) -> Result<StoryId, Error> {
+        let mut tx = self.pool.begin().await?;
+
+        let result =
+            sqlx::query("INSERT INTO stories (title, created_at) VALUES (?, CURRENT_TIMESTAMP)")
                 .bind(title)
-                .execute(&self.pool)
-                .await
-                .expect("Failed to insert new story")
-                .last_insert_rowid();
+                .execute(&mut tx)
+                .await?;
 
-        let start_page_id = self.create_page(story_id, "Start".to_string()).await;
+        let story_id = result.last_insert_rowid();
+        let start_page_id = self.create_page(story_id, "Start".to_string()).await?;
 
-        sqlx::query("UPDATE stories SET start_page = ? WHERE id = ?;")
+        sqlx::query("UPDATE stories SET start_page = ? WHERE id = ?")
             .bind(start_page_id)
             .bind(story_id)
-            .execute(&self.pool)
-            .await
-            .expect("Failed to update story with start page");
+            .execute(&mut tx)
+            .await?;
 
-        story_id
+        tx.commit().await?;
+        Ok(story_id)
     }
 
-    pub async fn get_story(&self, id: StoryId) -> Option<Story> {
-        let story_from_db = sqlx::query("SELECT id, title, start_page FROM stories WHERE id = ?;")
-            .bind(id)
-            .fetch_one(&self.pool)
-            .await
-            .expect("Failed to fetch story from database");
-
-        let pages_from_db =
-            sqlx::query("SELECT id, story_id, name, content FROM pages WHERE story_id = ?;")
-                .bind(id)
-                .fetch_all(&self.pool)
-                .await
-                .expect("Failed to fetch pages for story");
-
-        let mut pages = Vec::new();
-        let mut fetch_futures = FuturesUnordered::new();
-
-        for row in pages_from_db.iter() {
-            // Spawn each future for fetching choices
-            fetch_futures.push(async {
-                let page_id: i64 = row.get(0);
-                let choices_from_db = sqlx::query(
-                    "SELECT id, page_id, text, target_page_id FROM choices WHERE page_id = ?;",
-                )
+    async fn fetch_choices_for_page(&self, page_id: i64) -> Result<Vec<Choice>, Error> {
+        let rows =
+            sqlx::query("SELECT id, page_id, text, target_page_id FROM choices WHERE page_id = ?")
                 .bind(page_id)
                 .fetch_all(&self.pool)
-                .await
-                .expect("Failed to fetch choices for page");
+                .await?;
 
-                // Synchronously map choices
-                let choices = choices_from_db
-                    .iter()
-                    .map(|row| Choice {
-                        id: row.get(0),
-                        page_id: row.get(1),
-                        text: row.get(2),
-                        target_page: row.get(3),
-                    })
-                    .collect();
-
-                // Create the page with its choices
-                Page {
-                    id: row.get(0),
-                    story_id: row.get(1),
-                    name: row.get(2),
-                    body: row.get(3),
-                    options: choices,
-                }
-            });
-        }
-
-        // Collect all the pages once the async operations complete
-        while let Some(page) = fetch_futures.next().await {
-            pages.push(page);
-        }
-
-        Some(Story {
-            id: story_from_db.get(0),
-            title: story_from_db.get(1),
-            start_page: story_from_db.get(2),
-            pages,
-        })
-    }
-
-    pub async fn delete_story(&self, id: StoryId) -> SqliteQueryResult {
-        sqlx::query("DELETE FROM stories WHERE id = ?;")
-            .bind(id)
-            .execute(&self.pool)
-            .await
-            .expect("Failed to delete story")
-    }
-
-    pub async fn get_page(&self, id: i64) -> Option<Page> {
-        let page_from_db = sqlx::query("SELECT id, story_id, name, body FROM pages WHERE id = ?;")
-            .bind(id)
-            .fetch_one(&self.pool)
-            .await
-            .ok()?;
-
-        let choices_from_db =
-            sqlx::query("SELECT id, page_id, text, target_page_id FROM choices WHERE page_id = ?;")
-                .bind(id)
-                .fetch_all(&self.pool)
-                .await
-                .expect("Failed to fetch choices for page");
-
-        let choices = choices_from_db
+        Ok(rows
             .iter()
             .map(|row| Choice {
-                id: row.get(0),
-                page_id: row.get(1),
-                text: row.get(2),
-                target_page: row.get(3),
+                id: row.get("id"),
+                page_id: row.get("page_id"),
+                text: row.get("text"),
+                target_page: row.get("target_page_id"),
             })
-            .collect();
+            .collect())
+    }
 
-        Some(Page {
-            id: page_from_db.get(0),
-            story_id: page_from_db.get(1),
-            name: page_from_db.get(2),
-            body: page_from_db.get(3),
+    async fn build_page(&self, row: sqlx::sqlite::SqliteRow) -> Result<Page, Error> {
+        let page_id: i64 = row.get("id");
+        let choices = self.fetch_choices_for_page(page_id).await?;
+
+        Ok(Page {
+            id: page_id,
+            story_id: row.get("story_id"),
+            name: row.get("name"),
+            body: row.get("content"),
             options: choices,
         })
     }
 
-    pub async fn patch_page(&self, id: i64, patch: PagePatch) -> SqliteQueryResult {
-        let mut query = "UPDATE pages SET ".to_string();
+    pub async fn get_story(&self, id: StoryId) -> Result<Story, Error> {
+        let story = sqlx::query("SELECT id, title, start_page FROM stories WHERE id = ?")
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let pages_rows =
+            sqlx::query("SELECT id, story_id, name, content FROM pages WHERE story_id = ?")
+                .bind(id)
+                .fetch_all(&self.pool)
+                .await?;
+
+        let mut futures = FuturesUnordered::new();
+        for row in pages_rows {
+            futures.push(self.build_page(row));
+        }
+
+        let mut pages = Vec::new();
+        while let Some(page_result) = futures.next().await {
+            pages.push(page_result?);
+        }
+
+        Ok(Story {
+            id: story.get("id"),
+            title: story.get("title"),
+            start_page: story.get("start_page"),
+            pages,
+        })
+    }
+
+    pub async fn delete_story(&self, id: StoryId) -> Result<SqliteQueryResult, Error> {
+        sqlx::query("DELETE FROM stories WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+    }
+
+    pub async fn get_page(&self, id: i64) -> Result<Option<Page>, Error> {
+        let page = match sqlx::query("SELECT id, story_id, name, content FROM pages WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?
+        {
+            Some(row) => row,
+            None => return Ok(None),
+        };
+
+        let page = self.build_page(page).await?;
+        Ok(Some(page))
+    }
+
+    pub async fn patch_page(&self, id: i64, patch: PagePatch) -> Result<SqliteQueryResult, Error> {
+        let mut updates = Vec::new();
         let mut binds = Vec::new();
 
-        if let Some(title) = patch.name {
-            query.push_str("name = ?, ");
-            binds.push(title);
+        if let Some(name) = patch.name {
+            updates.push("name = ?");
+            binds.push(name);
         }
 
         if let Some(body) = patch.body {
-            query.push_str("content = ?, ");
+            updates.push("content = ?");
             binds.push(body);
         }
 
-        query.truncate(query.len() - 2);
+        if updates.is_empty() {
+            return Ok(SqliteQueryResult::default());
+        }
 
-        query.push_str(" WHERE id = ?;");
-        binds.push(id.to_string());
+        let query = format!("UPDATE pages SET {} WHERE id = ?", updates.join(", "));
 
         let mut query_builder = sqlx::query(&query);
 
         for bind in binds {
             query_builder = query_builder.bind(bind);
         }
+        query_builder = query_builder.bind(id);
 
-        query_builder
-            .execute(&self.pool)
-            .await
-            .expect("Failed to patch page")
+        query_builder.execute(&self.pool).await
     }
 }

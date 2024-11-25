@@ -5,7 +5,7 @@
 
 
 export const commands = {
-async getStories() : Promise<Result<StoryListing[], null>> {
+async getStories() : Promise<Result<StoryListing[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_stories") };
 } catch (e) {
@@ -13,7 +13,7 @@ async getStories() : Promise<Result<StoryListing[], null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async addStory(name: string) : Promise<Result<number, null>> {
+async addStory(name: string) : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("add_story", { name }) };
 } catch (e) {
@@ -21,7 +21,7 @@ async addStory(name: string) : Promise<Result<number, null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getStory(id: number) : Promise<Result<Story, null>> {
+async getStory(id: number) : Promise<Result<Story, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_story", { id }) };
 } catch (e) {
@@ -29,7 +29,7 @@ async getStory(id: number) : Promise<Result<Story, null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async deleteStory(id: number) : Promise<Result<null, null>> {
+async deleteStory(id: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_story", { id }) };
 } catch (e) {
@@ -37,7 +37,7 @@ async deleteStory(id: number) : Promise<Result<null, null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async getPage(id: number) : Promise<Result<Page, null>> {
+async getPage(id: number) : Promise<Result<Page, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_page", { id }) };
 } catch (e) {
@@ -45,7 +45,7 @@ async getPage(id: number) : Promise<Result<Page, null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async patchPage(patch: PagePatch) : Promise<Result<null, null>> {
+async patchPage(patch: PagePatch) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("patch_page", { patch }) };
 } catch (e) {
@@ -53,7 +53,7 @@ async patchPage(patch: PagePatch) : Promise<Result<null, null>> {
     else return { status: "error", error: e  as any };
 }
 },
-async createPage(storyId: number, name: string) : Promise<Result<number, null>> {
+async createPage(storyId: number, name: string) : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("create_page", { storyId, name }) };
 } catch (e) {

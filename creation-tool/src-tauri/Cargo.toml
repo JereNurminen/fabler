@@ -23,6 +23,8 @@ specta = "=2.0.0-rc.20"
 specta-typescript = "0.0.7"
 tauri-specta = "=2.0.0-rc.20"
 chrono = "0.4.38"
+anyhow = "1.0.93"
+thiserror = "2.0.3"
 #tauri-plugin-sql = { version = "2.0.0-rc", features = ["sqlite"] }
 
 [features]
