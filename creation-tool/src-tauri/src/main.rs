@@ -11,6 +11,8 @@ use shared::models::{Page, Story, StoryId, StoryListing};
 use specta::Type;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use std::path::PathBuf;
+use tauri::menu::{Menu, MenuEvent, MenuItem, MenuItemBuilder, Submenu, SubmenuBuilder};
+use tauri::Emitter;
 use tauri::{async_runtime::spawn, Manager, State};
 use tauri_specta::{collect_commands, Builder};
 
@@ -135,6 +137,41 @@ fn main() {
                     }
                 }
             })?;
+
+            let edit_submenu = SubmenuBuilder::new(handle, "Edit")
+                .cut()
+                .copy()
+                .paste()
+                .build()?;
+
+            let debug_db_reset_menu_item =
+                MenuItemBuilder::with_id("debug_reset_db", "Reset database")
+                    .build(app.handle())
+                    .expect("Failed to build debug menu");
+            let debug_submenu = SubmenuBuilder::new(handle, "Debug")
+                .item(&debug_db_reset_menu_item)
+                .build()?;
+
+            app.on_menu_event(move |app, event| {
+                if event.id() == debug_db_reset_menu_item.id() {
+                    let db = app.state::<Database>();
+                    let app_handle = app.app_handle();
+                    tauri::async_runtime::block_on(async {
+                        if let Err(e) = db.reset_db().await {
+                            eprintln!("Failed to reset database: {}", e);
+                        } else {
+                            // Emit event after successful reset
+                            app_handle.emit("database-reset", ()).unwrap();
+                        }
+                    });
+                }
+            });
+
+            let menu = Menu::new(handle)?;
+            menu.append(&edit_submenu)?;
+            menu.append(&debug_submenu)?;
+            app.set_menu(menu)
+                .expect("Failed to build application menu");
 
             Ok(())
         })

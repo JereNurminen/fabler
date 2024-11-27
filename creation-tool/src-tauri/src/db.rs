@@ -61,7 +61,15 @@ impl Database {
                 .await?;
 
         let story_id = result.last_insert_rowid();
-        let start_page_id = self.create_page(story_id, "Start".to_string()).await?;
+
+        let start_page_id =
+            sqlx::query("INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?)")
+                .bind("Start")
+                .bind("")
+                .bind(story_id)
+                .execute(&mut tx)
+                .await?
+                .last_insert_rowid();
 
         sqlx::query("UPDATE stories SET start_page = ? WHERE id = ?")
             .bind(start_page_id)
@@ -183,5 +191,9 @@ impl Database {
         query_builder = query_builder.bind(id);
 
         query_builder.execute(&self.pool).await
+    }
+
+    pub async fn reset_db(&self) -> Result<SqliteQueryResult, Error> {
+        sqlx::query("DELETE FROM stories").execute(&self.pool).await
     }
 }
