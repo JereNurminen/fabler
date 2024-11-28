@@ -20,7 +20,7 @@
       "capabilities": [
         {
           "identifier": "core",
-          "permissions": ["core:default"],
+          "permissions": ["core:default", "dialog:default"],
           "windows": ["main"]
         }
       ]

@@ -161,7 +161,7 @@ fn main() {
                             eprintln!("Failed to reset database: {}", e);
                         } else {
                             // Emit event after successful reset
-                            app_handle.emit("database-reset", ()).unwrap();
+                            app.emit("database-reset", ()).unwrap();
                         }
                     });
                 }
@@ -184,6 +184,7 @@ fn main() {
             patch_page,
             create_page
         ])
+        .plugin(tauri_plugin_dialog::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-rc.5",
+    "@tauri-apps/plugin-dialog": "^2.0.1",
     "@tauri-apps/plugin-sql": "^2.0.0-rc",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
