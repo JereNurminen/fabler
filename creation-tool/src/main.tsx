@@ -7,6 +7,8 @@ import { StoryProvider } from "./StoryContext";
 import { pageRoute, storyRoute } from "./utilities/routing";
 import { listen } from "@tauri-apps/api/event";
 import { message } from "@tauri-apps/plugin-dialog";
+import { ThemeProvider } from "styled-components";
+import { theme } from "./style";
 
 function App() {
   const [_, setLocation] = useLocation();
@@ -25,26 +27,28 @@ function App() {
   }, [setLocation]);
 
   return (
-    <StoryProvider>
-      <Switch>
-        <Route path="/">
-          <StartPage />
-        </Route>
+    <ThemeProvider theme={theme}>
+      <StoryProvider>
+        <Switch>
+          <Route path="/">
+            <StartPage />
+          </Route>
 
-        <Route path={pageRoute}>
-          {(params) => (
-            <StoryEditorPage
-              storyIdParam={params.story}
-              pageIdParam={params.page}
-            />
-          )}
-        </Route>
+          <Route path={pageRoute}>
+            {(params) => (
+              <StoryEditorPage
+                storyIdParam={params.story}
+                pageIdParam={params.page}
+              />
+            )}
+          </Route>
 
-        <Route path={storyRoute}>
-          {(params) => <StoryEditorPage storyIdParam={params.story} />}
-        </Route>
-      </Switch>
-    </StoryProvider>
+          <Route path={storyRoute}>
+            {(params) => <StoryEditorPage storyIdParam={params.story} />}
+          </Route>
+        </Switch>
+      </StoryProvider>
+    </ThemeProvider>
   );
 }
 

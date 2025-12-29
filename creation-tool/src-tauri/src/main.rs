@@ -11,9 +11,9 @@ use shared::models::{Page, Story, StoryId, StoryListing};
 use specta::Type;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use std::path::PathBuf;
-use tauri::menu::{Menu, MenuEvent, MenuItem, MenuItemBuilder, Submenu, SubmenuBuilder};
+use tauri::menu::{Menu, MenuItemBuilder, SubmenuBuilder};
 use tauri::Emitter;
-use tauri::{async_runtime::spawn, Manager, State};
+use tauri::{Manager, State};
 use tauri_specta::{collect_commands, Builder};
 
 #[derive(Debug, Serialize, Type)]
@@ -69,14 +69,8 @@ async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), Str
 
 #[tauri::command]
 #[specta::specta]
-async fn create_page(
-    story_id: StoryId,
-    name: String,
-    db: State<'_, Database>,
-) -> Result<i64, String> {
-    db.create_page(story_id, name)
-        .await
-        .map_err(|e| e.to_string())
+async fn create_page(story_id: StoryId, db: State<'_, Database>) -> Result<i64, String> {
+    db.create_page(story_id).await.map_err(|e| e.to_string())
 }
 
 async fn setup_database(

@@ -9,8 +9,8 @@ import {
 } from "../StoryContext";
 import LoadingSpinner from "./LoadingSpinner";
 import Error from "./Error";
-import { Editable } from "./Editable";
 import { useCallback, useEffect, useState } from "react";
+import { theme } from "../style";
 
 export default ({ pageId }: { pageId: number }) => {
   const [name, setName] = useState("");
@@ -42,22 +42,26 @@ export default ({ pageId }: { pageId: number }) => {
     () => <LoadingSpinner />,
     ({ data }) => (
       <PageCard key={data.id}>
-        <Editable
-          inputType="single-line"
-          onEdit={(value) => setName(value)}
-          value={name}
-          onBlur={patch}
-        >
-          <PageTitle>{name}</PageTitle>
-        </Editable>
-        <Editable
-          inputType="multi-line"
-          onEdit={(value) => setBody(value)}
-          value={body}
-          onBlur={patch}
-        >
-          <PageBody>{body}</PageBody>
-        </Editable>
+        <Label htmlFor="page-title-input">
+          Page title:
+          <SingleLineInput
+            type="text"
+            id="page-title-input"
+            onChange={(e) => setName(e.target.value)}
+            onBlur={patch}
+            value={name}
+          />
+        </Label>
+        <Label htmlFor="page-body-input">
+          Page content:
+          <MultiLineInput
+            type="textarea"
+            id="page-body-input"
+            onChange={(e) => setBody(e.target.value)}
+            onBlur={patch}
+            value={body}
+          />
+        </Label>
       </PageCard>
     ),
     (error) => <Error error={error.error} />,
@@ -71,13 +75,16 @@ const PageCard = styled.div`
   border-radius: 5px;
 `;
 
-const PageTitle = styled.h2`
-  font-size: 1.2em;
-  color: palevioletred;
+const Label = styled.label`
+  font-size: ${theme.fonts.size.s};
+  width: 100%;
 `;
 
-const PageBody = styled.p`
-  color: black;
-  min-height: 100px;
-  border: 1px solid black;
+const Input = styled.input`
+  font-size: ${theme.fonts.size.m};
+  width: 100%;
 `;
+
+const SingleLineInput = styled(Input)``;
+
+const MultiLineInput = styled(Input)``;

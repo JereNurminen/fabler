@@ -40,13 +40,15 @@ impl Database {
             .collect())
     }
 
-    pub async fn create_page(&self, story_id: StoryId, name: String) -> Result<i64, Error> {
-        let result = sqlx::query("INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?)")
-            .bind(&name)
-            .bind("")
-            .bind(story_id)
-            .execute(&self.pool)
-            .await?;
+    pub async fn create_page(&self, story_id: StoryId) -> Result<i64, Error> {
+        let result = sqlx::query(
+            "INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?) RETURNING id",
+        )
+        .bind("")
+        .bind("")
+        .bind(story_id)
+        .execute(&self.pool)
+        .await?;
 
         Ok(result.last_insert_rowid())
     }

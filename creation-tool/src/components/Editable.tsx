@@ -5,47 +5,53 @@ interface EditableProps {
   onEdit: (value: string) => void;
   onBlur?: (value: string) => void;
   value: string;
-  inputType: 'single-line' | 'multi-line';
+  inputType: "single-line" | "multi-line";
 }
 
-export const Editable = ({ onEdit, onBlur, value, inputType, children }: PropsWithChildren<EditableProps>) => {
-  const [isEditing, setIsEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
+export const Editable = ({
+  onEdit,
+  onBlur,
+  value,
+  inputType,
+  children,
+}: PropsWithChildren<EditableProps>) => {
+  const [isEditing, setIsEditing] = useState(false);
 
   const onActivate = () => {
-    setIsEditing(true)
-  }
+    setIsEditing(true);
+  };
 
   if (!isEditing) {
-    return <Container onClick={onActivate}>{children}</Container>
+    return <Container onClick={onActivate}>{children}</Container>;
   }
 
   switch (inputType) {
-    case 'single-line':
+    case "single-line":
       return (
-        <input type='text'
-          onBlur={e => {
-            setIsEditing(false)
-            onBlur?.(e.target.value)
+        <input
+          type="text"
+          onBlur={(e) => {
+            setIsEditing(false);
+            onBlur?.(e.target.value);
           }}
-          onChange={e => onEdit(e.target.value)}
+          onChange={(e) => onEdit(e.target.value)}
           value={value}
         />
-      )
-    case 'multi-line':
+      );
+    case "multi-line":
       return (
         <textarea
-          onBlur={e => {
-            setIsEditing(false)
-            onBlur?.(e.target.value)
+          onBlur={(e) => {
+            setIsEditing(false);
+            onBlur?.(e.target.value);
           }}
-          onChange={e => onEdit(e.target.value)}
+          onChange={(e) => onEdit(e.target.value)}
           value={value}
         />
-      )
+      );
   }
-}
+};
 
 const Container = styled.div`
-display: contents;
-`
+  display: contents;
+`;

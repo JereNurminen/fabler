@@ -62,7 +62,7 @@ type StoryContextType = {
   loadStory: (id: number) => Promise<void>;
   getPage: (pageId: number) => Promise<Loadable<Page>>;
   patchPage: (patch: PagePatch) => Promise<Result<null>>;
-  createPage: (name: string) => Promise<Result<number>>;
+  createPage: () => Promise<Result<number>>;
 };
 
 const StoryContext = createContext<StoryContextType | undefined>(undefined);
@@ -131,18 +131,15 @@ export const StoryProvider: React.FC<StoryContextProps> = ({ children }) => {
     [getPage],
   );
 
-  const createPage = useCallback(
-    async (name: string) => {
-      if (!isLoadedAndSuccess(story)) return errorResult("Story not loaded");
-      const result = await api.createPage(story.value.data.id, name);
-      if (result.status === "ok") {
-        const loadedPage = await getPage(result.data);
-        pageMap.set(result.data, loadedPage);
-      }
-      return result;
-    },
-    [story, getPage],
-  );
+  const createPage = useCallback(async () => {
+    if (!isLoadedAndSuccess(story)) return errorResult("Story not loaded");
+    const result = await api.createPage(story.value.data.id);
+    if (result.status === "ok") {
+      const loadedPage = await getPage(result.data);
+      pageMap.set(result.data, loadedPage);
+    }
+    return result;
+  }, [story, getPage]);
 
   return (
     <StoryContext.Provider

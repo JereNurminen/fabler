@@ -8,7 +8,7 @@ import styled from "styled-components";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
 import NewPageButton from "../components/NewPageButton";
-import style from "../style";
+import { theme } from "../style";
 import { useRoute } from "wouter";
 import { pageRoute } from "../utilities/routing";
 import PageLink from "../components/PageLink";
@@ -48,7 +48,7 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
                     storyId={storyId}
                     pageId={page.value.data.id}
                   >
-                    {page.value.data.name}
+                    {`${page.value.data.name || `Page ${page.value.data.id}`}`}
                   </PageLink>
                 ))}
               <NewPageButton />
@@ -75,7 +75,7 @@ const Sidebar = styled.div`
   grid-row: 1;
   display: flex;
   flex-direction: column;
-  flex-gap: ${style.spacing.m};
+  flex-gap: ${theme.spacing.m};
   border-right: 1px solid black;
 `;
 
