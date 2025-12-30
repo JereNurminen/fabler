@@ -45,6 +45,14 @@ async deleteStory(id: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async patchStory(patch: StoryPatch) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("patch_story", { patch }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getPage(id: number) : Promise<Result<Page, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_page", { id }) };
@@ -113,6 +121,7 @@ export type PagePatch = { id: number; name: string | null; body: string | null }
 export type Story = { id: number; title: string; pages: Page[]; start_page: number }
 export type StoryListing = { id: number; title: string }
 export type StoryOutline = { id: number; title: string; pages: PageListItem[]; start_page: number }
+export type StoryPatch = { id: number; title: string | null; start_page: number | null }
 
 /** tauri-specta globals **/
 

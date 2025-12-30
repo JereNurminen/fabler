@@ -14,3 +14,10 @@ pub struct ChoicePatch {
     pub text: Option<String>,
     pub target_page: Option<i64>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct StoryPatch {
+    pub id: i64,
+    pub title: Option<String>,
+    pub start_page: Option<i64>,
+}

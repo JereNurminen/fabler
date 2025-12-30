@@ -5,6 +5,7 @@ const api = {
   createStory: commands.addStory,
   getStory: commands.getStory,
   getStoryOutline: commands.getStoryOutline,
+  patchStory: commands.patchStory,
   getPage: commands.getPage,
   patchPage: commands.patchPage,
   createPage: commands.createPage,

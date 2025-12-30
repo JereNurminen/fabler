@@ -5,7 +5,7 @@ import {
   pageAtomFamily,
   storyRefreshAtom,
 } from "./storyAtoms";
-import type { PagePatch, ChoicePatch } from "../bindings";
+import type { PagePatch, ChoicePatch, StoryPatch } from "../bindings";
 
 export const loadStoryAtom = atom(null, (_get, set, storyId: number) => {
   set(currentStoryIdAtom, storyId);
@@ -75,6 +75,25 @@ export const patchChoiceAtom = atom(
     // Invalidate the page cache to refresh choices
     pageAtomFamily.remove(args.pageId);
 
+    return result;
+  }
+);
+
+export const patchStoryAtom = atom(
+  null,
+  async (_get, set, patch: { id: number; title?: string; start_page?: number }) => {
+    const result = await api.patchStory({
+      id: patch.id,
+      title: patch.title ?? null,
+      start_page: patch.start_page ?? null,
+    });
+
+    if (result.status !== "ok") {
+      throw new Error(result.error);
+    }
+
+    // Refresh story outline to reflect changes
+    set(storyRefreshAtom, (c) => c + 1);
     return result;
   }
 );

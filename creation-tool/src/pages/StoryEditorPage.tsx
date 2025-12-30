@@ -29,6 +29,7 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
         storyId={storyId}
         storyTitle={story.title}
         pages={pages}
+        startPage={story.start_page}
       />
       <Main>
         {pageId ? (

@@ -113,4 +113,39 @@ impl Database {
             .await?;
         Ok(())
     }
+
+    pub async fn patch_story(&self, id: StoryId, patch: crate::models::StoryPatch) -> AppResult<()> {
+        let mut updates = Vec::new();
+        let mut title_bind = None;
+        let mut start_page_bind = None;
+
+        if let Some(title) = patch.title {
+            updates.push("title = ?");
+            title_bind = Some(title);
+        }
+
+        if let Some(start_page) = patch.start_page {
+            updates.push("start_page = ?");
+            start_page_bind = Some(start_page);
+        }
+
+        if updates.is_empty() {
+            return Ok(());
+        }
+
+        let query = format!("UPDATE stories SET {} WHERE id = ?", updates.join(", "));
+        let mut query_builder = sqlx::query(&query);
+
+        if let Some(title) = title_bind {
+            query_builder = query_builder.bind(title);
+        }
+
+        if let Some(start_page) = start_page_bind {
+            query_builder = query_builder.bind(start_page);
+        }
+
+        query_builder = query_builder.bind(id);
+        query_builder.execute(&self.pool).await?;
+        Ok(())
+    }
 }
