@@ -3,137 +3,20 @@
     windows_subsystem = "windows"
 )]
 
+mod commands;
 mod db;
+mod models;
+mod error;
+mod app;
 
-use db::{Database, PagePatch, ChoicePatch};
-use serde::Serialize;
-use shared::models::{Page, PageId, Story, StoryId, StoryListing, StoryOutline};
-use specta::Type;
+use commands::*;
+use app::{setup_database, create_menus, setup_menu_handlers};
 use specta_typescript::{BigIntExportBehavior, Typescript};
-use std::path::PathBuf;
-use tauri::menu::{Menu, MenuItemBuilder, SubmenuBuilder};
-use tauri::Emitter;
-use tauri::{Manager, State};
+use tauri::Manager;
 use tauri_specta::{collect_commands, Builder};
 
-#[derive(Debug, Serialize, Type)]
-pub struct CommandError {
-    message: String,
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn get_story(id: i64, db: State<'_, Database>) -> Result<Story, String> {
-    db.get_story(id).await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn get_story_outline(id: i64, db: State<'_, Database>) -> Result<StoryOutline, String> {
-    db.get_story_outline(id).await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn get_stories(db: State<'_, Database>) -> Result<Vec<StoryListing>, String> {
-    db.get_story_list().await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn add_story(name: String, db: State<'_, Database>) -> Result<StoryId, String> {
-    db.add_story(&name).await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn delete_story(id: i64, db: State<'_, Database>) -> Result<(), String> {
-    db.delete_story(id)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn get_page(id: i64, db: State<'_, Database>) -> Result<Page, String> {
-    match db.get_page(id).await {
-        Ok(Some(page)) => Ok(page),
-        Ok(None) => Err("Page not found".to_string()),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn patch_page(patch: PagePatch, db: State<'_, Database>) -> Result<(), String> {
-    db.patch_page(patch.id, patch)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn create_page(story_id: StoryId, db: State<'_, Database>) -> Result<i64, String> {
-    db.create_page(story_id).await.map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn create_choice(
-    page_id: PageId,
-    text: String,
-    target_page_id: PageId,
-    db: State<'_, Database>,
-) -> Result<i64, String> {
-    db.create_choice(page_id, &text, target_page_id)
-        .await
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn delete_choice(id: i64, db: State<'_, Database>) -> Result<(), String> {
-    db.delete_choice(id)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-#[specta::specta]
-async fn patch_choice(patch: ChoicePatch, db: State<'_, Database>) -> Result<(), String> {
-    db.patch_choice(patch.id, patch)
-        .await
-        .map(|_| ())
-        .map_err(|e| e.to_string())
-}
-
-async fn setup_database(
-    app_handle: &tauri::AppHandle,
-) -> Result<Database, Box<dyn std::error::Error>> {
-    let db_dir = app_handle
-        .path()
-        .app_data_dir()
-        .expect("failed to get path to database");
-
-    std::fs::create_dir_all(&db_dir)?;
-
-    let db_path: PathBuf = db_dir.join("story_nodes.db");
-    let db_url = format!(
-        "sqlite://{}?mode=rwc",
-        db_path.to_str().ok_or("Invalid database path")?
-    );
-
-    let database = Database::new(&db_url).await?;
-
-    sqlx::migrate!("./migrations").run(&database.pool).await?;
-
-    Ok(database)
-}
-
 fn main() {
+    // Collect commands for TypeScript bindings
     let commands = collect_commands![
         get_stories,
         add_story,
@@ -148,6 +31,7 @@ fn main() {
         patch_choice
     ];
 
+    // Export TypeScript bindings
     Builder::<tauri::Wry>::new()
         .commands(commands)
         .export(
@@ -156,57 +40,31 @@ fn main() {
         )
         .expect("Failed to export typescript bindings");
 
+    // Run Tauri application
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle();
 
+            // Setup database
             tauri::async_runtime::block_on(async {
                 match setup_database(&handle).await {
                     Ok(db) => {
                         handle.manage(db);
-                        Ok::<(), Box<dyn std::error::Error>>(())
+                        Ok(())
                     }
                     Err(e) => {
                         eprintln!("Failed to setup database: {}", e);
-                        Err(e.into())
+                        Err(Box::new(e) as Box<dyn std::error::Error>)
                     }
                 }
             })?;
 
-            let edit_submenu = SubmenuBuilder::new(handle, "Edit")
-                .cut()
-                .copy()
-                .paste()
-                .build()?;
+            // Setup menus
+            let menu = create_menus(&handle)?;
+            app.set_menu(menu)?;
 
-            let debug_db_reset_menu_item =
-                MenuItemBuilder::with_id("debug_reset_db", "Reset database")
-                    .build(app.handle())
-                    .expect("Failed to build debug menu");
-            let debug_submenu = SubmenuBuilder::new(handle, "Debug")
-                .item(&debug_db_reset_menu_item)
-                .build()?;
-
-            app.on_menu_event(move |app, event| {
-                if event.id() == debug_db_reset_menu_item.id() {
-                    let db = app.state::<Database>();
-                    let app_handle = app.app_handle();
-                    tauri::async_runtime::block_on(async {
-                        if let Err(e) = db.reset_db().await {
-                            eprintln!("Failed to reset database: {}", e);
-                        } else {
-                            // Emit event after successful reset
-                            app.emit("database-reset", ()).unwrap();
-                        }
-                    });
-                }
-            });
-
-            let menu = Menu::new(handle)?;
-            menu.append(&edit_submenu)?;
-            menu.append(&debug_submenu)?;
-            app.set_menu(menu)
-                .expect("Failed to build application menu");
+            // Setup menu event handlers
+            setup_menu_handlers(&handle);
 
             Ok(())
         })
