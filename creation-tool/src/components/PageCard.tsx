@@ -1,70 +1,56 @@
 import styled from "styled-components";
-import { Page } from "../bindings";
-import {
-  handleLoadable,
-  isLoadedAndSuccess,
-  Loadable,
-  notLoaded,
-  useStoryContext,
-} from "../StoryContext";
-import LoadingSpinner from "./LoadingSpinner";
-import Error from "./Error";
+import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { theme } from "../style";
+import { pageAtomFamily } from "../atoms/storyAtoms";
+import { useStoryAtoms } from "../atoms/useStoryAtoms";
 
 export default ({ pageId }: { pageId: number }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
-  const [page, setPage] = useState<Loadable<Page>>(notLoaded<Page>());
-  const { getPage, patchPage } = useStoryContext();
+  const [page] = useAtom(pageAtomFamily(pageId));
+  const { patchPage } = useStoryAtoms();
 
   useEffect(() => {
-    async function loadPage() {
-      const loadedPage = await getPage(pageId);
-      setPage(loadedPage);
-    }
-    void loadPage();
-  }, [pageId]);
-
-  useEffect(() => {
-    if (isLoadedAndSuccess(page)) {
-      setName(page.value.data.name);
-      setBody(page.value.data.body);
+    if (page) {
+      setName(page.name);
+      setBody(page.body);
     }
   }, [page]);
 
   const patch = useCallback(async () => {
-    await patchPage({ id: pageId, name, body });
-  }, [pageId, name, body]);
+    try {
+      await patchPage({ id: pageId, name, body });
+    } catch (error) {
+      console.error("Failed to patch page:", error);
+    }
+  }, [pageId, name, body, patchPage]);
 
-  return handleLoadable(
-    page,
-    () => <LoadingSpinner />,
-    ({ data }) => (
-      <PageCard key={data.id}>
-        <Label htmlFor="page-title-input">
-          Page title:
-          <SingleLineInput
-            type="text"
-            id="page-title-input"
-            onChange={(e) => setName(e.target.value)}
-            onBlur={patch}
-            value={name}
-          />
-        </Label>
-        <Label htmlFor="page-body-input">
-          Page content:
-          <MultiLineInput
-            type="textarea"
-            id="page-body-input"
-            onChange={(e) => setBody(e.target.value)}
-            onBlur={patch}
-            value={body}
-          />
-        </Label>
-      </PageCard>
-    ),
-    (error) => <Error error={error.error} />,
+  if (!page) return null;
+
+  return (
+    <PageCard key={page.id}>
+      <Label htmlFor="page-title-input">
+        Page title:
+        <SingleLineInput
+          type="text"
+          id="page-title-input"
+          onChange={(e) => setName(e.target.value)}
+          onBlur={patch}
+          value={name}
+        />
+      </Label>
+      <Label htmlFor="page-body-input">
+        Page content:
+        <MultiLineInput
+          type="textarea"
+          id="page-body-input"
+          onChange={(e) => setBody(e.target.value)}
+          onBlur={patch}
+          value={body}
+        />
+      </Label>
+    </PageCard>
   );
 };
 

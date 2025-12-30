@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { StoryListing } from "../bindings";
 import api from "../api";
-import { handleResult, Loadable } from "../StoryContext";
+import { handleResult, Loadable } from "../utilities/loadable";
 import styled from "styled-components";
 import { Link, useLocation } from "wouter";
 import { getLinkToStoryPage } from "../utilities/routing";

@@ -7,7 +7,7 @@ use sqlx::{
     Error, Row,
 };
 
-use shared::models::{Choice, Page, Story, StoryId, StoryListing};
+use shared::models::{Choice, Page, PageListItem, Story, StoryId, StoryListing, StoryOutline};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct PagePatch {
@@ -137,6 +137,33 @@ impl Database {
         }
 
         Ok(Story {
+            id: story.get("id"),
+            title: story.get("title"),
+            start_page: story.get("start_page"),
+            pages,
+        })
+    }
+
+    pub async fn get_story_outline(&self, id: StoryId) -> Result<StoryOutline, Error> {
+        let story = sqlx::query("SELECT id, title, start_page FROM stories WHERE id = ?")
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let pages_rows = sqlx::query("SELECT id, name FROM pages WHERE story_id = ?")
+            .bind(id)
+            .fetch_all(&self.pool)
+            .await?;
+
+        let pages = pages_rows
+            .iter()
+            .map(|row| PageListItem {
+                id: row.get("id"),
+                name: row.get("name"),
+            })
+            .collect();
+
+        Ok(StoryOutline {
             id: story.get("id"),
             title: story.get("title"),
             start_page: story.get("start_page"),

@@ -29,6 +29,14 @@ async getStory(id: number) : Promise<Result<Story, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async getStoryOutline(id: number) : Promise<Result<StoryOutline, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_story_outline", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async deleteStory(id: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("delete_story", { id }) };
@@ -75,9 +83,11 @@ async createPage(storyId: number) : Promise<Result<number, string>> {
 
 export type Choice = { id: number; page_id: number; text: string; target_page: number }
 export type Page = { id: number; story_id: number; name: string; body: string; options: Choice[] }
+export type PageListItem = { id: number; name: string }
 export type PagePatch = { id: number; name: string | null; body: string | null }
 export type Story = { id: number; title: string; pages: Page[]; start_page: number }
 export type StoryListing = { id: number; title: string }
+export type StoryOutline = { id: number; title: string; pages: PageListItem[]; start_page: number }
 
 /** tauri-specta globals **/
 

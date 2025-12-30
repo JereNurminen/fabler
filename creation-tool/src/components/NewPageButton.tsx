@@ -1,13 +1,15 @@
-import { useStoryContext } from "../StoryContext";
+import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import styled from "styled-components";
 
-type Props = {};
-
 export default () => {
-  const { createPage } = useStoryContext();
+  const { createPage } = useStoryAtoms();
 
   const createNewPage = async () => {
-    await createPage();
+    try {
+      await createPage();
+    } catch (error) {
+      console.error("Failed to create page:", error);
+    }
   };
 
   return (

@@ -1,16 +1,10 @@
-import { useEffect } from "react";
-import {
-  handleLoadable,
-  isLoadedAndSuccess,
-  useStoryContext,
-} from "../StoryContext";
+import { Suspense, useEffect } from "react";
+import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import styled from "styled-components";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
 import NewPageButton from "../components/NewPageButton";
 import { theme } from "../style";
-import { useRoute } from "wouter";
-import { pageRoute } from "../utilities/routing";
 import PageLink from "../components/PageLink";
 
 interface StoryEditorPageProps {
@@ -22,43 +16,40 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
   const storyId = parseInt(storyIdParam);
   const pageId = pageIdParam !== undefined ? parseInt(pageIdParam) : undefined;
 
-  console.debug(storyId, pageId);
-
-  const { story, pages, loadStory } = useStoryContext();
+  const { story, pages, loadStory } = useStoryAtoms();
 
   useEffect(() => {
-    void loadStory(storyId);
-  }, [storyId]);
+    loadStory(storyId);
+  }, [storyId, loadStory]);
 
-  return handleLoadable(
-    story,
-    () => <LoadingSpinner />,
-    (story) => (
-      <>
-        <StoryPage>
-          <Sidebar>
-            <StoryHeading>{story.data.title}</StoryHeading>
-            <PageList>
-              {pages
-                .filter(isLoadedAndSuccess)
-                .sort((a, b) => a.value.data.id - b.value.data.id)
-                .map((page) => (
-                  <PageLink
-                    key={page.value.data.id}
-                    storyId={storyId}
-                    pageId={page.value.data.id}
-                  >
-                    {`${page.value.data.name || `Page ${page.value.data.id}`}`}
-                  </PageLink>
-                ))}
-              <NewPageButton />
-            </PageList>
-          </Sidebar>
-          <Main>{pageId ? <PageCard pageId={pageId} /> : <></>}</Main>
-        </StoryPage>
-      </>
-    ),
-    (err) => <p>Error: {err.error}</p>,
+  // story and pages are always loaded here (or component suspended)
+  if (!story) return <LoadingSpinner />;
+
+  return (
+    <StoryPage>
+      <Sidebar>
+        <StoryHeading>{story.title}</StoryHeading>
+        <PageList>
+          {pages
+            .sort((a, b) => a.id - b.id)
+            .map((page) => (
+              <PageLink key={page.id} storyId={storyId} pageId={page.id}>
+                {`${page.name || `Page ${page.id}`}`}
+              </PageLink>
+            ))}
+          <NewPageButton />
+        </PageList>
+      </Sidebar>
+      <Main>
+        {pageId ? (
+          <Suspense fallback={<LoadingSpinner />}>
+            <PageCard pageId={pageId} />
+          </Suspense>
+        ) : (
+          <></>
+        )}
+      </Main>
+    </StoryPage>
   );
 };
 

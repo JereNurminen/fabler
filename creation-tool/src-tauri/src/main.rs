@@ -7,7 +7,7 @@ mod db;
 
 use db::{Database, PagePatch};
 use serde::Serialize;
-use shared::models::{Page, Story, StoryId, StoryListing};
+use shared::models::{Page, Story, StoryId, StoryListing, StoryOutline};
 use specta::Type;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use std::path::PathBuf;
@@ -25,6 +25,12 @@ pub struct CommandError {
 #[specta::specta]
 async fn get_story(id: i64, db: State<'_, Database>) -> Result<Story, String> {
     db.get_story(id).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn get_story_outline(id: i64, db: State<'_, Database>) -> Result<StoryOutline, String> {
+    db.get_story_outline(id).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -101,6 +107,7 @@ fn main() {
         get_stories,
         add_story,
         get_story,
+        get_story_outline,
         delete_story,
         get_page,
         patch_page,
@@ -172,6 +179,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             get_stories,
             get_story,
+            get_story_outline,
             add_story,
             delete_story,
             get_page,
