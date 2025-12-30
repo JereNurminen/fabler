@@ -5,7 +5,7 @@ import {
   pageAtomFamily,
   storyRefreshAtom,
 } from "./storyAtoms";
-import type { PagePatch } from "../bindings";
+import type { PagePatch, ChoicePatch } from "../bindings";
 
 export const loadStoryAtom = atom(null, (_get, set, storyId: number) => {
   set(currentStoryIdAtom, storyId);
@@ -39,3 +39,42 @@ export const createPageAtom = atom(null, async (get, set) => {
 
   return result.data;
 });
+
+export const createChoiceAtom = atom(
+  null,
+  async (_get, _set, args: { pageId: number; text: string; targetPageId: number }) => {
+    const result = await api.createChoice(args.pageId, args.text, args.targetPageId);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh choices
+    pageAtomFamily.remove(args.pageId);
+
+    return result.data;
+  }
+);
+
+export const deleteChoiceAtom = atom(
+  null,
+  async (_get, _set, args: { choiceId: number; pageId: number }) => {
+    const result = await api.deleteChoice(args.choiceId);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh choices
+    pageAtomFamily.remove(args.pageId);
+
+    return result;
+  }
+);
+
+export const patchChoiceAtom = atom(
+  null,
+  async (_get, _set, args: { patch: ChoicePatch; pageId: number }) => {
+    const result = await api.patchChoice(args.patch);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh choices
+    pageAtomFamily.remove(args.pageId);
+
+    return result;
+  }
+);

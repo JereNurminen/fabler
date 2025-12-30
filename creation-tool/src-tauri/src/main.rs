@@ -5,9 +5,9 @@
 
 mod db;
 
-use db::{Database, PagePatch};
+use db::{Database, PagePatch, ChoicePatch};
 use serde::Serialize;
-use shared::models::{Page, Story, StoryId, StoryListing, StoryOutline};
+use shared::models::{Page, PageId, Story, StoryId, StoryListing, StoryOutline};
 use specta::Type;
 use specta_typescript::{BigIntExportBehavior, Typescript};
 use std::path::PathBuf;
@@ -79,6 +79,37 @@ async fn create_page(story_id: StoryId, db: State<'_, Database>) -> Result<i64, 
     db.create_page(story_id).await.map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+#[specta::specta]
+async fn create_choice(
+    page_id: PageId,
+    text: String,
+    target_page_id: PageId,
+    db: State<'_, Database>,
+) -> Result<i64, String> {
+    db.create_choice(page_id, &text, target_page_id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn delete_choice(id: i64, db: State<'_, Database>) -> Result<(), String> {
+    db.delete_choice(id)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn patch_choice(patch: ChoicePatch, db: State<'_, Database>) -> Result<(), String> {
+    db.patch_choice(patch.id, patch)
+        .await
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+}
+
 async fn setup_database(
     app_handle: &tauri::AppHandle,
 ) -> Result<Database, Box<dyn std::error::Error>> {
@@ -111,7 +142,10 @@ fn main() {
         delete_story,
         get_page,
         patch_page,
-        create_page
+        create_page,
+        create_choice,
+        delete_choice,
+        patch_choice
     ];
 
     Builder::<tauri::Wry>::new()
@@ -184,7 +218,10 @@ fn main() {
             delete_story,
             get_page,
             patch_page,
-            create_page
+            create_page,
+            create_choice,
+            delete_choice,
+            patch_choice
         ])
         .plugin(tauri_plugin_dialog::init())
         .run(tauri::generate_context!())

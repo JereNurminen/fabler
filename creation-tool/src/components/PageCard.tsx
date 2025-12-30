@@ -1,20 +1,27 @@
 import styled from "styled-components";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { theme } from "../style";
-import { pageAtomFamily } from "../atoms/storyAtoms";
+import { pageAtomFamily, allPagesAtom } from "../atoms/storyAtoms";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
+import type { Choice } from "../bindings";
+import { useLocation } from "wouter";
+import { getLinkToPagePage } from "../utilities/routing";
 
 export default ({ pageId }: { pageId: number }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
+  const [choices, setChoices] = useState<Choice[]>([]);
   const [page] = useAtom(pageAtomFamily(pageId));
-  const { patchPage } = useStoryAtoms();
+  const pages = useAtomValue(allPagesAtom);
+  const { patchPage, createChoice, deleteChoice, patchChoice } = useStoryAtoms();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (page) {
       setName(page.name);
       setBody(page.body);
+      setChoices(page.options);
     }
   }, [page]);
 
@@ -25,6 +32,70 @@ export default ({ pageId }: { pageId: number }) => {
       console.error("Failed to patch page:", error);
     }
   }, [pageId, name, body, patchPage]);
+
+  const handleCreateChoice = async () => {
+    if (!page) return;
+
+    try {
+      // Create with empty text, defaulting to first available page
+      const defaultTargetPage = pages[0]?.id || page.id;
+      const newChoiceId = await createChoice({
+        pageId: page.id,
+        text: "",
+        targetPageId: defaultTargetPage,
+      });
+
+      // Optimistically add to local state
+      setChoices([
+        ...choices,
+        {
+          id: newChoiceId,
+          page_id: page.id,
+          text: "",
+          target_page: defaultTargetPage,
+        },
+      ]);
+    } catch (error) {
+      console.error("Failed to create choice:", error);
+    }
+  };
+
+  const handleDeleteChoice = async (choiceId: number) => {
+    if (!page) return;
+
+    try {
+      // Optimistically remove from local state
+      setChoices(choices.filter((c) => c.id !== choiceId));
+
+      await deleteChoice({ choiceId, pageId: page.id });
+    } catch (error) {
+      console.error("Failed to delete choice:", error);
+      // On error, refetch to restore correct state
+      if (page) {
+        setChoices(page.options);
+      }
+    }
+  };
+
+  const handlePatchChoice = async (
+    choiceId: number,
+    updates: { text?: string; target_page?: number }
+  ) => {
+    if (!page) return;
+
+    try {
+      await patchChoice({
+        patch: {
+          id: choiceId,
+          text: updates.text !== undefined ? updates.text : null,
+          target_page: updates.target_page !== undefined ? updates.target_page : null,
+        },
+        pageId: page.id,
+      });
+    } catch (error) {
+      console.error("Failed to patch choice:", error);
+    }
+  };
 
   if (!page) return null;
 
@@ -50,6 +121,85 @@ export default ({ pageId }: { pageId: number }) => {
           value={body}
         />
       </Label>
+
+      <ChoicesSection>
+        <SectionLabel>Choices:</SectionLabel>
+
+        {choices.length === 0 ? (
+          <EmptyState>No choices yet. Add one below.</EmptyState>
+        ) : (
+          <ChoicesList>
+            {choices.map((choice) => (
+              <ChoiceItem key={choice.id}>
+                <ChoiceInputs>
+                  <Label htmlFor={`choice-text-${choice.id}`}>
+                    Choice text:
+                    <Input
+                      type="text"
+                      id={`choice-text-${choice.id}`}
+                      value={choice.text}
+                      onChange={(e) => {
+                        // Update local state immediately
+                        setChoices(
+                          choices.map((c) =>
+                            c.id === choice.id ? { ...c, text: e.target.value } : c
+                          )
+                        );
+                      }}
+                      onBlur={() =>
+                        handlePatchChoice(choice.id, { text: choice.text })
+                      }
+                      placeholder="Enter choice text..."
+                    />
+                  </Label>
+
+                  <Label htmlFor={`choice-target-${choice.id}`}>
+                    Leads to:
+                    <TargetPageRow>
+                      <Select
+                        id={`choice-target-${choice.id}`}
+                        value={choice.target_page}
+                        onChange={(e) => {
+                          const newTarget = parseInt(e.target.value);
+                          // Update local state immediately
+                          setChoices(
+                            choices.map((c) =>
+                              c.id === choice.id ? { ...c, target_page: newTarget } : c
+                            )
+                          );
+                          // Update immediately (no blur needed for select)
+                          handlePatchChoice(choice.id, { target_page: newTarget });
+                        }}
+                      >
+                        {pages.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name || `Page ${p.id}`}
+                          </option>
+                        ))}
+                      </Select>
+                      <GoToPageLink
+                        onClick={() =>
+                          setLocation(
+                            getLinkToPagePage(page.story_id, choice.target_page)
+                          )
+                        }
+                      >
+                        Go to page →
+                      </GoToPageLink>
+                    </TargetPageRow>
+                  </Label>
+                </ChoiceInputs>
+
+                <DeleteButton onClick={() => handleDeleteChoice(choice.id)}>
+                  Delete
+                </DeleteButton>
+              </ChoiceItem>
+            ))}
+          </ChoicesList>
+        )}
+
+        <AddButton onClick={handleCreateChoice}>Add Choice</AddButton>
+      </ChoicesSection>
     </PageCard>
   );
 };
@@ -74,3 +224,102 @@ const Input = styled.input`
 const SingleLineInput = styled(Input)``;
 
 const MultiLineInput = styled(Input)``;
+
+const ChoicesSection = styled.div`
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const SectionLabel = styled.h3`
+  font-size: ${theme.fonts.size.m};
+  margin: 0;
+  padding: 0;
+`;
+
+const EmptyState = styled.div`
+  font-size: ${theme.fonts.size.s};
+  color: #999;
+  font-style: italic;
+  padding: 10px 0;
+`;
+
+const ChoicesList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+
+const ChoiceItem = styled.div`
+  border: 1px solid #e6e6e6;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #fafafa;
+`;
+
+const ChoiceInputs = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const TargetPageRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+const Select = styled.select`
+  font-size: ${theme.fonts.size.m};
+  flex: 1;
+  padding: 4px;
+`;
+
+const GoToPageLink = styled.button`
+  background: none;
+  border: none;
+  color: #2196f3;
+  cursor: pointer;
+  font-size: ${theme.fonts.size.s};
+  text-decoration: underline;
+  white-space: nowrap;
+  padding: 0;
+
+  &:hover {
+    color: #1976d2;
+  }
+`;
+
+const DeleteButton = styled.button`
+  align-self: flex-end;
+  background-color: ${theme.colors.light.danger};
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 10px;
+  font-size: ${theme.fonts.size.s};
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const AddButton = styled.button`
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-size: ${theme.fonts.size.m};
+  cursor: pointer;
+  margin-top: 5px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;

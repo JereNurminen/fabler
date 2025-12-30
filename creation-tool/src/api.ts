@@ -8,6 +8,9 @@ const api = {
   getPage: commands.getPage,
   patchPage: commands.patchPage,
   createPage: commands.createPage,
+  createChoice: commands.createChoice,
+  deleteChoice: commands.deleteChoice,
+  patchChoice: commands.patchChoice,
 };
 
 export default api;

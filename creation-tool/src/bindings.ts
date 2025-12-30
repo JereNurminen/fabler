@@ -68,6 +68,30 @@ async createPage(storyId: number) : Promise<Result<number, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async createChoice(pageId: number, text: string, targetPageId: number) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("create_choice", { pageId, text, targetPageId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteChoice(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_choice", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async patchChoice(patch: ChoicePatch) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("patch_choice", { patch }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -82,6 +106,7 @@ async createPage(storyId: number) : Promise<Result<number, string>> {
 /** user-defined types **/
 
 export type Choice = { id: number; page_id: number; text: string; target_page: number }
+export type ChoicePatch = { id: number; text: string | null; target_page: number | null }
 export type Page = { id: number; story_id: number; name: string; body: string; options: Choice[] }
 export type PageListItem = { id: number; name: string }
 export type PagePatch = { id: number; name: string | null; body: string | null }

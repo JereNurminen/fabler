@@ -16,6 +16,13 @@ pub struct PagePatch {
     pub body: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct ChoicePatch {
+    pub id: i64,
+    pub text: Option<String>,
+    pub target_page: Option<i64>,
+}
+
 pub struct Database {
     pub pool: SqlitePool,
 }
@@ -47,6 +54,19 @@ impl Database {
         .bind("")
         .bind("")
         .bind(story_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.last_insert_rowid())
+    }
+
+    pub async fn create_choice(&self, page_id: i64, text: &str, target_page_id: i64) -> Result<i64, Error> {
+        let result = sqlx::query(
+            "INSERT INTO choices (page_id, text, target_page_id) VALUES (?, ?, ?) RETURNING id",
+        )
+        .bind(page_id)
+        .bind(text)
+        .bind(target_page_id)
         .execute(&self.pool)
         .await?;
 
@@ -178,6 +198,13 @@ impl Database {
             .await
     }
 
+    pub async fn delete_choice(&self, id: i64) -> Result<SqliteQueryResult, Error> {
+        sqlx::query("DELETE FROM choices WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+    }
+
     pub async fn get_page(&self, id: i64) -> Result<Option<Page>, Error> {
         let page = match sqlx::query("SELECT id, story_id, name, content FROM pages WHERE id = ?")
             .bind(id)
@@ -217,6 +244,41 @@ impl Database {
         for bind in binds {
             query_builder = query_builder.bind(bind);
         }
+        query_builder = query_builder.bind(id);
+
+        query_builder.execute(&self.pool).await
+    }
+
+    pub async fn patch_choice(&self, id: i64, patch: ChoicePatch) -> Result<SqliteQueryResult, Error> {
+        let mut updates = Vec::new();
+        let mut text_bind = None;
+        let mut target_page_bind = None;
+
+        if let Some(text) = patch.text {
+            updates.push("text = ?");
+            text_bind = Some(text);
+        }
+
+        if let Some(target_page) = patch.target_page {
+            updates.push("target_page_id = ?");
+            target_page_bind = Some(target_page);
+        }
+
+        if updates.is_empty() {
+            return Ok(SqliteQueryResult::default());
+        }
+
+        let query = format!("UPDATE choices SET {} WHERE id = ?", updates.join(", "));
+        let mut query_builder = sqlx::query(&query);
+
+        if let Some(text) = text_bind {
+            query_builder = query_builder.bind(text);
+        }
+
+        if let Some(target_page) = target_page_bind {
+            query_builder = query_builder.bind(target_page);
+        }
+
         query_builder = query_builder.bind(id);
 
         query_builder.execute(&self.pool).await

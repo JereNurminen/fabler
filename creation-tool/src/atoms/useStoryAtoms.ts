@@ -5,6 +5,9 @@ import {
   getPageAtom,
   patchPageAtom,
   createPageAtom,
+  createChoiceAtom,
+  deleteChoiceAtom,
+  patchChoiceAtom,
 } from "./storyActions";
 
 export const useStoryAtoms = () => {
@@ -16,6 +19,9 @@ export const useStoryAtoms = () => {
   const getPage = useSetAtom(getPageAtom);
   const patchPage = useSetAtom(patchPageAtom);
   const createPage = useSetAtom(createPageAtom);
+  const createChoice = useSetAtom(createChoiceAtom);
+  const deleteChoice = useSetAtom(deleteChoiceAtom);
+  const patchChoice = useSetAtom(patchChoiceAtom);
 
   return {
     story,
@@ -24,5 +30,8 @@ export const useStoryAtoms = () => {
     getPage,
     patchPage,
     createPage,
+    createChoice,
+    deleteChoice,
+    patchChoice,
   };
 };
