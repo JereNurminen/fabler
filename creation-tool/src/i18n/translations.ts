@@ -9,6 +9,7 @@ export const translations = {
     createPage: "Create Page",
     newStory: "New Story",
     goToPage: "Go to page →",
+    exportSchema: "Export Schema Template",
   },
 
   // Labels
@@ -56,6 +57,10 @@ export const translations = {
     storyTitleEmpty: "Story title cannot be empty",
     selectStartPage: "Please select a start page",
     updateSettingsFailed: "Failed to update story settings",
+    exportSuccess: "Story exported successfully",
+    exportFailed: "Failed to export story",
+    schemaExported: "Schema exported successfully",
+    schemaExportFailed: "Failed to export schema",
   },
 
   // Error messages

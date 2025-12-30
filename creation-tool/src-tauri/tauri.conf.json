@@ -20,7 +20,11 @@
       "capabilities": [
         {
           "identifier": "core",
-          "permissions": ["core:default", "dialog:default"],
+          "permissions": [
+            "core:default",
+            "dialog:default",
+            "fs:allow-write-text-file"
+          ],
           "windows": ["main"]
         }
       ]

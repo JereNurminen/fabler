@@ -329,15 +329,10 @@
   resolved "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.22.2.tgz"
   integrity sha512-BTHO7rR+LC67OP7I8N8GvdvnQqzFujJYWo7qCQ8fGdQcb8Gn6EQY+K1P+daQLnDCuWKbZ+gHAQZuKiQkXkqIYg==
 
-"@tauri-apps/api@^2.0.0-rc.4", "@tauri-apps/api@^2.0.0-rc.5":
-  version "2.0.0-rc.5"
-  resolved "https://registry.npmjs.org/@tauri-apps/api/-/api-2.0.0-rc.5.tgz"
-  integrity sha512-JWs69pE9NsQdcqTpEVBepAZ08+jgQWuthIiTiaWRq/YlCLgnqq0KfC9sDem55uJ0YpgsytZuyj+m6b6q8oiD2g==
-
-"@tauri-apps/api@^2.0.0":
-  version "2.1.1"
-  resolved "https://registry.npmjs.org/@tauri-apps/api/-/api-2.1.1.tgz"
-  integrity sha512-fzUfFFKo4lknXGJq8qrCidkUcKcH2UHhfaaCNt4GzgzGaW2iS26uFOg4tS3H4P8D6ZEeUxtiD5z0nwFF0UN30A==
+"@tauri-apps/api@^2.0.0", "@tauri-apps/api@^2.0.0-rc.4", "@tauri-apps/api@^2.0.0-rc.5", "@tauri-apps/api@^2.8.0":
+  version "2.9.1"
+  resolved "https://registry.npmjs.org/@tauri-apps/api/-/api-2.9.1.tgz"
+  integrity sha512-IGlhP6EivjXHepbBic618GOmiWe4URJiIeZFlB7x3czM0yDHHYviH1Xvoiv4FefdkQtn6v7TuwWCRfOGdnVUGw==
 
 "@tauri-apps/cli-darwin-arm64@2.0.0-rc.16":
   version "2.0.0-rc.16"
@@ -366,6 +361,13 @@
   integrity sha512-fnUrNr6EfvTqdls/ufusU7h6UbNFzLKvHk/zTuOiBq01R3dTODqwctZlzakdbfSp/7pNwTKvgKTAgl/NAP/Z0Q==
   dependencies:
     "@tauri-apps/api" "^2.0.0"
+
+"@tauri-apps/plugin-fs@^2.4.4":
+  version "2.4.4"
+  resolved "https://registry.npmjs.org/@tauri-apps/plugin-fs/-/plugin-fs-2.4.4.tgz"
+  integrity sha512-MTorXxIRmOnOPT1jZ3w96vjSuScER38ryXY88vl5F0uiKdnvTKKTtaEjTEo8uPbl4e3gnUtfsDVwC7h77GQLvQ==
+  dependencies:
+    "@tauri-apps/api" "^2.8.0"
 
 "@tauri-apps/plugin-sql@^2.0.0-rc":
   version "2.0.0-rc.1"

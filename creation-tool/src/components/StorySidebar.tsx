@@ -5,6 +5,10 @@ import NewPageButton from "./NewPageButton";
 import { StorySettingsDialog } from "./StorySettingsDialog";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { theme } from "../style";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import api from "../api";
+import { useTranslation } from "../i18n";
 
 interface StorySidebarProps {
   storyId: number;
@@ -21,6 +25,7 @@ export default function StorySidebar({
 }: StorySidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
   const { patchStory } = useStoryAtoms();
+  const { t } = useTranslation();
 
   const handleSaveSettings = async (title: string, newStartPage: number) => {
     try {
@@ -36,11 +41,65 @@ export default function StorySidebar({
     }
   };
 
+  const handleExportStory = async () => {
+    try {
+      const result = await api.exportStoryToml(storyId);
+      if (result.status === "ok") {
+        const tomlContent = result.data;
+        const filePath = await save({
+          defaultPath: `${storyTitle}.toml`,
+          filters: [
+            {
+              name: "TOML",
+              extensions: ["toml"],
+            },
+          ],
+        });
+
+        if (filePath) {
+          await writeTextFile(filePath, tomlContent);
+          alert(t.alerts.exportSuccess);
+        }
+      } else {
+        alert(t.alerts.exportFailed);
+      }
+    } catch (error) {
+      console.error("Failed to export story:", error);
+      alert(t.alerts.exportFailed);
+    }
+  };
+
+  const handleExportSchema = async () => {
+    try {
+      const schema = await api.getTomlSchema();
+      const filePath = await save({
+        defaultPath: "story-schema.toml",
+        filters: [
+          {
+            name: "TOML",
+            extensions: ["toml"],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, schema);
+        alert(t.alerts.schemaExported);
+      }
+    } catch (error) {
+      console.error("Failed to export schema:", error);
+      alert(t.alerts.schemaExportFailed);
+    }
+  };
+
   return (
     <>
       <Sidebar>
         <Header>
           <StoryHeading>{storyTitle}</StoryHeading>
+          <ExportButton onClick={handleExportStory} title="Export story">
+            📤
+          </ExportButton>
           <SettingsButton onClick={() => setShowSettings(true)}>
             ⚙️
           </SettingsButton>
@@ -55,6 +114,9 @@ export default function StorySidebar({
               </PageLink>
             ))}
           <NewPageButton storyId={storyId} />
+          <SchemaButton onClick={handleExportSchema}>
+            {t.buttons.exportSchema}
+          </SchemaButton>
         </PageList>
       </Sidebar>
 
@@ -126,4 +188,33 @@ const PageList = styled.div`
   padding: 0;
   display: flex;
   flex-direction: column;
+`;
+
+const ExportButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const SchemaButton = styled.button`
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
 `;

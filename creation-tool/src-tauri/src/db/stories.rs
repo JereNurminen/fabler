@@ -1,6 +1,7 @@
 use crate::db::Database;
 use crate::error::AppResult;
 use futures::{stream::FuturesUnordered, StreamExt};
+use shared::export::{ExportedChoice, ExportedPage, ExportedStory, StoryMetadata};
 use shared::models::{PageListItem, Story, StoryId, StoryListing, StoryOutline};
 use sqlx::Row;
 
@@ -147,5 +148,43 @@ impl Database {
         query_builder = query_builder.bind(id);
         query_builder.execute(&self.pool).await?;
         Ok(())
+    }
+
+    pub async fn export_story(&self, story_id: StoryId) -> AppResult<ExportedStory> {
+        // Get complete story with all pages and choices
+        let story = self.get_story(story_id).await?;
+
+        // Convert pages
+        let exported_pages: Vec<ExportedPage> = story
+            .pages
+            .into_iter()
+            .map(|page| {
+                let choices = page
+                    .options
+                    .into_iter()
+                    .map(|choice| ExportedChoice {
+                        id: choice.id,
+                        text: choice.text,
+                        target: choice.target_page,
+                    })
+                    .collect();
+
+                ExportedPage {
+                    id: page.id,
+                    name: page.name,
+                    content: page.body,
+                    choices,
+                }
+            })
+            .collect();
+
+        Ok(ExportedStory {
+            story: StoryMetadata {
+                id: story.id,
+                title: story.title,
+                start_page: story.start_page,
+            },
+            pages: exported_pages,
+        })
     }
 }

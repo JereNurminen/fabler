@@ -6,6 +6,8 @@ const api = {
   getStory: commands.getStory,
   getStoryOutline: commands.getStoryOutline,
   patchStory: commands.patchStory,
+  exportStoryToml: commands.exportStoryToml,
+  getTomlSchema: commands.getTomlSchema,
   getPage: commands.getPage,
   patchPage: commands.patchPage,
   createPage: commands.createPage,

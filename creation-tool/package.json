@@ -12,6 +12,7 @@
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-rc.5",
     "@tauri-apps/plugin-dialog": "^2.0.1",
+    "@tauri-apps/plugin-fs": "^2.4.4",
     "@tauri-apps/plugin-sql": "^2.0.0-rc",
     "jotai": "^2.16.1",
     "jotai-family": "^1.0.1",

@@ -8,6 +8,7 @@ mod db;
 mod models;
 mod error;
 mod app;
+mod schema;
 
 use commands::*;
 use app::{setup_database, create_menus, setup_menu_handlers};
@@ -24,6 +25,8 @@ fn main() {
         get_story_outline,
         delete_story,
         patch_story,
+        export_story_toml,
+        get_toml_schema,
         get_page,
         patch_page,
         create_page,
@@ -76,6 +79,8 @@ fn main() {
             add_story,
             delete_story,
             patch_story,
+            export_story_toml,
+            get_toml_schema,
             get_page,
             patch_page,
             create_page,
@@ -84,6 +89,7 @@ fn main() {
             patch_choice
         ])
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
