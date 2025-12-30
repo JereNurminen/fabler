@@ -5,7 +5,15 @@ import {
   pageAtomFamily,
   storyRefreshAtom,
 } from "./storyAtoms";
-import type { PagePatch, ChoicePatch, StoryPatch } from "../bindings";
+import type {
+  PagePatch,
+  ChoicePatch,
+  StoryPatch,
+  CreateFlag,
+  FlagPatch,
+  SetFlagOperation,
+  SetChoiceCondition,
+} from "../bindings";
 
 export const loadStoryAtom = atom(null, (_get, set, storyId: number) => {
   set(currentStoryIdAtom, storyId);
@@ -94,6 +102,81 @@ export const patchStoryAtom = atom(
 
     // Refresh story outline to reflect changes
     set(storyRefreshAtom, (c) => c + 1);
+    return result;
+  }
+);
+
+// ===== Flag Actions =====
+
+export const createFlagAtom = atom(null, async (_get, set, create: CreateFlag) => {
+  const result = await api.createFlag(create);
+  if (result.status !== "ok") throw new Error(result.error);
+  set(storyRefreshAtom, (c) => c + 1);
+  return result.data;
+});
+
+export const patchFlagAtom = atom(null, async (_get, set, patch: FlagPatch) => {
+  const result = await api.patchFlag(patch);
+  if (result.status !== "ok") throw new Error(result.error);
+  set(storyRefreshAtom, (c) => c + 1);
+  return result;
+});
+
+export const deleteFlagAtom = atom(null, async (_get, set, id: number) => {
+  const result = await api.deleteFlag(id);
+  if (result.status !== "ok") throw new Error(result.error);
+  set(storyRefreshAtom, (c) => c + 1);
+  return result;
+});
+
+export const setFlagOperationAtom = atom(
+  null,
+  async (_get, _set, args: { op: SetFlagOperation; pageId: number }) => {
+    const result = await api.setFlagOperation(args.op);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh operations
+    pageAtomFamily.remove(args.pageId);
+
+    return result.data;
+  }
+);
+
+export const removeFlagOperationAtom = atom(
+  null,
+  async (_get, _set, args: { choiceId?: number; pageId: number; flagId: number }) => {
+    const result = await api.removeFlagOperation(args.choiceId ?? null, args.pageId ?? null, args.flagId);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh operations
+    pageAtomFamily.remove(args.pageId);
+
+    return result;
+  }
+);
+
+export const setChoiceConditionAtom = atom(
+  null,
+  async (_get, _set, args: { cond: SetChoiceCondition; pageId: number }) => {
+    const result = await api.setChoiceCondition(args.cond);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh conditions
+    pageAtomFamily.remove(args.pageId);
+
+    return result.data;
+  }
+);
+
+export const removeChoiceConditionAtom = atom(
+  null,
+  async (_get, _set, args: { choiceId: number; pageId: number; flagId: number }) => {
+    const result = await api.removeChoiceCondition(args.choiceId, args.flagId);
+    if (result.status !== "ok") throw new Error(result.error);
+
+    // Invalidate the page cache to refresh conditions
+    pageAtomFamily.remove(args.pageId);
+
     return result;
   }
 );

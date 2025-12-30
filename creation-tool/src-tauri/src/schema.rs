@@ -14,6 +14,23 @@ title = "My Adventure Story"
 # Must match one of the page IDs defined below
 start_page = 1
 
+# Array of flags (optional)
+# Flags are boolean variables that can control story flow
+[[flags]]
+# Flag ID (required, number)
+id = 1
+
+# Flag name (required)
+name = "has_flashlight"
+
+# Default value when story starts (required, boolean)
+default_value = false
+
+[[flags]]
+id = 2
+name = "door_unlocked"
+default_value = false
+
 # Array of pages in the story
 [[pages]]
 # Page ID (required, number)
@@ -32,6 +49,15 @@ The air is musty and cold.
 What do you do?
 """
 
+  # Array of flag operations performed when page is shown (optional)
+  [[pages.flag_operations]]
+  # Flag ID to modify (required, number)
+  flag_id = 1
+
+  # Operation to perform (required, string)
+  # Valid values: "set_true", "set_false", "toggle"
+  operation = "set_true"
+
   # Array of choices available on this page (optional)
   [[pages.choices]]
   # Choice ID (required, number)
@@ -43,6 +69,20 @@ What do you do?
   # Target page ID this choice leads to (required, number)
   # Must match a page ID defined in this file
   target = 2
+
+    # Array of flag operations performed when choice is selected (optional)
+    [[pages.choices.flag_operations]]
+    flag_id = 2
+    operation = "set_true"
+
+    # Array of conditions that must be met to show this choice (optional)
+    [[pages.choices.conditions]]
+    # Flag ID to check (required, number)
+    flag_id = 1
+
+    # Required value for the flag (required, boolean)
+    # Choice is only shown if flag matches this value
+    required_value = true
 
   [[pages.choices]]
   id = 2
@@ -66,10 +106,13 @@ name = "Search Results"
 content = "You find a flashlight!"
 
 # Rules:
-# 1. All IDs (story, page, choice) must be unique numbers
+# 1. All IDs (story, page, choice, flag) must be unique numbers
 # 2. All choice targets must reference existing page IDs
 # 3. start_page must reference an existing page ID
 # 4. Page content supports multi-line strings
 # 5. Choices array can be empty for ending pages
+# 6. Flag operations reference flag IDs defined in the flags array
+# 7. Choice conditions use AND logic (all must be true)
+# 8. Operations: "set_true" sets flag to true, "set_false" to false, "toggle" flips value
 "#.to_string()
 }

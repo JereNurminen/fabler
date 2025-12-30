@@ -3,6 +3,7 @@ import styled from "styled-components";
 import PageLink from "./PageLink";
 import NewPageButton from "./NewPageButton";
 import { StorySettingsDialog } from "./StorySettingsDialog";
+import { FlagsDialog } from "./FlagsDialog";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { theme } from "../style";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -24,6 +25,7 @@ export default function StorySidebar({
   startPage,
 }: StorySidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [showFlags, setShowFlags] = useState(false);
   const { patchStory } = useStoryAtoms();
   const { t } = useTranslation();
 
@@ -97,6 +99,9 @@ export default function StorySidebar({
       <Sidebar>
         <Header>
           <StoryHeading>{storyTitle}</StoryHeading>
+          <FlagsButton onClick={() => setShowFlags(true)} title={t.buttons.manageFlags}>
+            🏴
+          </FlagsButton>
           <ExportButton onClick={handleExportStory} title="Export story">
             📤
           </ExportButton>
@@ -130,6 +135,8 @@ export default function StorySidebar({
           onCancel={() => setShowSettings(false)}
         />
       )}
+
+      {showFlags && <FlagsDialog onClose={() => setShowFlags(false)} />}
     </>
   );
 }
@@ -213,6 +220,20 @@ const SchemaButton = styled.button`
   cursor: pointer;
   font-size: 12px;
   opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const FlagsButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
 
   &:hover {
     opacity: 1;

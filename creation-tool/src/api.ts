@@ -14,6 +14,20 @@ const api = {
   createChoice: commands.createChoice,
   deleteChoice: commands.deleteChoice,
   patchChoice: commands.patchChoice,
+  // Flag CRUD
+  getStoryFlags: commands.getStoryFlags,
+  createFlag: commands.createFlag,
+  patchFlag: commands.patchFlag,
+  deleteFlag: commands.deleteFlag,
+  // Flag operations
+  setFlagOperation: commands.setFlagOperation,
+  removeFlagOperation: commands.removeFlagOperation,
+  getChoiceFlagOperations: commands.getChoiceFlagOperations,
+  getPageFlagOperations: commands.getPageFlagOperations,
+  // Choice conditions
+  setChoiceCondition: commands.setChoiceCondition,
+  removeChoiceCondition: commands.removeChoiceCondition,
+  getChoiceConditions: commands.getChoiceConditions,
 };
 
 export default api;

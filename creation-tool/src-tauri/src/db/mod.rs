@@ -1,6 +1,7 @@
 mod stories;
 mod pages;
 mod choices;
+mod flags;
 
 use sqlx::sqlite::SqlitePool;
 use crate::error::AppResult;

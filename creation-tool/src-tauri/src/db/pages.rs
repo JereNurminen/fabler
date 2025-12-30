@@ -67,6 +67,7 @@ impl Database {
     pub(crate) async fn build_page(&self, row: sqlx::sqlite::SqliteRow) -> AppResult<Page> {
         let page_id: i64 = row.get("id");
         let choices = self.fetch_choices_for_page(page_id).await?;
+        let flag_operations = self.get_page_flag_operations(page_id).await?;
 
         Ok(Page {
             id: page_id,
@@ -74,6 +75,7 @@ impl Database {
             name: row.get("name"),
             body: row.get("content"),
             options: choices,
+            flag_operations,
         })
     }
 
@@ -84,14 +86,22 @@ impl Database {
                 .fetch_all(&self.pool)
                 .await?;
 
-        Ok(rows
-            .iter()
-            .map(|row| Choice {
-                id: row.get("id"),
+        let mut choices = Vec::new();
+        for row in rows {
+            let choice_id: i64 = row.get("id");
+            let flag_operations = self.get_choice_flag_operations(choice_id).await?;
+            let conditions = self.get_choice_conditions(choice_id).await?;
+
+            choices.push(Choice {
+                id: choice_id,
                 page_id: row.get("page_id"),
                 text: row.get("text"),
                 target_page: row.get("target_page_id"),
-            })
-            .collect())
+                flag_operations,
+                conditions,
+            });
+        }
+
+        Ok(choices)
     }
 }

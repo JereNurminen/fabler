@@ -32,7 +32,18 @@ fn main() {
         create_page,
         create_choice,
         delete_choice,
-        patch_choice
+        patch_choice,
+        get_story_flags,
+        create_flag,
+        patch_flag,
+        delete_flag,
+        set_flag_operation,
+        remove_flag_operation,
+        get_choice_flag_operations,
+        get_page_flag_operations,
+        set_choice_condition,
+        remove_choice_condition,
+        get_choice_conditions
     ];
 
     // Export TypeScript bindings
@@ -86,7 +97,18 @@ fn main() {
             create_page,
             create_choice,
             delete_choice,
-            patch_choice
+            patch_choice,
+            get_story_flags,
+            create_flag,
+            patch_flag,
+            delete_flag,
+            set_flag_operation,
+            remove_flag_operation,
+            get_choice_flag_operations,
+            get_page_flag_operations,
+            set_choice_condition,
+            remove_choice_condition,
+            get_choice_conditions
         ])
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())

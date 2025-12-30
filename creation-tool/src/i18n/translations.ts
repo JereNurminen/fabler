@@ -10,6 +10,10 @@ export const translations = {
     newStory: "New Story",
     goToPage: "Go to page →",
     exportSchema: "Export Schema Template",
+    manageFlags: "Manage Flags",
+    addFlag: "Add Flag",
+    addCondition: "Add Condition",
+    addOperation: "Add Operation",
   },
 
   // Labels
@@ -21,6 +25,14 @@ export const translations = {
     storyTitle: "Story Title",
     startPage: "Start Page",
     choices: "Choices:",
+    flagName: "Flag Name",
+    defaultValue: "Default Value",
+    showChoiceIf: "Show this choice only if:",
+    whenSelected: "When selected, set flags:",
+    whenPageShown: "When page is shown, set flags:",
+    operation: "Operation",
+    requiredValue: "Required Value",
+    flag: "Flag",
   },
 
   // Placeholders
@@ -28,12 +40,14 @@ export const translations = {
     storyTitle: "Title",
     storyTitleLong: "Story title",
     choiceText: "Enter choice text...",
+    flagName: "Enter flag name...",
   },
 
   // Headings
   headings: {
     hello: "Hello",
     storySettings: "Story Settings",
+    flags: "Flags",
   },
 
   // Status messages
@@ -45,6 +59,9 @@ export const translations = {
   // Empty states
   emptyStates: {
     noChoices: "No choices yet. Add one below.",
+    noFlags: "No flags defined yet.",
+    noConditions: "No conditions set.",
+    noOperations: "No operations set.",
   },
 
   // Badges
@@ -61,6 +78,9 @@ export const translations = {
     exportFailed: "Failed to export story",
     schemaExported: "Schema exported successfully",
     schemaExportFailed: "Failed to export schema",
+    flagNameEmpty: "Flag name cannot be empty",
+    flagCreated: "Flag created successfully",
+    flagDeleted: "Flag deleted successfully",
   },
 
   // Error messages

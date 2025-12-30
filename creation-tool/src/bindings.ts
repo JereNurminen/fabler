@@ -111,6 +111,94 @@ async patchChoice(patch: ChoicePatch) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getStoryFlags(storyId: number) : Promise<Result<Flag[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_story_flags", { storyId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async createFlag(create: CreateFlag) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("create_flag", { create }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async patchFlag(patch: FlagPatch) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("patch_flag", { patch }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async deleteFlag(id: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_flag", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setFlagOperation(op: SetFlagOperation) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_flag_operation", { op }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async removeFlagOperation(choiceId: number | null, pageId: number | null, flagId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_flag_operation", { choiceId, pageId, flagId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getChoiceFlagOperations(choiceId: number) : Promise<Result<FlagOperation[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_choice_flag_operations", { choiceId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getPageFlagOperations(pageId: number) : Promise<Result<FlagOperation[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_page_flag_operations", { pageId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setChoiceCondition(cond: SetChoiceCondition) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_choice_condition", { cond }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async removeChoiceCondition(choiceId: number, flagId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("remove_choice_condition", { choiceId, flagId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getChoiceConditions(choiceId: number) : Promise<Result<ChoiceCondition[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_choice_conditions", { choiceId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -124,11 +212,18 @@ async patchChoice(patch: ChoicePatch) : Promise<Result<null, string>> {
 
 /** user-defined types **/
 
-export type Choice = { id: number; page_id: number; text: string; target_page: number }
+export type Choice = { id: number; page_id: number; text: string; target_page: number; flag_operations: FlagOperation[]; conditions: ChoiceCondition[] }
+export type ChoiceCondition = { id: number; flag_id: number; required_value: boolean }
 export type ChoicePatch = { id: number; text: string | null; target_page: number | null }
-export type Page = { id: number; story_id: number; name: string; body: string; options: Choice[] }
+export type CreateFlag = { story_id: number; name: string; default_value: boolean }
+export type Flag = { id: number; story_id: number; name: string; default_value: boolean }
+export type FlagOperation = { id: number; flag_id: number; operation: string }
+export type FlagPatch = { id: number; name: string | null; default_value: boolean | null }
+export type Page = { id: number; story_id: number; name: string; body: string; options: Choice[]; flag_operations: FlagOperation[] }
 export type PageListItem = { id: number; name: string }
 export type PagePatch = { id: number; name: string | null; body: string | null }
+export type SetChoiceCondition = { choice_id: number; flag_id: number; required_value: boolean }
+export type SetFlagOperation = { choice_id: number | null; page_id: number | null; flag_id: number; operation: string }
 export type Story = { id: number; title: string; pages: Page[]; start_page: number }
 export type StoryListing = { id: number; title: string }
 export type StoryOutline = { id: number; title: string; pages: PageListItem[]; start_page: number }
