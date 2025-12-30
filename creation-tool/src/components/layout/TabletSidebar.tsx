@@ -81,41 +81,44 @@ export const TabletSidebar = ({
       )}
 
       {activePanel === "pages" && (
-        <div className="fixed left-20 top-0 bottom-0 w-64 bg-white border-r border-gray-200 shadow-lg z-40 overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold mb-4">Pages</h2>
-            <div className="space-y-1">
-              {pages
-                .sort((a, b) => a.id - b.id)
-                .map((page) => (
-                  <PageLink
-                    key={page.id}
-                    storyId={storyId}
-                    pageId={page.id}
-                    onClick={() => setActivePanel(null)}
-                  >
-                    {page.id === startPage && (
-                      <span className="inline-block bg-primary text-white text-xs font-bold px-2 py-0.5 rounded mr-2">
-                        {t.badges.start}
-                      </span>
-                    )}
-                    {t.dynamic.pageDisplay(page.name, page.id)}
-                  </PageLink>
-                ))}
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/25 z-30"
+            onClick={() => setActivePanel(null)}
+          />
+
+          {/* Pages Panel */}
+          <div className="fixed left-20 top-4 bottom-4 w-80 max-w-[calc(100vw-6rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-40 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Pages</h2>
             </div>
-            <div className="mt-4 border-t border-gray-200 pt-4">
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-1">
+                {pages
+                  .sort((a, b) => a.id - b.id)
+                  .map((page) => (
+                    <PageLink
+                      key={page.id}
+                      storyId={storyId}
+                      pageId={page.id}
+                      onClick={() => setActivePanel(null)}
+                    >
+                      {page.id === startPage && (
+                        <span className="inline-block bg-primary text-white text-xs font-bold px-2 py-0.5 rounded mr-2">
+                          {t.badges.start}
+                        </span>
+                      )}
+                      {t.dynamic.pageDisplay(page.name, page.id)}
+                    </PageLink>
+                  ))}
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200">
               <NewPageButton storyId={storyId} />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Backdrop */}
-      {activePanel === "pages" && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-25 z-30"
-          onClick={() => setActivePanel(null)}
-        />
+        </>
       )}
     </>
   );
