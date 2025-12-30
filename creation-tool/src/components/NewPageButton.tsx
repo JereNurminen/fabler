@@ -1,12 +1,20 @@
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import styled from "styled-components";
+import { useLocation } from "wouter";
+import { getLinkToPagePage } from "../utilities/routing";
 
-export default () => {
+interface NewPageButtonProps {
+  storyId: number;
+}
+
+export default ({ storyId }: NewPageButtonProps) => {
   const { createPage } = useStoryAtoms();
+  const [, setLocation] = useLocation();
 
   const createNewPage = async () => {
     try {
-      await createPage();
+      const pageId = await createPage();
+      setLocation(getLinkToPagePage(storyId, pageId));
     } catch (error) {
       console.error("Failed to create page:", error);
     }
