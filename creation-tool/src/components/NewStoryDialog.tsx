@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { Card } from "./Card";
+import { useTranslation } from "../i18n";
 //import { theme } from "../style";
 
 export const NewStoryDialog = ({
@@ -11,6 +12,7 @@ export const NewStoryDialog = ({
   onCancel: () => void;
 }) => {
   const [title, setTitle] = useState("");
+  const { t } = useTranslation();
 
   return (
     <Overlay>
@@ -19,7 +21,7 @@ export const NewStoryDialog = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
+          placeholder={t.placeholders.storyTitle}
         />
         <ButtonContainer>
           <button
@@ -27,9 +29,9 @@ export const NewStoryDialog = ({
               onConfirm(title);
             }}
           >
-            Create
+            {t.buttons.create}
           </button>
-          <button onClick={onCancel}>Cancel</button>
+          <button onClick={onCancel}>{t.buttons.cancel}</button>
         </ButtonContainer>
       </Card>
     </Overlay>

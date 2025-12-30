@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { Card } from "./Card";
+import { useTranslation } from "../i18n";
 
 type StorySettingsDialogProps = {
   storyId: number;
@@ -23,14 +24,15 @@ export const StorySettingsDialog = ({
   const [startPage, setStartPage] = useState<number>(
     initialStartPage ?? pages[0]?.id ?? 0
   );
+  const { t } = useTranslation();
 
   const handleConfirm = () => {
     if (title.trim() === "") {
-      alert("Story title cannot be empty");
+      alert(t.alerts.storyTitleEmpty);
       return;
     }
     if (!startPage) {
-      alert("Please select a start page");
+      alert(t.alerts.selectStartPage);
       return;
     }
     onConfirm(title, startPage);
@@ -39,32 +41,32 @@ export const StorySettingsDialog = ({
   return (
     <Overlay onClick={onCancel}>
       <DialogCard onClick={(e) => e.stopPropagation()}>
-        <Title>Story Settings</Title>
+        <Title>{t.headings.storySettings}</Title>
 
-        <Label>Story Title</Label>
+        <Label>{t.labels.storyTitle}</Label>
         <SingleLineInput
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Story title"
+          placeholder={t.placeholders.storyTitleLong}
           autoFocus
         />
 
-        <Label>Start Page</Label>
+        <Label>{t.labels.startPage}</Label>
         <Select
           value={startPage}
           onChange={(e) => setStartPage(Number(e.target.value))}
         >
           {pages.map((page) => (
             <option key={page.id} value={page.id}>
-              {page.name || `Page ${page.id}`}
+              {t.dynamic.pageDisplay(page.name, page.id)}
             </option>
           ))}
         </Select>
 
         <ButtonContainer>
-          <ConfirmButton onClick={handleConfirm}>Save</ConfirmButton>
-          <CancelButton onClick={onCancel}>Cancel</CancelButton>
+          <ConfirmButton onClick={handleConfirm}>{t.buttons.save}</ConfirmButton>
+          <CancelButton onClick={onCancel}>{t.buttons.cancel}</CancelButton>
         </ButtonContainer>
       </DialogCard>
     </Overlay>

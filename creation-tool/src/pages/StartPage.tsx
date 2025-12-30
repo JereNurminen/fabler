@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { StoryListing } from "../bindings";
 import api from "../api";
 import { handleResult, Loadable } from "../utilities/loadable";
+import { useTranslation } from "../i18n";
 import styled from "styled-components";
 import { Link, useLocation } from "wouter";
 import { getLinkToStoryPage } from "../utilities/routing";
@@ -13,6 +14,7 @@ export const StartPage = () => {
   });
   const [showNewStoryModal, setShowStoryModal] = useState(false);
   const [_, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   const loadStories = useCallback(async () => {
     setStories({ status: "loading" });
@@ -39,7 +41,7 @@ export const StartPage = () => {
     switch (stories.status) {
       case "not-loaded":
       case "loading":
-        return <p>Loading...</p>;
+        return <p>{t.status.loading}</p>;
       case "loaded":
         return handleResult(
           stories.value,
@@ -50,19 +52,19 @@ export const StartPage = () => {
                   key={story.id}
                   href={getLinkToStoryPage(story.id)}
                 >
-                  {`${story.id}: ${story.title}`}
+                  {t.dynamic.storyListItem(story.id, story.title)}
                 </StoryListItem>
               ))}
             </StoryList>
           ),
-          (err) => <p>Error: {err.error}</p>,
+          (err) => <p>{t.dynamic.errorMessage(err.error)}</p>,
         );
     }
   })();
 
   return (
     <StartPageContainer>
-      <h1>Hello</h1>
+      <h1>{t.headings.hello}</h1>
       <div>{content}</div>
       <div>
         <button
@@ -70,7 +72,7 @@ export const StartPage = () => {
             setShowStoryModal(true);
           }}
         >
-          New Story
+          {t.buttons.newStory}
         </button>
       </div>
       {showNewStoryModal ? (

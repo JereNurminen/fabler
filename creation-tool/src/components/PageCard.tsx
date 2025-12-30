@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { theme } from "../style";
 import { pageAtomFamily, allPagesAtom } from "../atoms/storyAtoms";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
+import { useTranslation } from "../i18n";
 import type { Choice } from "../bindings";
 import { useLocation } from "wouter";
 import { getLinkToPagePage } from "../utilities/routing";
@@ -15,6 +16,7 @@ export default ({ pageId }: { pageId: number }) => {
   const [page] = useAtom(pageAtomFamily(pageId));
   const pages = useAtomValue(allPagesAtom);
   const { patchPage, createChoice, deleteChoice, patchChoice } = useStoryAtoms();
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -102,7 +104,7 @@ export default ({ pageId }: { pageId: number }) => {
   return (
     <PageCard key={page.id}>
       <Label htmlFor="page-title-input">
-        Page title:
+        {t.labels.pageTitle}
         <SingleLineInput
           type="text"
           id="page-title-input"
@@ -112,7 +114,7 @@ export default ({ pageId }: { pageId: number }) => {
         />
       </Label>
       <Label htmlFor="page-body-input">
-        Page content:
+        {t.labels.pageContent}
         <MultiLineInput
           type="textarea"
           id="page-body-input"
@@ -123,17 +125,17 @@ export default ({ pageId }: { pageId: number }) => {
       </Label>
 
       <ChoicesSection>
-        <SectionLabel>Choices:</SectionLabel>
+        <SectionLabel>{t.labels.choices}</SectionLabel>
 
         {choices.length === 0 ? (
-          <EmptyState>No choices yet. Add one below.</EmptyState>
+          <EmptyState>{t.emptyStates.noChoices}</EmptyState>
         ) : (
           <ChoicesList>
             {choices.map((choice) => (
               <ChoiceItem key={choice.id}>
                 <ChoiceInputs>
                   <Label htmlFor={`choice-text-${choice.id}`}>
-                    Choice text:
+                    {t.labels.choiceText}
                     <Input
                       type="text"
                       id={`choice-text-${choice.id}`}
@@ -149,12 +151,12 @@ export default ({ pageId }: { pageId: number }) => {
                       onBlur={() =>
                         handlePatchChoice(choice.id, { text: choice.text })
                       }
-                      placeholder="Enter choice text..."
+                      placeholder={t.placeholders.choiceText}
                     />
                   </Label>
 
                   <Label htmlFor={`choice-target-${choice.id}`}>
-                    Leads to:
+                    {t.labels.leadsTo}
                     <TargetPageRow>
                       <Select
                         id={`choice-target-${choice.id}`}
@@ -173,7 +175,7 @@ export default ({ pageId }: { pageId: number }) => {
                       >
                         {pages.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name || `Page ${p.id}`}
+                            {t.dynamic.pageDisplay(p.name, p.id)}
                           </option>
                         ))}
                       </Select>
@@ -184,21 +186,21 @@ export default ({ pageId }: { pageId: number }) => {
                           )
                         }
                       >
-                        Go to page →
+                        {t.buttons.goToPage}
                       </GoToPageLink>
                     </TargetPageRow>
                   </Label>
                 </ChoiceInputs>
 
                 <DeleteButton onClick={() => handleDeleteChoice(choice.id)}>
-                  Delete
+                  {t.buttons.delete}
                 </DeleteButton>
               </ChoiceItem>
             ))}
           </ChoicesList>
         )}
 
-        <AddButton onClick={handleCreateChoice}>Add Choice</AddButton>
+        <AddButton onClick={handleCreateChoice}>{t.buttons.addChoice}</AddButton>
       </ChoicesSection>
     </PageCard>
   );

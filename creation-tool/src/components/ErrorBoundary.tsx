@@ -1,4 +1,5 @@
 import { Component, ReactNode } from "react";
+import { translations } from "../i18n";
 
 interface Props {
   children: ReactNode;
@@ -25,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         return this.props.fallback(this.state.error!);
       }
-      return <div>Error: {this.state.error?.message}</div>;
+      return <div>{translations.dynamic.errorMessage(this.state.error?.message || "")}</div>;
     }
 
     return this.props.children;

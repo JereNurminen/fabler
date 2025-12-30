@@ -1,4 +1,5 @@
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
+import { useTranslation } from "../i18n";
 import styled from "styled-components";
 import { useLocation } from "wouter";
 import { getLinkToPagePage } from "../utilities/routing";
@@ -9,6 +10,7 @@ interface NewPageButtonProps {
 
 export default ({ storyId }: NewPageButtonProps) => {
   const { createPage } = useStoryAtoms();
+  const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
   const createNewPage = async () => {
@@ -22,7 +24,7 @@ export default ({ storyId }: NewPageButtonProps) => {
 
   return (
     <ButtonContainer>
-      <button onClick={() => createNewPage()}>Create Page</button>
+      <button onClick={() => createNewPage()}>{t.buttons.createPage}</button>
     </ButtonContainer>
   );
 };

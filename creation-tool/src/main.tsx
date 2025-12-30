@@ -8,6 +8,7 @@ import { listen } from "@tauri-apps/api/event";
 import { message } from "@tauri-apps/plugin-dialog";
 import { ThemeProvider } from "styled-components";
 import { theme } from "./style";
+import { translations } from "./i18n";
 import { Provider as JotaiProvider } from "jotai";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -18,7 +19,7 @@ function App() {
   useEffect(() => {
     const unlisten = listen("database-reset", async () => {
       setLocation("/");
-      await message("Database reset successfully", { title: "", kind: "info" });
+      await message(translations.status.databaseReset, { title: "", kind: "info" });
       window.location.reload();
     });
 

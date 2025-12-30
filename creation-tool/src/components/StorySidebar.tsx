@@ -32,7 +32,7 @@ export default function StorySidebar({
       setShowSettings(false);
     } catch (error) {
       console.error("Failed to update story settings:", error);
-      alert("Failed to update story settings");
+      alert(t.alerts.updateSettingsFailed);
     }
   };
 
@@ -50,8 +50,8 @@ export default function StorySidebar({
             .sort((a, b) => a.id - b.id)
             .map((page) => (
               <PageLink key={page.id} storyId={storyId} pageId={page.id}>
-                {page.id === startPage && <StartBadge>START</StartBadge>}
-                {`${page.name || `Page ${page.id}`}`}
+                {page.id === startPage && <StartBadge>{t.badges.start}</StartBadge>}
+                {t.dynamic.pageDisplay(page.name, page.id)}
               </PageLink>
             ))}
           <NewPageButton storyId={storyId} />
