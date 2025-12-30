@@ -3,9 +3,7 @@ import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import styled from "styled-components";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
-import NewPageButton from "../components/NewPageButton";
-import { theme } from "../style";
-import PageLink from "../components/PageLink";
+import StorySidebar from "../components/StorySidebar";
 
 interface StoryEditorPageProps {
   storyIdParam: string;
@@ -27,19 +25,11 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
 
   return (
     <StoryPage>
-      <Sidebar>
-        <StoryHeading>{story.title}</StoryHeading>
-        <PageList>
-          {pages
-            .sort((a, b) => a.id - b.id)
-            .map((page) => (
-              <PageLink key={page.id} storyId={storyId} pageId={page.id}>
-                {`${page.name || `Page ${page.id}`}`}
-              </PageLink>
-            ))}
-          <NewPageButton />
-        </PageList>
-      </Sidebar>
+      <StorySidebar
+        storyId={storyId}
+        storyTitle={story.title}
+        pages={pages}
+      />
       <Main>
         {pageId ? (
           <Suspense fallback={<LoadingSpinner />}>
@@ -61,28 +51,7 @@ const StoryPage = styled.div`
   grid-template-rows: auto;
 `;
 
-const Sidebar = styled.div`
-  grid-column: 1;
-  grid-row: 1;
-  display: flex;
-  flex-direction: column;
-  flex-gap: ${theme.spacing.m};
-  border-right: 1px solid black;
-`;
-
 const Main = styled.div`
   grid-column: 2;
   grid-row: 1;
-`;
-
-const StoryHeading = styled.h1`
-  font-size: 1.5em;
-  text-align: center;
-  color: palevioletred;
-`;
-
-const PageList = styled.div`
-  padding: 0;
-  display: flex;
-  flex-direction: column;
 `;
