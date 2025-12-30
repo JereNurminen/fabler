@@ -1,7 +1,5 @@
-import styled from "styled-components";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { theme } from "../style";
 import { pageAtomFamily, allPagesAtom } from "../atoms/storyAtoms";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
@@ -10,6 +8,10 @@ import { useLocation } from "wouter";
 import { getLinkToPagePage } from "../utilities/routing";
 import { FlagOperations } from "./FlagOperations";
 import { ChoiceConditions } from "./ChoiceConditions";
+import { Input } from "./ui/Input";
+import { Textarea } from "./ui/Textarea";
+import { Select } from "./ui/Select";
+import { Button } from "./ui/Button";
 
 export default ({ pageId }: { pageId: number }) => {
   const [name, setName] = useState("");
@@ -51,7 +53,6 @@ export default ({ pageId }: { pageId: number }) => {
     if (!page) return;
 
     try {
-      // Create with empty text, defaulting to first available page
       const defaultTargetPage = pages[0]?.id || page.id;
       const newChoiceId = await createChoice({
         pageId: page.id,
@@ -59,7 +60,6 @@ export default ({ pageId }: { pageId: number }) => {
         targetPageId: defaultTargetPage,
       });
 
-      // Optimistically add to local state
       setChoices([
         ...choices,
         {
@@ -67,6 +67,8 @@ export default ({ pageId }: { pageId: number }) => {
           page_id: page.id,
           text: "",
           target_page: defaultTargetPage,
+          flag_operations: [],
+          conditions: [],
         },
       ]);
     } catch (error) {
@@ -78,13 +80,10 @@ export default ({ pageId }: { pageId: number }) => {
     if (!page) return;
 
     try {
-      // Optimistically remove from local state
       setChoices(choices.filter((c) => c.id !== choiceId));
-
       await deleteChoice({ choiceId, pageId: page.id });
     } catch (error) {
       console.error("Failed to delete choice:", error);
-      // On error, refetch to restore correct state
       if (page) {
         setChoices(page.options);
       }
@@ -111,7 +110,6 @@ export default ({ pageId }: { pageId: number }) => {
     }
   };
 
-  // Flag operations handlers
   const handleAddPageFlagOperation = async (flagId: number, operation: string) => {
     if (!page) return;
     try {
@@ -136,7 +134,6 @@ export default ({ pageId }: { pageId: number }) => {
   const handleAddChoiceFlagOperation = async (choiceId: number, flagId: number, operation: string) => {
     if (!page) return;
     try {
-      // Optimistically update local state
       setChoices(choices.map((c) => {
         if (c.id === choiceId) {
           return {
@@ -153,7 +150,6 @@ export default ({ pageId }: { pageId: number }) => {
       });
     } catch (error) {
       console.error("Failed to add choice flag operation:", error);
-      // Revert on error
       if (page) setChoices(page.options);
     }
   };
@@ -161,7 +157,6 @@ export default ({ pageId }: { pageId: number }) => {
   const handleRemoveChoiceFlagOperation = async (choiceId: number, flagId: number) => {
     if (!page) return;
     try {
-      // Optimistically update local state
       setChoices(choices.map((c) => {
         if (c.id === choiceId) {
           return {
@@ -175,7 +170,6 @@ export default ({ pageId }: { pageId: number }) => {
       await removeFlagOperation({ choiceId, pageId: page.id, flagId });
     } catch (error) {
       console.error("Failed to remove choice flag operation:", error);
-      // Revert on error
       if (page) setChoices(page.options);
     }
   };
@@ -183,7 +177,6 @@ export default ({ pageId }: { pageId: number }) => {
   const handleAddChoiceCondition = async (choiceId: number, flagId: number, requiredValue: boolean) => {
     if (!page) return;
     try {
-      // Optimistically update local state
       setChoices(choices.map((c) => {
         if (c.id === choiceId) {
           return {
@@ -200,7 +193,6 @@ export default ({ pageId }: { pageId: number }) => {
       });
     } catch (error) {
       console.error("Failed to add choice condition:", error);
-      // Revert on error
       if (page) setChoices(page.options);
     }
   };
@@ -208,7 +200,6 @@ export default ({ pageId }: { pageId: number }) => {
   const handleRemoveChoiceCondition = async (choiceId: number, flagId: number) => {
     if (!page) return;
     try {
-      // Optimistically update local state
       setChoices(choices.map((c) => {
         if (c.id === choiceId) {
           return {
@@ -222,7 +213,6 @@ export default ({ pageId }: { pageId: number }) => {
       await removeChoiceCondition({ choiceId, pageId: page.id, flagId });
     } catch (error) {
       console.error("Failed to remove choice condition:", error);
-      // Revert on error
       if (page) setChoices(page.options);
     }
   };
@@ -230,112 +220,108 @@ export default ({ pageId }: { pageId: number }) => {
   if (!page) return null;
 
   return (
-    <PageCard key={page.id}>
-      <Label htmlFor="page-title-input">
-        {t.labels.pageTitle}
-        <SingleLineInput
+    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+      {/* Page Title and Content */}
+      <div className="space-y-4">
+        <Input
+          label={t.labels.pageTitle}
           type="text"
           id="page-title-input"
           onChange={(e) => setName(e.target.value)}
           onBlur={patch}
           value={name}
         />
-      </Label>
-      <Label htmlFor="page-body-input">
-        {t.labels.pageContent}
-        <MultiLineInput
-          type="textarea"
+
+        <Textarea
+          label={t.labels.pageContent}
           id="page-body-input"
           onChange={(e) => setBody(e.target.value)}
           onBlur={patch}
           value={body}
         />
-      </Label>
+      </div>
 
+      {/* Page Flag Operations */}
       {flags.length > 0 && (
-        <FlagSection>
-          <SectionLabel>{t.labels.whenPageShown}</SectionLabel>
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">{t.labels.whenPageShown}</h3>
           <FlagOperations
             operations={page.flag_operations}
             availableFlags={flags}
             onAdd={handleAddPageFlagOperation}
             onRemove={handleRemovePageFlagOperation}
           />
-        </FlagSection>
+        </div>
       )}
 
-      <ChoicesSection>
-        <SectionLabel>{t.labels.choices}</SectionLabel>
+      {/* Choices Section */}
+      <div className="mt-8">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{t.labels.choices}</h3>
 
         {choices.length === 0 ? (
-          <EmptyState>{t.emptyStates.noChoices}</EmptyState>
+          <div className="text-sm text-gray-500 italic py-4">{t.emptyStates.noChoices}</div>
         ) : (
-          <ChoicesList>
+          <div className="space-y-4">
             {choices.map((choice) => (
-              <ChoiceItem key={choice.id}>
-                <ChoiceInputs>
-                  <Label htmlFor={`choice-text-${choice.id}`}>
-                    {t.labels.choiceText}
-                    <Input
-                      type="text"
-                      id={`choice-text-${choice.id}`}
-                      value={choice.text}
+              <div
+                key={choice.id}
+                className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+              >
+                {/* Choice Text and Target - Grid on desktop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label={t.labels.choiceText}
+                    type="text"
+                    id={`choice-text-${choice.id}`}
+                    value={choice.text}
+                    onChange={(e) => {
+                      setChoices(
+                        choices.map((c) =>
+                          c.id === choice.id ? { ...c, text: e.target.value } : c
+                        )
+                      );
+                    }}
+                    onBlur={() => handlePatchChoice(choice.id, { text: choice.text })}
+                    placeholder={t.placeholders.choiceText}
+                  />
+
+                  <div>
+                    <Select
+                      label={t.labels.leadsTo}
+                      id={`choice-target-${choice.id}`}
+                      value={choice.target_page}
                       onChange={(e) => {
-                        // Update local state immediately
+                        const newTarget = parseInt(e.target.value);
                         setChoices(
                           choices.map((c) =>
-                            c.id === choice.id ? { ...c, text: e.target.value } : c
+                            c.id === choice.id ? { ...c, target_page: newTarget } : c
                           )
                         );
+                        handlePatchChoice(choice.id, { target_page: newTarget });
                       }}
-                      onBlur={() =>
-                        handlePatchChoice(choice.id, { text: choice.text })
-                      }
-                      placeholder={t.placeholders.choiceText}
-                    />
-                  </Label>
+                    >
+                      {pages.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {t.dynamic.pageDisplay(p.name, p.id)}
+                        </option>
+                      ))}
+                    </Select>
+                    <button
+                      onClick={() => setLocation(getLinkToPagePage(page.story_id, choice.target_page))}
+                      className="text-primary text-sm mt-1 hover:underline"
+                    >
+                      {t.buttons.goToPage} →
+                    </button>
+                  </div>
+                </div>
 
-                  <Label htmlFor={`choice-target-${choice.id}`}>
-                    {t.labels.leadsTo}
-                    <TargetPageRow>
-                      <Select
-                        id={`choice-target-${choice.id}`}
-                        value={choice.target_page}
-                        onChange={(e) => {
-                          const newTarget = parseInt(e.target.value);
-                          // Update local state immediately
-                          setChoices(
-                            choices.map((c) =>
-                              c.id === choice.id ? { ...c, target_page: newTarget } : c
-                            )
-                          );
-                          // Update immediately (no blur needed for select)
-                          handlePatchChoice(choice.id, { target_page: newTarget });
-                        }}
-                      >
-                        {pages.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {t.dynamic.pageDisplay(p.name, p.id)}
-                          </option>
-                        ))}
-                      </Select>
-                      <GoToPageLink
-                        onClick={() =>
-                          setLocation(
-                            getLinkToPagePage(page.story_id, choice.target_page)
-                          )
-                        }
-                      >
-                        {t.buttons.goToPage}
-                      </GoToPageLink>
-                    </TargetPageRow>
-                  </Label>
-                </ChoiceInputs>
-
+                {/* Flag UI - Two columns on desktop */}
                 {flags.length > 0 && (
-                  <>
-                    <FlagSubsection>
-                      <SmallLabel>{t.labels.showChoiceIf}</SmallLabel>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                    <div className="p-3 bg-white rounded border border-gray-200">
+                      <h4 className="text-xs font-medium text-gray-600 mb-2">
+                        {t.labels.showChoiceIf}
+                      </h4>
                       <ChoiceConditions
                         conditions={choice.conditions}
                         availableFlags={flags}
@@ -344,10 +330,12 @@ export default ({ pageId }: { pageId: number }) => {
                         }
                         onRemove={(flagId) => handleRemoveChoiceCondition(choice.id, flagId)}
                       />
-                    </FlagSubsection>
+                    </div>
 
-                    <FlagSubsection>
-                      <SmallLabel>{t.labels.whenSelected}</SmallLabel>
+                    <div className="p-3 bg-white rounded border border-gray-200">
+                      <h4 className="text-xs font-medium text-gray-600 mb-2">
+                        {t.labels.whenSelected}
+                      </h4>
                       <FlagOperations
                         operations={choice.flag_operations}
                         availableFlags={flags}
@@ -356,163 +344,31 @@ export default ({ pageId }: { pageId: number }) => {
                         }
                         onRemove={(flagId) => handleRemoveChoiceFlagOperation(choice.id, flagId)}
                       />
-                    </FlagSubsection>
-                  </>
+                    </div>
+                  </div>
                 )}
 
-                <DeleteButton onClick={() => handleDeleteChoice(choice.id)}>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => handleDeleteChoice(choice.id)}
+                >
                   {t.buttons.delete}
-                </DeleteButton>
-              </ChoiceItem>
+                </Button>
+              </div>
             ))}
-          </ChoicesList>
+          </div>
         )}
 
-        <AddButton onClick={handleCreateChoice}>{t.buttons.addChoice}</AddButton>
-      </ChoicesSection>
-    </PageCard>
+        <Button
+          variant="success"
+          className="mt-4 w-full sm:w-auto"
+          onClick={handleCreateChoice}
+        >
+          {t.buttons.addChoice}
+        </Button>
+      </div>
+    </div>
   );
 };
-
-const PageCard = styled.div`
-  margin: 10px;
-  padding: 10px;
-  border: 1px solid black;
-  border-radius: 5px;
-`;
-
-const Label = styled.label`
-  font-size: ${theme.fonts.size.s};
-  width: 100%;
-`;
-
-const Input = styled.input`
-  font-size: ${theme.fonts.size.m};
-  width: 100%;
-`;
-
-const SingleLineInput = styled(Input)``;
-
-const MultiLineInput = styled(Input)``;
-
-const ChoicesSection = styled.div`
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const SectionLabel = styled.h3`
-  font-size: ${theme.fonts.size.m};
-  margin: 0;
-  padding: 0;
-`;
-
-const EmptyState = styled.div`
-  font-size: ${theme.fonts.size.s};
-  color: #999;
-  font-style: italic;
-  padding: 10px 0;
-`;
-
-const ChoicesList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-`;
-
-const ChoiceItem = styled.div`
-  border: 1px solid #e6e6e6;
-  border-radius: 5px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background-color: #fafafa;
-`;
-
-const ChoiceInputs = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const TargetPageRow = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-`;
-
-const Select = styled.select`
-  font-size: ${theme.fonts.size.m};
-  flex: 1;
-  padding: 4px;
-`;
-
-const GoToPageLink = styled.button`
-  background: none;
-  border: none;
-  color: #2196f3;
-  cursor: pointer;
-  font-size: ${theme.fonts.size.s};
-  text-decoration: underline;
-  white-space: nowrap;
-  padding: 0;
-
-  &:hover {
-    color: #1976d2;
-  }
-`;
-
-const DeleteButton = styled.button`
-  align-self: flex-end;
-  background-color: ${theme.colors.light.danger};
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 5px 10px;
-  font-size: ${theme.fonts.size.s};
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
-const AddButton = styled.button`
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  padding: 8px 16px;
-  font-size: ${theme.fonts.size.m};
-  cursor: pointer;
-  margin-top: 5px;
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
-const FlagSection = styled.div`
-  margin-top: 15px;
-  padding: 12px;
-  background-color: #f5f5f5;
-  border-radius: 5px;
-  border: 1px solid #e0e0e0;
-`;
-
-const FlagSubsection = styled.div`
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #fafafa;
-  border-radius: 4px;
-  border: 1px solid #e6e6e6;
-`;
-
-const SmallLabel = styled.div`
-  font-size: ${theme.fonts.size.s};
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #666;
-`;

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import styled from "styled-components";
-import { Card } from "./Card";
+import { Dialog } from "./ui/Dialog";
+import { Input } from "./ui/Input";
+import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
-//import { theme } from "../style";
 
 export const NewStoryDialog = ({
   onConfirm,
@@ -15,50 +15,24 @@ export const NewStoryDialog = ({
   const { t } = useTranslation();
 
   return (
-    <Overlay>
-      <Card>
-        <SingleLineInput
+    <Dialog open={true} onClose={onCancel} title={t.headings.createNewStory}>
+      <div className="space-y-4">
+        <Input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t.placeholders.storyTitle}
+          autoFocus
         />
-        <ButtonContainer>
-          <button
-            onClick={() => {
-              onConfirm(title);
-            }}
-          >
+        <div className="flex gap-3">
+          <Button onClick={() => onConfirm(title)} className="flex-1">
             {t.buttons.create}
-          </button>
-          <button onClick={onCancel}>{t.buttons.cancel}</button>
-        </ButtonContainer>
-      </Card>
-    </Overlay>
+          </Button>
+          <Button onClick={onCancel} variant="secondary" className="flex-1">
+            {t.buttons.cancel}
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   );
 };
-
-const ButtonContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: space-between;
-`;
-
-const Overlay = styled.div`
-  position: fixed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  background-color: rgba(0, 0, 0, 0.5);
-`;
-
-const SingleLineInput = styled.input`
-  border: 1px solid #000;
-  border-radius: 2px;
-`;

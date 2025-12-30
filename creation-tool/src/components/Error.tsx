@@ -2,5 +2,11 @@ import { useTranslation } from "../i18n";
 
 export default ({ error }: { error: any }) => {
   const { t } = useTranslation();
-  return <p>{t.dynamic.errorMessage(error.toString())}</p>;
+  return (
+    <div className="flex items-center justify-center p-8">
+      <p className="text-red-600 text-sm">
+        {t.dynamic.errorMessage(error.toString())}
+      </p>
+    </div>
+  );
 };

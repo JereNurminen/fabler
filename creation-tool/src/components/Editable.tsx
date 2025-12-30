@@ -1,5 +1,4 @@
-import { PropsWithChildren, useRef, useState } from "react";
-import styled from "styled-components";
+import { PropsWithChildren, useState } from "react";
 
 interface EditableProps {
   onEdit: (value: string) => void;
@@ -22,7 +21,7 @@ export const Editable = ({
   };
 
   if (!isEditing) {
-    return <Container onClick={onActivate}>{children}</Container>;
+    return <div onClick={onActivate} className="contents">{children}</div>;
   }
 
   switch (inputType) {
@@ -30,6 +29,7 @@ export const Editable = ({
       return (
         <input
           type="text"
+          className="w-full px-3 py-2 border border-gray-300 rounded"
           onBlur={(e) => {
             setIsEditing(false);
             onBlur?.(e.target.value);
@@ -41,6 +41,7 @@ export const Editable = ({
     case "multi-line":
       return (
         <textarea
+          className="w-full px-3 py-2 border border-gray-300 rounded"
           onBlur={(e) => {
             setIsEditing(false);
             onBlur?.(e.target.value);
@@ -51,7 +52,3 @@ export const Editable = ({
       );
   }
 };
-
-const Container = styled.div`
-  display: contents;
-`;

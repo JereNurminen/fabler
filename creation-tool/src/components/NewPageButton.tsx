@@ -1,8 +1,8 @@
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
-import styled from "styled-components";
 import { useLocation } from "wouter";
 import { getLinkToPagePage } from "../utilities/routing";
+import { Button } from "./ui/Button";
 
 interface NewPageButtonProps {
   storyId: number;
@@ -23,14 +23,8 @@ export default ({ storyId }: NewPageButtonProps) => {
   };
 
   return (
-    <ButtonContainer>
-      <button onClick={() => createNewPage()}>{t.buttons.createPage}</button>
-    </ButtonContainer>
+    <Button onClick={() => createNewPage()} className="w-full" variant="success">
+      {t.buttons.createPage}
+    </Button>
   );
 };
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-`;

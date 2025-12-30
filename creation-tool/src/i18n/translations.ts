@@ -5,6 +5,7 @@ export const translations = {
     cancel: "Cancel",
     save: "Save",
     delete: "Delete",
+    close: "Close",
     addChoice: "Add Choice",
     createPage: "Create Page",
     newStory: "New Story",
@@ -14,6 +15,8 @@ export const translations = {
     addFlag: "Add Flag",
     addCondition: "Add Condition",
     addOperation: "Add Operation",
+    menu: "Menu",
+    closeMenu: "Close Menu",
   },
 
   // Labels
@@ -46,6 +49,7 @@ export const translations = {
   // Headings
   headings: {
     hello: "Hello",
+    createNewStory: "Create New Story",
     storySettings: "Story Settings",
     flags: "Flags",
   },
@@ -54,6 +58,7 @@ export const translations = {
   status: {
     loading: "Loading...",
     databaseReset: "Database reset successfully",
+    selectPage: "Select a page from the sidebar to edit",
   },
 
   // Empty states

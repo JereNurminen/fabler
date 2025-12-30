@@ -8,7 +8,6 @@ import {
 import type {
   PagePatch,
   ChoicePatch,
-  StoryPatch,
   CreateFlag,
   FlagPatch,
   SetFlagOperation,

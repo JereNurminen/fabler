@@ -1,9 +1,9 @@
 import { Suspense, useEffect } from "react";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
-import styled from "styled-components";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
-import StorySidebar from "../components/StorySidebar";
+import { MainLayout } from "../components/layout/MainLayout";
+import { useTranslation } from "../i18n";
 
 interface StoryEditorPageProps {
   storyIdParam: string;
@@ -15,6 +15,7 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
   const pageId = pageIdParam !== undefined ? parseInt(pageIdParam) : undefined;
 
   const { story, pages, loadStory } = useStoryAtoms();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadStory(storyId);
@@ -24,35 +25,21 @@ export default ({ storyIdParam, pageIdParam }: StoryEditorPageProps) => {
   if (!story) return <LoadingSpinner />;
 
   return (
-    <StoryPage>
-      <StorySidebar
-        storyId={storyId}
-        storyTitle={story.title}
-        pages={pages}
-        startPage={story.start_page}
-      />
-      <Main>
-        {pageId ? (
-          <Suspense fallback={<LoadingSpinner />}>
-            <PageCard pageId={pageId} />
-          </Suspense>
-        ) : (
-          <></>
-        )}
-      </Main>
-    </StoryPage>
+    <MainLayout
+      storyId={storyId}
+      storyTitle={story.title}
+      pages={pages}
+      startPage={story.start_page}
+    >
+      {pageId ? (
+        <Suspense fallback={<LoadingSpinner />}>
+          <PageCard pageId={pageId} />
+        </Suspense>
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">{t.status.selectPage}</p>
+        </div>
+      )}
+    </MainLayout>
   );
 };
-
-const StoryPage = styled.div`
-  width: 100vw;
-  height: 100vh;
-  display: grid;
-  grid-template-columns: fit-content(20%) auto;
-  grid-template-rows: auto;
-`;
-
-const Main = styled.div`
-  grid-column: 2;
-  grid-row: 1;
-`;

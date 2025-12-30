@@ -6,12 +6,11 @@ import StoryEditorPage from "./pages/StoryEditorPage";
 import { pageRoute, storyRoute } from "./utilities/routing";
 import { listen } from "@tauri-apps/api/event";
 import { message } from "@tauri-apps/plugin-dialog";
-import { ThemeProvider } from "styled-components";
-import { theme } from "./style";
 import { translations } from "./i18n";
 import { Provider as JotaiProvider } from "jotai";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import LoadingSpinner from "./components/LoadingSpinner";
+import "./index.css";
 
 function App() {
   const [_, setLocation] = useLocation();
@@ -30,32 +29,30 @@ function App() {
   }, [setLocation]);
 
   return (
-    <ThemeProvider theme={theme}>
-      <JotaiProvider>
-        <ErrorBoundary>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Switch>
-              <Route path="/">
-                <StartPage />
-              </Route>
+    <JotaiProvider>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Switch>
+            <Route path="/">
+              <StartPage />
+            </Route>
 
-              <Route path={pageRoute}>
-                {(params) => (
-                  <StoryEditorPage
-                    storyIdParam={params.story}
-                    pageIdParam={params.page}
-                  />
-                )}
-              </Route>
+            <Route path={pageRoute}>
+              {(params) => (
+                <StoryEditorPage
+                  storyIdParam={params.story}
+                  pageIdParam={params.page}
+                />
+              )}
+            </Route>
 
-              <Route path={storyRoute}>
-                {(params) => <StoryEditorPage storyIdParam={params.story} />}
-              </Route>
-            </Switch>
-          </Suspense>
-        </ErrorBoundary>
-      </JotaiProvider>
-    </ThemeProvider>
+            <Route path={storyRoute}>
+              {(params) => <StoryEditorPage storyIdParam={params.story} />}
+            </Route>
+          </Switch>
+        </Suspense>
+      </ErrorBoundary>
+    </JotaiProvider>
   );
 }
 

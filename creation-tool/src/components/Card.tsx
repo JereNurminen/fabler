@@ -1,29 +1,27 @@
-import styled from "styled-components";
-import { theme } from "../style";
+import { ReactNode } from "react";
 
-export const Card = styled.div`
-  border-radius: 5px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background-color: white;
-  border: solid 1px #e6e6e6;
-`;
+export const Card = ({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={`bg-white rounded-lg border border-gray-200 p-3 flex flex-col gap-3 ${className}`}
+  >
+    {children}
+  </div>
+);
 
-export const CardTitle = styled.h2`
-  font-size: ${theme.fonts.size.l};
-  font-weight: 700;
-  color: #333;
-`;
+export const CardTitle = ({ children }: { children: ReactNode }) => (
+  <h2 className="text-lg font-bold text-gray-900">{children}</h2>
+);
 
-export const CardDescription = styled.p`
-  font-size: ${theme.fonts.size.m};
-  color: #666;
-`;
+export const CardDescription = ({ children }: { children: ReactNode }) => (
+  <p className="text-base text-gray-600">{children}</p>
+);
 
-const CardButtonContainer = styled.div`
-  display: "flex";
-  flex-direction: "row";
-  align-items: "space-between";
-`;
+export const CardButtonContainer = ({ children }: { children: ReactNode }) => (
+  <div className="flex flex-row items-center justify-between">{children}</div>
+);

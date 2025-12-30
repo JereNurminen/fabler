@@ -3,10 +3,10 @@ import { StoryListing } from "../bindings";
 import api from "../api";
 import { handleResult, Loadable } from "../utilities/loadable";
 import { useTranslation } from "../i18n";
-import styled from "styled-components";
 import { Link, useLocation } from "wouter";
 import { getLinkToStoryPage } from "../utilities/routing";
 import { NewStoryDialog } from "../components/NewStoryDialog";
+import { Button } from "../components/ui/Button";
 
 export const StartPage = () => {
   const [stories, setStories] = useState<Loadable<StoryListing[]>>({
@@ -41,39 +41,36 @@ export const StartPage = () => {
     switch (stories.status) {
       case "not-loaded":
       case "loading":
-        return <p>{t.status.loading}</p>;
+        return <p className="text-gray-600">{t.status.loading}</p>;
       case "loaded":
         return handleResult(
           stories.value,
           (ok) => (
-            <StoryList>
+            <div className="flex flex-col items-center justify-center gap-2">
               {ok.data.map((story) => (
-                <StoryListItem
+                <Link
                   key={story.id}
                   href={getLinkToStoryPage(story.id)}
+                  className="px-4 py-2 border border-gray-900 rounded hover:bg-gray-100 transition-colors min-w-64 text-center"
                 >
                   {t.dynamic.storyListItem(story.id, story.title)}
-                </StoryListItem>
+                </Link>
               ))}
-            </StoryList>
+            </div>
           ),
-          (err) => <p>{t.dynamic.errorMessage(err.error)}</p>,
+          (err) => <p className="text-red-600">{t.dynamic.errorMessage(err.error)}</p>,
         );
     }
   })();
 
   return (
-    <StartPageContainer>
-      <h1>{t.headings.hello}</h1>
-      <div>{content}</div>
+    <div className="flex flex-col items-center justify-center h-screen w-screen bg-gray-50">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900">{t.headings.hello}</h1>
+      <div className="mb-6">{content}</div>
       <div>
-        <button
-          onClick={() => {
-            setShowStoryModal(true);
-          }}
-        >
+        <Button onClick={() => setShowStoryModal(true)}>
           {t.buttons.newStory}
-        </button>
+        </Button>
       </div>
       {showNewStoryModal ? (
         <NewStoryDialog
@@ -86,30 +83,6 @@ export const StartPage = () => {
           onCancel={() => setShowStoryModal(false)}
         />
       ) : null}
-    </StartPageContainer>
+    </div>
   );
 };
-
-const StartPageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
-  background-color: #f0f0f0;
-  font-family: Arial, sans-serif;
-`;
-
-const StoryList = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-`;
-
-const StoryListItem = styled(Link)`
-  padding: 10px;
-  margin: 10px;
-  border: 1px solid black;
-`;

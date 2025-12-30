@@ -1,5 +1,5 @@
 import { useState } from "react";
-import styled from "styled-components";
+import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
 import type { Flag, FlagOperation } from "../bindings";
 
@@ -26,30 +26,43 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
   const availableForAdd = availableFlags.filter((flag) => !usedFlagIds.has(flag.id));
 
   return (
-    <Container>
+    <div className="flex flex-col gap-2">
       {operations.length === 0 ? (
-        <EmptyState>{t.emptyStates.noOperations}</EmptyState>
+        <div className="py-3 text-center text-gray-500 text-xs italic">
+          {t.emptyStates.noOperations}
+        </div>
       ) : (
-        <OperationsList>
+        <div className="flex flex-col gap-1.5">
           {operations.map((op) => {
             const flag = availableFlags.find((f) => f.id === op.flag_id);
             return (
-              <OperationItem key={op.id}>
-                <OperationText>
+              <div
+                key={op.id}
+                className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
+              >
+                <span className="text-gray-900">
                   <strong>{flag?.name || `Flag ${op.flag_id}`}</strong>
                   {" → "}
-                  <OperationType>{op.operation}</OperationType>
-                </OperationText>
-                <RemoveButton onClick={() => onRemove(op.flag_id)}>×</RemoveButton>
-              </OperationItem>
+                  <span className="font-mono bg-gray-200 px-1.5 py-0.5 rounded text-xs">
+                    {op.operation}
+                  </span>
+                </span>
+                <button
+                  onClick={() => onRemove(op.flag_id)}
+                  className="text-danger text-xl w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+                >
+                  ×
+                </button>
+              </div>
             );
           })}
-        </OperationsList>
+        </div>
       )}
 
       {availableForAdd.length > 0 && (
-        <AddSection>
-          <Select
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mt-1">
+          <select
+            className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedFlagId ?? ""}
             onChange={(e) => setSelectedFlagId(e.target.value ? Number(e.target.value) : null)}
           >
@@ -59,131 +72,28 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
                 {flag.name}
               </option>
             ))}
-          </Select>
+          </select>
 
-          <Select
+          <select
+            className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedOperation}
             onChange={(e) => setSelectedOperation(e.target.value)}
           >
             <option value="set_true">set_true</option>
             <option value="set_false">set_false</option>
             <option value="toggle">toggle</option>
-          </Select>
+          </select>
 
-          <AddButton onClick={handleAdd} disabled={selectedFlagId === null}>
+          <Button
+            onClick={handleAdd}
+            disabled={selectedFlagId === null}
+            size="sm"
+            className="whitespace-nowrap"
+          >
             {t.buttons.addOperation}
-          </AddButton>
-        </AddSection>
+          </Button>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
-
-// Styled Components
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const OperationsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const OperationItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  background-color: ${(props) => props.theme.bgLight || props.theme.bg};
-  border: 1px solid ${(props) => props.theme.border};
-  border-radius: 4px;
-  font-size: 13px;
-`;
-
-const OperationText = styled.span`
-  color: ${(props) => props.theme.fg};
-`;
-
-const OperationType = styled.span`
-  font-family: monospace;
-  background-color: ${(props) => props.theme.bgDark || props.theme.bg};
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 12px;
-`;
-
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  color: ${(props) => props.theme.danger || "#dc3545"};
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: ${(props) => props.theme.bgLight || props.theme.bg};
-  }
-`;
-
-const AddSection = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 4px;
-`;
-
-const Select = styled.select`
-  padding: 6px 10px;
-  border: 1px solid ${(props) => props.theme.border};
-  border-radius: 4px;
-  background-color: ${(props) => props.theme.bg};
-  color: ${(props) => props.theme.fg};
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: ${(props) => props.theme.primary};
-  }
-`;
-
-const AddButton = styled.button`
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  background-color: ${(props) => props.theme.primary};
-  color: white;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: opacity 0.2s;
-
-  &:hover:not(:disabled) {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const EmptyState = styled.div`
-  padding: 12px;
-  text-align: center;
-  color: ${(props) => props.theme.fgMuted};
-  font-size: 12px;
-  font-style: italic;
-`;
