@@ -6,6 +6,7 @@ mod flags;
 use sqlx::sqlite::SqlitePool;
 use crate::error::AppResult;
 
+#[derive(Clone)]
 pub struct Database {
     pub pool: SqlitePool,
 }

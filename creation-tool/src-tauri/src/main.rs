@@ -10,6 +10,9 @@ mod error;
 mod app;
 mod schema;
 
+#[cfg(feature = "test-server")]
+mod test_server;
+
 use commands::*;
 use app::{setup_database, create_menus, setup_menu_handlers};
 use specta_typescript::{BigIntExportBehavior, Typescript};
@@ -61,11 +64,11 @@ fn main() {
             let handle = app.handle();
 
             // Setup database
-            tauri::async_runtime::block_on(async {
+            let db = tauri::async_runtime::block_on(async {
                 match setup_database(&handle).await {
                     Ok(db) => {
-                        handle.manage(db);
-                        Ok(())
+                        handle.manage(db.clone());
+                        Ok(db)
                     }
                     Err(e) => {
                         eprintln!("Failed to setup database: {}", e);
@@ -73,6 +76,18 @@ fn main() {
                     }
                 }
             })?;
+
+            // Start test server if enabled
+            #[cfg(feature = "test-server")]
+            {
+                let db_clone = std::sync::Arc::new(db);
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = test_server::start_test_server(db_clone, 3001).await {
+                        eprintln!("Test server error: {}", e);
+                    }
+                });
+                println!("Test server will start on http://127.0.0.1:3001");
+            }
 
             // Setup menus
             let menu = create_menus(&handle)?;

@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:e2e": "./scripts/test-with-backend.sh",
+    "test:e2e:ui": "./scripts/test-with-backend.sh --ui",
+    "test:e2e:headed": "./scripts/test-with-backend.sh --headed"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@tauri-apps/cli": "^2.0.0-rc.16",
     "@types/react": "^18.2.15",

@@ -1,6 +1,10 @@
 import { commands } from "./bindings";
+import httpApi from "./api-http";
 
-const api = {
+// Use HTTP API if VITE_USE_HTTP_API is set (for testing)
+const useHttpApi = import.meta.env.VITE_USE_HTTP_API === "true";
+
+const tauriApi = {
   getStoryList: commands.getStories,
   createStory: commands.addStory,
   getStory: commands.getStory,
@@ -29,6 +33,8 @@ const api = {
   removeChoiceCondition: commands.removeChoiceCondition,
   getChoiceConditions: commands.getChoiceConditions,
 };
+
+const api = useHttpApi ? httpApi : tauriApi;
 
 export default api;
 export type { Result } from "./bindings";
