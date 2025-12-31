@@ -1,6 +1,21 @@
 @import "tailwindcss";
 
+/* Configure class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+/* Define custom colors for Tailwind v4 */
+@theme {
+  --color-primary: #2196f3;
+  --color-danger: #F7567C;
+  --color-success: #4caf50;
+}
+
 body {
   color: rgb(17 24 39);
   background-color: rgb(249 250 251);
+}
+
+body.dark {
+  color: rgb(243 244 246);
+  background-color: rgb(17 24 39);
 }

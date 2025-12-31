@@ -12,6 +12,7 @@ import { Input } from "./ui/Input";
 import { Textarea } from "./ui/Textarea";
 import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
+import clsx from "clsx";
 
 export default ({ pageId }: { pageId: number }) => {
   const [name, setName] = useState("");
@@ -308,7 +309,11 @@ export default ({ pageId }: { pageId: number }) => {
                     </Select>
                     <button
                       onClick={() => setLocation(getLinkToPagePage(page.story_id, choice.target_page))}
-                      className="text-primary text-sm mt-1 hover:underline"
+                      className={clsx(
+                        "text-sm font-medium mt-1",
+                        "text-primary dark:text-blue-400",
+                        "hover:underline"
+                      )}
                     >
                       {t.buttons.goToPage} →
                     </button>

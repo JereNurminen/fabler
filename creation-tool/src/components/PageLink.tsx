@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { getLinkToPagePage } from "../utilities/routing";
 import { PropsWithChildren } from "react";
+import clsx from "clsx";
 
 export default ({
   storyId,
@@ -11,12 +12,35 @@ export default ({
   storyId: number;
   pageId: number;
   onClick?: () => void;
-}>) => (
-  <Link
-    to={getLinkToPagePage(storyId, pageId)}
-    className="block no-underline text-gray-900 p-2.5 border border-gray-300 rounded bg-white transition-colors hover:bg-gray-100"
-    onClick={onClick}
-  >
-    {children}
-  </Link>
-);
+}>) => {
+  // Base structure
+  const base = clsx(
+    "block no-underline",
+    "p-2.5 rounded",
+    "transition-colors"
+  );
+
+  // Light mode colors
+  const light = clsx(
+    "text-gray-900 bg-white",
+    "border border-gray-300",
+    "hover:bg-gray-100"
+  );
+
+  // Dark mode colors
+  const dark = clsx(
+    "dark:text-gray-100 dark:bg-gray-800",
+    "dark:border-gray-600",
+    "dark:hover:bg-gray-700"
+  );
+
+  return (
+    <Link
+      to={getLinkToPagePage(storyId, pageId)}
+      className={clsx(base, light, dark)}
+      onClick={onClick}
+    >
+      {children}
+    </Link>
+  );
+};

@@ -11,6 +11,7 @@ import api from "../../api";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
 import { FlagsDialog } from "../FlagsDialog";
+import clsx from "clsx";
 
 interface DesktopSidebarProps {
   storyId: number;
@@ -144,7 +145,13 @@ export const DesktopSidebar = ({
                   </div>
                 ))}
                 {flags.length > 5 && (
-                  <button className="text-xs text-primary hover:underline">
+                  <button
+                    className={clsx(
+                      "text-xs font-medium",
+                      "text-primary dark:text-blue-400",
+                      "hover:underline"
+                    )}
+                  >
                     +{flags.length - 5} more...
                   </button>
                 )}
