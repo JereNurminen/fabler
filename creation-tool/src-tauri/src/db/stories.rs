@@ -1,10 +1,7 @@
 use crate::db::Database;
 use crate::error::AppResult;
 use futures::{stream::FuturesUnordered, StreamExt};
-use shared::export::{
-    ExportedChoice, ExportedChoiceCondition, ExportedFlag, ExportedFlagOperation, ExportedPage,
-    ExportedStory, StoryMetadata,
-};
+use shared::export::{ExportedStory, StoryMetadata};
 use shared::models::{PageListItem, Story, StoryId, StoryListing, StoryOutline};
 use sqlx::Row;
 
@@ -159,71 +156,15 @@ impl Database {
 
         // Get flags for this story
         let flags = self.get_flags_for_story(story_id).await?;
-        let exported_flags: Vec<ExportedFlag> = flags
-            .into_iter()
-            .map(|flag| ExportedFlag {
-                id: flag.id,
-                name: flag.name,
-                default_value: flag.default_value,
-            })
-            .collect();
-
-        // Convert pages
-        let exported_pages: Vec<ExportedPage> = story
-            .pages
-            .into_iter()
-            .map(|page| {
-                let choices = page
-                    .options
-                    .into_iter()
-                    .map(|choice| ExportedChoice {
-                        id: choice.id,
-                        text: choice.text,
-                        target: choice.target_page,
-                        flag_operations: choice
-                            .flag_operations
-                            .into_iter()
-                            .map(|op| ExportedFlagOperation {
-                                flag_id: op.flag_id,
-                                operation: op.operation,
-                            })
-                            .collect(),
-                        conditions: choice
-                            .conditions
-                            .into_iter()
-                            .map(|cond| ExportedChoiceCondition {
-                                flag_id: cond.flag_id,
-                                required_value: cond.required_value,
-                            })
-                            .collect(),
-                    })
-                    .collect();
-
-                ExportedPage {
-                    id: page.id,
-                    name: page.name,
-                    content: page.body,
-                    choices,
-                    flag_operations: page
-                        .flag_operations
-                        .into_iter()
-                        .map(|op| ExportedFlagOperation {
-                            flag_id: op.flag_id,
-                            operation: op.operation,
-                        })
-                        .collect(),
-                }
-            })
-            .collect();
 
         Ok(ExportedStory {
             story: StoryMetadata {
                 id: story.id,
-                title: story.title,
+                title: story.title.clone(),
                 start_page: story.start_page,
             },
-            flags: exported_flags,
-            pages: exported_pages,
+            flags,
+            pages: story.pages,
         })
     }
 }
