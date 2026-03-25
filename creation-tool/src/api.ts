@@ -11,6 +11,7 @@ const tauriApi = {
   getStoryOutline: commands.getStoryOutline,
   patchStory: commands.patchStory,
   exportStoryToml: commands.exportStoryToml,
+  importStoryToml: commands.importStoryToml,
   getTomlSchema: commands.getTomlSchema,
   getPage: commands.getPage,
   patchPage: commands.patchPage,

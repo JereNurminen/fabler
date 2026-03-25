@@ -52,6 +52,8 @@ const httpApi = {
 
   exportStoryToml: (storyId: number) => apiCall<string>(`/stories/${storyId}/export`),
 
+  importStoryToml: (tomlContent: string) => apiCall<number>("/stories/import", post(tomlContent)),
+
   getTomlSchema: () => apiCall<string>("/schema"),
 
   // Pages

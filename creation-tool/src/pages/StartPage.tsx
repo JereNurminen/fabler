@@ -4,6 +4,8 @@ import api from "../api";
 import { handleResult, Loadable } from "../utilities/loadable";
 import { useTranslation } from "../i18n";
 import { Link, useLocation } from "wouter";
+import { open } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@tauri-apps/plugin-fs";
 import { getLinkToStoryPage } from "../utilities/routing";
 import { NewStoryDialog } from "../components/NewStoryDialog";
 import { Button } from "../components/ui/Button";
@@ -37,6 +39,26 @@ export const StartPage = () => {
     return newStoryId;
   }, []);
 
+  const handleImportStory = useCallback(async () => {
+    try {
+      const filePath = await open({
+        filters: [{ name: "TOML", extensions: ["toml"] }],
+      });
+      if (!filePath) return;
+
+      const tomlContent = await readTextFile(filePath);
+      const result = await api.importStoryToml(tomlContent);
+      if (result.status === "ok") {
+        setLocation(getLinkToStoryPage(result.data));
+      } else {
+        alert(t.alerts.importFailed);
+      }
+    } catch (error) {
+      console.error("Failed to import story:", error);
+      alert(t.alerts.importFailed);
+    }
+  }, [setLocation, t]);
+
   const content = (() => {
     switch (stories.status) {
       case "not-loaded":
@@ -67,9 +89,12 @@ export const StartPage = () => {
     <div className="flex flex-col items-center justify-center h-screen w-screen bg-gray-50">
       <h1 className="text-3xl font-bold mb-8 text-gray-900">{t.headings.hello}</h1>
       <div className="mb-6">{content}</div>
-      <div>
+      <div className="flex gap-2">
         <Button onClick={() => setShowStoryModal(true)}>
           {t.buttons.newStory}
+        </Button>
+        <Button variant="secondary" onClick={handleImportStory}>
+          {t.buttons.importStory}
         </Button>
       </div>
       {showNewStoryModal ? (

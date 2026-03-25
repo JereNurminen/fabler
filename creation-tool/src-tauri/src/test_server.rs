@@ -118,6 +118,20 @@ async fn export_story_toml(
     }
 }
 
+async fn import_story_toml(
+    AxumState(state): AxumState<AppState>,
+    Json(toml_content): Json<String>,
+) -> Result<Json<ApiResponse<i64>>, StatusCode> {
+    let exported: shared::export::ExportedStory = match toml::from_str(&toml_content) {
+        Ok(e) => e,
+        Err(e) => return Ok(Json(ApiResponse::error(format!("Failed to parse TOML: {}", e)))),
+    };
+    match state.db.import_story(exported).await {
+        Ok(id) => Ok(Json(ApiResponse::ok(id))),
+        Err(e) => Ok(Json(ApiResponse::error(e.to_string()))),
+    }
+}
+
 async fn get_toml_schema() -> Json<ApiResponse<String>> {
     Json(ApiResponse::ok(crate::schema::generate_toml_schema()))
 }
@@ -309,6 +323,7 @@ pub fn create_router(db: Arc<Database>) -> Router {
         .route("/api/stories/:id/flags", get(get_story_flags))
         .route("/api/stories/patch", post(patch_story))
         .route("/api/stories/:id/export", get(export_story_toml))
+        .route("/api/stories/import", post(import_story_toml))
         .route("/api/schema", get(get_toml_schema))
         // Page routes
         .route("/api/pages/:id", get(get_page))

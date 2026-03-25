@@ -1,5 +1,5 @@
 use crate::db::Database;
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use futures::{stream::FuturesUnordered, StreamExt};
 use shared::export::{ExportedStory, StoryMetadata};
 use shared::models::{PageListItem, Story, StoryId, StoryListing, StoryOutline};
@@ -148,6 +148,132 @@ impl Database {
         query_builder = query_builder.bind(id);
         query_builder.execute(&self.pool).await?;
         Ok(())
+    }
+
+    pub async fn import_story(&self, exported: ExportedStory) -> AppResult<StoryId> {
+        use std::collections::HashMap;
+
+        let mut tx = self.pool.begin().await?;
+
+        // Create the story
+        let story_id = sqlx::query(
+            "INSERT INTO stories (title, created_at) VALUES (?, CURRENT_TIMESTAMP)",
+        )
+        .bind(&exported.story.title)
+        .execute(&mut tx)
+        .await?
+        .last_insert_rowid();
+
+        // Insert pages and build old→new page ID mapping
+        let mut page_id_map: HashMap<i64, i64> = HashMap::new();
+        for page in &exported.pages {
+            let new_page_id =
+                sqlx::query("INSERT INTO pages (name, content, story_id) VALUES (?, ?, ?)")
+                    .bind(&page.name)
+                    .bind(&page.body)
+                    .bind(story_id)
+                    .execute(&mut tx)
+                    .await?
+                    .last_insert_rowid();
+            page_id_map.insert(page.id, new_page_id);
+        }
+
+        // Set start_page using remapped ID
+        let new_start_page = page_id_map
+            .get(&exported.story.start_page)
+            .ok_or_else(|| AppError::Custom("Start page ID not found in exported pages".into()))?;
+        sqlx::query("UPDATE stories SET start_page = ? WHERE id = ?")
+            .bind(new_start_page)
+            .bind(story_id)
+            .execute(&mut tx)
+            .await?;
+
+        // Insert flags and build old→new flag ID mapping
+        let mut flag_id_map: HashMap<i64, i64> = HashMap::new();
+        for flag in &exported.flags {
+            let new_flag_id = sqlx::query(
+                "INSERT INTO flags (story_id, name, default_value) VALUES (?, ?, ?)",
+            )
+            .bind(story_id)
+            .bind(&flag.name)
+            .bind(if flag.default_value { 1 } else { 0 })
+            .execute(&mut tx)
+            .await?
+            .last_insert_rowid();
+            flag_id_map.insert(flag.id, new_flag_id);
+        }
+
+        // Insert choices, flag operations, and conditions for each page
+        for page in &exported.pages {
+            let new_page_id = page_id_map[&page.id];
+
+            // Page flag operations
+            for op in &page.flag_operations {
+                if let Some(&new_flag_id) = flag_id_map.get(&op.flag_id) {
+                    sqlx::query(
+                        "INSERT INTO page_flag_operations (page_id, flag_id, operation) VALUES (?, ?, ?)",
+                    )
+                    .bind(new_page_id)
+                    .bind(new_flag_id)
+                    .bind(&op.operation)
+                    .execute(&mut tx)
+                    .await?;
+                }
+            }
+
+            // Choices
+            for choice in &page.options {
+                let new_target_page = page_id_map
+                    .get(&choice.target_page)
+                    .ok_or_else(|| {
+                        AppError::Custom(format!(
+                            "Choice target page {} not found in exported pages",
+                            choice.target_page
+                        ))
+                    })?;
+
+                let new_choice_id = sqlx::query(
+                    "INSERT INTO choices (page_id, text, target_page_id) VALUES (?, ?, ?)",
+                )
+                .bind(new_page_id)
+                .bind(&choice.text)
+                .bind(new_target_page)
+                .execute(&mut tx)
+                .await?
+                .last_insert_rowid();
+
+                // Choice flag operations
+                for op in &choice.flag_operations {
+                    if let Some(&new_flag_id) = flag_id_map.get(&op.flag_id) {
+                        sqlx::query(
+                            "INSERT INTO choice_flag_operations (choice_id, flag_id, operation) VALUES (?, ?, ?)",
+                        )
+                        .bind(new_choice_id)
+                        .bind(new_flag_id)
+                        .bind(&op.operation)
+                        .execute(&mut tx)
+                        .await?;
+                    }
+                }
+
+                // Choice conditions
+                for cond in &choice.conditions {
+                    if let Some(&new_flag_id) = flag_id_map.get(&cond.flag_id) {
+                        sqlx::query(
+                            "INSERT INTO choice_conditions (choice_id, flag_id, required_value) VALUES (?, ?, ?)",
+                        )
+                        .bind(new_choice_id)
+                        .bind(new_flag_id)
+                        .bind(if cond.required_value { 1 } else { 0 })
+                        .execute(&mut tx)
+                        .await?;
+                    }
+                }
+            }
+        }
+
+        tx.commit().await?;
+        Ok(story_id)
     }
 
     pub async fn export_story(&self, story_id: StoryId) -> AppResult<ExportedStory> {

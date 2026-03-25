@@ -61,6 +61,14 @@ async exportStoryToml(storyId: number) : Promise<Result<string, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async importStoryToml(tomlContent: string) : Promise<Result<number, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("import_story_toml", { tomlContent }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getTomlSchema() : Promise<string> {
     return await TAURI_INVOKE("get_toml_schema");
 },

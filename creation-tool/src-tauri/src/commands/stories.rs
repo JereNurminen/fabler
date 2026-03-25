@@ -1,5 +1,6 @@
 use crate::db::Database;
 use crate::models::StoryPatch;
+use shared::export::ExportedStory;
 use shared::models::{Story, StoryId, StoryListing, StoryOutline};
 use tauri::State;
 
@@ -53,6 +54,17 @@ pub async fn export_story_toml(story_id: i64, db: State<'_, Database>) -> Result
         .map_err(|e| format!("Failed to serialize to TOML: {}", e))?;
 
     Ok(toml_string)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn import_story_toml(toml_content: String, db: State<'_, Database>) -> Result<StoryId, String> {
+    let exported: ExportedStory = toml::from_str(&toml_content)
+        .map_err(|e| format!("Failed to parse TOML: {}", e))?;
+
+    db.import_story(exported)
+        .await
+        .map_err(|e| format!("Failed to import story: {}", e))
 }
 
 #[tauri::command]
