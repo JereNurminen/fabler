@@ -1,5 +1,6 @@
 import { Disclosure, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import { ReactNode } from "react";
 import { Badge } from "./Badge";
 
@@ -8,6 +9,7 @@ export interface CollapsibleProps {
   icon?: React.ComponentType<{ className?: string }>;
   badge?: number;
   defaultOpen?: boolean;
+  className?: string;
   children: ReactNode;
 }
 
@@ -16,12 +18,13 @@ export const Collapsible = ({
   icon: Icon,
   badge,
   defaultOpen = false,
+  className,
   children,
 }: CollapsibleProps) => {
   return (
     <Disclosure defaultOpen={defaultOpen}>
       {({ open }) => (
-        <div className="border-b border-gray-200">
+        <div className={clsx("border-b border-gray-200", className)}>
           <Disclosure.Button className="flex items-center justify-between w-full px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors">
             <div className="flex items-center gap-2">
               {Icon && <Icon className="w-5 h-5 text-gray-600" />}

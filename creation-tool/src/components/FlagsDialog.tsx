@@ -5,7 +5,11 @@ import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
 import { useAtomValue, useSetAtom } from "jotai";
 import { currentStoryIdAtom, storyFlagsAtom } from "../atoms/storyAtoms";
-import { createFlagAtom, patchFlagAtom, deleteFlagAtom } from "../atoms/storyActions";
+import {
+  createFlagAtom,
+  patchFlagAtom,
+  deleteFlagAtom,
+} from "../atoms/storyActions";
 import type { Flag } from "../bindings";
 
 type FlagsDialogProps = {
@@ -22,7 +26,9 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
 
   const [newFlagName, setNewFlagName] = useState("");
   const [newFlagDefaultValue, setNewFlagDefaultValue] = useState(false);
-  const [editingFlags, setEditingFlags] = useState<Record<number, { name: string; defaultValue: boolean }>>({});
+  const [editingFlags, setEditingFlags] = useState<
+    Record<number, { name: string; defaultValue: boolean }>
+  >({});
 
   const handleCreateFlag = async () => {
     if (!storyId) return;
@@ -52,7 +58,10 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
       await patchFlag({
         id: flag.id,
         name: edited.name !== flag.name ? edited.name : null,
-        default_value: edited.defaultValue !== flag.default_value ? edited.defaultValue : null,
+        default_value:
+          edited.defaultValue !== flag.default_value
+            ? edited.defaultValue
+            : null,
       });
       setEditingFlags((prev) => {
         const next = { ...prev };
@@ -72,7 +81,11 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
     }
   };
 
-  const handleFlagChange = (flagId: number, field: "name" | "defaultValue", value: string | boolean) => {
+  const handleFlagChange = (
+    flagId: number,
+    field: "name" | "defaultValue",
+    value: string | boolean,
+  ) => {
     setEditingFlags((prev) => ({
       ...prev,
       [flagId]: {
@@ -83,12 +96,22 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
   };
 
   const getEditedValue = (flag: Flag) => {
-    return editingFlags[flag.id] || { name: flag.name, defaultValue: flag.default_value };
+    return (
+      editingFlags[flag.id] || {
+        name: flag.name,
+        defaultValue: flag.default_value,
+      }
+    );
   };
 
   return (
-    <Dialog open={true} onClose={onClose} title={t.headings.flags} maxWidth="2xl">
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+    <Dialog
+      open={true}
+      onClose={onClose}
+      title={t.headings.flags}
+      maxWidth="2xl"
+    >
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto flag-creation-dialog">
         {flags.length === 0 ? (
           <div className="py-12 text-center text-gray-500 text-sm">
             {t.emptyStates.noFlags}
@@ -105,7 +128,9 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
                     <Input
                       type="text"
                       value={edited.name}
-                      onChange={(e) => handleFlagChange(flag.id, "name", e.target.value)}
+                      onChange={(e) =>
+                        handleFlagChange(flag.id, "name", e.target.value)
+                      }
                       onBlur={() => hasChanges && handleUpdateFlag(flag)}
                       placeholder={t.placeholders.flagName}
                     />
@@ -114,7 +139,11 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
                         type="checkbox"
                         checked={edited.defaultValue}
                         onChange={(e) => {
-                          handleFlagChange(flag.id, "defaultValue", e.target.checked);
+                          handleFlagChange(
+                            flag.id,
+                            "defaultValue",
+                            e.target.checked,
+                          );
                           setEditingFlags((prev) => ({
                             ...prev,
                             [flag.id]: {
@@ -191,7 +220,13 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
 };
 
 export const FlagsDialog = (props: FlagsDialogProps) => (
-  <Suspense fallback={<div className="flex items-center justify-center p-8"><p className="text-gray-500">Loading...</p></div>}>
+  <Suspense
+    fallback={
+      <div className="flex items-center justify-center p-8">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    }
+  >
     <FlagsDialogContent {...props} />
   </Suspense>
 );

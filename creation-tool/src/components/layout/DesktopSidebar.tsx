@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Collapsible } from "../ui/Collapsible";
 import { Button } from "../ui/Button";
 import { Select } from "../ui/Select";
-import { Cog6ToothIcon, FlagIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import {
+  Cog6ToothIcon,
+  FlagIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -84,16 +88,22 @@ export const DesktopSidebar = ({
   };
 
   return (
-    <div className="hidden lg:flex flex-col w-80 h-screen bg-white border-r border-gray-200">
+    <div className="hidden lg:flex flex-col w-80 h-screen bg-white border-r border-gray-200 sidebar">
       {/* Story Title Header */}
       <div className="px-4 py-6 border-b border-gray-200">
-        <h1 className="text-xl font-semibold text-gray-900 truncate">{storyTitle}</h1>
+        <h1 className="text-xl font-semibold text-gray-900 truncate">
+          {storyTitle}
+        </h1>
       </div>
 
       {/* Scrollable Sections */}
       <div className="flex-1 overflow-y-auto">
         {/* Story Settings Section */}
-        <Collapsible title="Story Settings" icon={Cog6ToothIcon}>
+        <Collapsible
+          title="Story Settings"
+          icon={Cog6ToothIcon}
+          className="story-settings-section"
+        >
           <div className="px-4 py-3 space-y-3">
             <Select
               label="Start Page"
@@ -128,7 +138,12 @@ export const DesktopSidebar = ({
         </Collapsible>
 
         {/* Flags Section */}
-        <Collapsible title="Flags" icon={FlagIcon} badge={flags.length}>
+        <Collapsible
+          title="Flags"
+          icon={FlagIcon}
+          badge={flags.length}
+          className="flags-section"
+        >
           <div className="px-4 py-3">
             <Button
               size="sm"
@@ -149,7 +164,7 @@ export const DesktopSidebar = ({
                     className={clsx(
                       "text-xs font-medium",
                       "text-primary dark:text-blue-400",
-                      "hover:underline"
+                      "hover:underline",
                     )}
                   >
                     +{flags.length - 5} more...
@@ -161,7 +176,13 @@ export const DesktopSidebar = ({
         </Collapsible>
 
         {/* Pages Section */}
-        <Collapsible title="Pages" icon={DocumentTextIcon} defaultOpen badge={pages.length}>
+        <Collapsible
+          title="Pages"
+          icon={DocumentTextIcon}
+          defaultOpen
+          badge={pages.length}
+          className="pages-section"
+        >
           <div className="space-y-1 p-2">
             {pages
               .sort((a, b) => a.id - b.id)
