@@ -100,13 +100,13 @@ export const DesktopSidebar = ({
       <div className="flex-1 overflow-y-auto">
         {/* Story Settings Section */}
         <Collapsible
-          title="Story Settings"
+          title={t.headings.storySettings}
           icon={Cog6ToothIcon}
           className="story-settings-section"
         >
           <div className="px-4 py-3 space-y-3">
             <Select
-              label="Start Page"
+              label={t.labels.startPage}
               value={startPage || ""}
               onChange={(e) => handleStartPageChange(parseInt(e.target.value))}
             >
@@ -123,7 +123,7 @@ export const DesktopSidebar = ({
                 onClick={handleExportStory}
                 className="flex-1"
               >
-                Export Story
+                {t.buttons.exportStory}
               </Button>
               <Button
                 size="sm"
@@ -131,7 +131,7 @@ export const DesktopSidebar = ({
                 onClick={handleExportSchema}
                 className="flex-1"
               >
-                Export Schema
+                {t.buttons.exportSchema}
               </Button>
             </div>
           </div>
@@ -139,7 +139,7 @@ export const DesktopSidebar = ({
 
         {/* Flags Section */}
         <Collapsible
-          title="Flags"
+          title={t.headings.flags}
           icon={FlagIcon}
           badge={flags.length}
           className="flags-section"
@@ -150,13 +150,13 @@ export const DesktopSidebar = ({
               onClick={() => setShowFlags(true)}
               className="w-full mb-3"
             >
-              Manage Flags
+              {t.buttons.manageFlags}
             </Button>
             {flags.length > 0 && (
               <div className="space-y-1">
                 {flags.slice(0, 5).map((flag) => (
                   <div key={flag.id} className="text-xs text-gray-600 truncate">
-                    {flag.name} {flag.default_value ? "(true)" : "(false)"}
+                    {flag.name} {flag.default_value ? t.badges.flagDefaultTrue : t.badges.flagDefaultFalse}
                   </div>
                 ))}
                 {flags.length > 5 && (
@@ -167,7 +167,7 @@ export const DesktopSidebar = ({
                       "hover:underline",
                     )}
                   >
-                    +{flags.length - 5} more...
+                    {t.dynamic.moreFlags(flags.length - 5)}
                   </button>
                 )}
               </div>
@@ -177,7 +177,7 @@ export const DesktopSidebar = ({
 
         {/* Pages Section */}
         <Collapsible
-          title="Pages"
+          title={t.headings.pages}
           icon={DocumentTextIcon}
           defaultOpen
           badge={pages.length}

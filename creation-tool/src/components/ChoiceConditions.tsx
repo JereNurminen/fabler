@@ -41,14 +41,14 @@ export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove }
                 className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
               >
                 <span className="text-gray-900">
-                  <strong>{flag?.name || `Flag ${cond.flag_id}`}</strong>
-                  {" must be "}
+                  <strong>{flag?.name || t.dynamic.flagFallback(cond.flag_id)}</strong>
+                  {` ${t.conditions.mustBe} `}
                   <span
                     className={`font-mono text-white px-1.5 py-0.5 rounded text-xs font-medium ${
                       cond.required_value ? "bg-success" : "bg-danger"
                     }`}
                   >
-                    {cond.required_value ? "true" : "false"}
+                    {cond.required_value ? t.badges.true : t.badges.false}
                   </span>
                 </span>
                 <button
@@ -83,8 +83,8 @@ export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove }
             value={requiredValue ? "true" : "false"}
             onChange={(e) => setRequiredValue(e.target.value === "true")}
           >
-            <option value="true">must be true</option>
-            <option value="false">must be false</option>
+            <option value="true">{t.conditions.mustBeTrue}</option>
+            <option value="false">{t.conditions.mustBeFalse}</option>
           </select>
 
           <Button

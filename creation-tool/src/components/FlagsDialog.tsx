@@ -2,7 +2,7 @@ import { useState, Suspense } from "react";
 import { Dialog } from "./ui/Dialog";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
-import { useTranslation } from "../i18n";
+import { useTranslation, translations } from "../i18n";
 import { useAtomValue, useSetAtom } from "jotai";
 import { currentStoryIdAtom, storyFlagsAtom } from "../atoms/storyAtoms";
 import {
@@ -223,7 +223,7 @@ export const FlagsDialog = (props: FlagsDialogProps) => (
   <Suspense
     fallback={
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">{translations.status.loading}</p>
       </div>
     }
   >

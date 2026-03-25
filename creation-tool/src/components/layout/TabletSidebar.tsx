@@ -47,18 +47,18 @@ export const TabletSidebar = ({
       <div className="hidden sm:flex lg:hidden flex-col w-20 h-screen bg-white border-r border-gray-200 items-center py-4 gap-2">
         <IconButton
           icon={Cog6ToothIcon}
-          label="Story Settings"
+          label={t.headings.storySettings}
           onClick={() => setActivePanel(activePanel === "settings" ? null : "settings")}
         />
         <IconButton
           icon={FlagIcon}
-          label="Flags"
+          label={t.headings.flags}
           badge={flags.length}
           onClick={() => setActivePanel(activePanel === "flags" ? null : "flags")}
         />
         <IconButton
           icon={DocumentTextIcon}
-          label="Pages"
+          label={t.headings.pages}
           badge={pages.length}
           onClick={() => setActivePanel(activePanel === "pages" ? null : "pages")}
         />
@@ -91,7 +91,7 @@ export const TabletSidebar = ({
           {/* Pages Panel */}
           <div className="fixed left-20 top-4 bottom-4 w-80 max-w-[calc(100vw-6rem)] bg-white border border-gray-200 rounded-lg shadow-xl z-40 overflow-hidden flex flex-col">
             <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold">Pages</h2>
+              <h2 className="text-lg font-semibold">{t.headings.pages}</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-1">

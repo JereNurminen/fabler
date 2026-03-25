@@ -41,10 +41,10 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
                 className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
               >
                 <span className="text-gray-900">
-                  <strong>{flag?.name || `Flag ${op.flag_id}`}</strong>
+                  <strong>{flag?.name || t.dynamic.flagFallback(op.flag_id)}</strong>
                   {" → "}
                   <span className="font-mono bg-gray-200 px-1.5 py-0.5 rounded text-xs">
-                    {op.operation}
+                    {t.operations[op.operation as keyof typeof t.operations] ?? op.operation}
                   </span>
                 </span>
                 <button
@@ -79,9 +79,9 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
             value={selectedOperation}
             onChange={(e) => setSelectedOperation(e.target.value)}
           >
-            <option value="set_true">set_true</option>
-            <option value="set_false">set_false</option>
-            <option value="toggle">toggle</option>
+            <option value="set_true">{t.operations.set_true}</option>
+            <option value="set_false">{t.operations.set_false}</option>
+            <option value="toggle">{t.operations.toggle}</option>
           </select>
 
           <Button

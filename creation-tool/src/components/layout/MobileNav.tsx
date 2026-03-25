@@ -106,7 +106,7 @@ export const MobileNav = ({
         <div className="sm:hidden fixed top-14 left-0 bottom-0 w-80 max-w-[85vw] bg-white shadow-xl z-50 overflow-y-auto">
           {/* Close Button */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Menu</h2>
+            <h2 className="text-lg font-semibold">{t.headings.menu}</h2>
             <button
               onClick={() => setMenuOpen(false)}
               className="p-2 text-gray-600 hover:text-gray-900"
@@ -119,11 +119,11 @@ export const MobileNav = ({
           <div className="border-b border-gray-200">
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50">
               <Cog6ToothIcon className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">Story Settings</h3>
+              <h3 className="font-medium text-gray-900">{t.headings.storySettings}</h3>
             </div>
             <div className="px-4 py-3 space-y-3">
               <Select
-                label="Start Page"
+                label={t.labels.startPage}
                 value={startPage || ""}
                 onChange={(e) => handleStartPageChange(parseInt(e.target.value))}
               >
@@ -140,7 +140,7 @@ export const MobileNav = ({
           <div className="border-b border-gray-200">
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50">
               <FlagIcon className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">Flags</h3>
+              <h3 className="font-medium text-gray-900">{t.headings.flags}</h3>
               {flags.length > 0 && (
                 <span className="ml-auto bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                   {flags.length}
@@ -156,7 +156,7 @@ export const MobileNav = ({
                 }}
                 className="w-full"
               >
-                Manage Flags
+                {t.buttons.manageFlags}
               </Button>
             </div>
           </div>
@@ -165,7 +165,7 @@ export const MobileNav = ({
           <div>
             <div className="flex items-center gap-2 px-4 py-3 bg-gray-50">
               <DocumentTextIcon className="w-5 h-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">Pages</h3>
+              <h3 className="font-medium text-gray-900">{t.headings.pages}</h3>
               <span className="ml-auto bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                 {pages.length}
               </span>

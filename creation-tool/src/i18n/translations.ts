@@ -10,7 +10,9 @@ export const translations = {
     createPage: "Create Page",
     newStory: "New Story",
     goToPage: "Go to page →",
-    exportSchema: "Export Schema Template",
+    exportStory: "Export Story",
+    exportSchema: "Export Schema",
+    exportSchemaTemplate: "Export Schema Template",
     manageFlags: "Manage Flags",
     addFlag: "Add Flag",
     addCondition: "Add Condition",
@@ -52,6 +54,8 @@ export const translations = {
     createNewStory: "Create New Story",
     storySettings: "Story Settings",
     flags: "Flags",
+    pages: "Pages",
+    menu: "Menu",
   },
 
   // Status messages
@@ -69,9 +73,26 @@ export const translations = {
     noOperations: "No operations set.",
   },
 
+  // Conditions & operations
+  conditions: {
+    mustBe: "must be",
+    mustBeTrue: "must be true",
+    mustBeFalse: "must be false",
+  },
+
+  operations: {
+    set_true: "set_true",
+    set_false: "set_false",
+    toggle: "toggle",
+  },
+
   // Badges
   badges: {
     start: "START",
+    true: "true",
+    false: "false",
+    flagDefaultTrue: "(true)",
+    flagDefaultFalse: "(false)",
   },
 
   // Alerts
@@ -99,6 +120,8 @@ export const translations = {
     pageFallback: (id: number) => `Page ${id}`,
     pageDisplay: (name: string, id: number) => name || `Page ${id}`,
     errorMessage: (error: string) => `Error: ${error}`,
+    flagFallback: (id: number) => `Flag ${id}`,
+    moreFlags: (count: number) => `+${count} more...`,
   },
 } as const;
 
