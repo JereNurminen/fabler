@@ -24,7 +24,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'VITE_USE_HTTP_API=true npm run dev',
+    command: 'VITE_USE_HTTP_API=true VITE_API_URL=http://127.0.0.1:3001/api npm run dev',
     url: 'http://localhost:1420',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,

@@ -1,0 +1,6 @@
+# Disable test-server feature for rust-analyzer
+# This ensures the editor uses the normal production code paths
+cargo.features = []
+
+[diagnostics]
+disabled = ["inactive-code"]

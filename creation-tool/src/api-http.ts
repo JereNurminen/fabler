@@ -1,11 +1,12 @@
 /**
- * HTTP API implementation for testing
- * Uses fetch to call the test server instead of Tauri commands
+ * HTTP API implementation for testing.
+ * Signatures must match the Tauri command bindings in bindings.ts.
+ * Field names are converted from camelCase (frontend) to snake_case (Rust server).
  */
 
 import type { Result } from "./bindings";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001/api";
 
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<Result<T, string>> {
   try {
@@ -32,25 +33,22 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<Resu
   }
 }
 
+function post(body: unknown): RequestInit {
+  return { method: "POST", body: JSON.stringify(body) };
+}
+
 const httpApi = {
   // Stories
   getStoryList: () => apiCall<any[]>("/stories"),
 
-  createStory: (name: string) =>
-    apiCall<number>("/stories", {
-      method: "POST",
-      body: JSON.stringify(name),
-    }),
+  createStory: (name: string) => apiCall<number>("/stories", post(name)),
 
   getStory: (id: number) => apiCall<any>(`/stories/${id}`),
 
   getStoryOutline: (id: number) => apiCall<any>(`/stories/${id}/outline`),
 
-  patchStory: (patch: any) =>
-    apiCall<void>("/stories/patch", {
-      method: "POST",
-      body: JSON.stringify(patch),
-    }),
+  patchStory: (patch: { id: number; title?: string | null; start_page?: number | null }) =>
+    apiCall<void>("/stories/patch", post(patch)),
 
   exportStoryToml: (storyId: number) => apiCall<string>(`/stories/${storyId}/export`),
 
@@ -59,69 +57,52 @@ const httpApi = {
   // Pages
   getPage: (id: number) => apiCall<any>(`/pages/${id}`),
 
-  patchPage: (patch: any) =>
-    apiCall<void>("/pages/patch", {
-      method: "POST",
-      body: JSON.stringify(patch),
-    }),
+  patchPage: (patch: { id: number; name?: string | null; body?: string | null }) =>
+    apiCall<void>("/pages/patch", post(patch)),
 
-  createPage: (storyId: number) =>
-    apiCall<number>("/pages", {
-      method: "POST",
-      body: JSON.stringify(storyId),
-    }),
+  createPage: (storyId: number) => apiCall<number>("/pages", post(storyId)),
 
-  // Choices
-  createChoice: (req: any) =>
-    apiCall<number>("/choices", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Choices — Tauri binding: createChoice(pageId, text, targetPageId)
+  createChoice: (pageId: number, text: string, targetPageId: number) =>
+    apiCall<number>("/choices", post({
+      page_id: pageId,
+      text,
+      target_page_id: targetPageId,
+    })),
 
-  deleteChoice: (req: any) =>
-    apiCall<void>("/choices/delete", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Tauri binding: deleteChoice(id)
+  deleteChoice: (id: number) =>
+    apiCall<void>("/choices/delete", post({ id })),
 
-  patchChoice: (req: any) =>
-    apiCall<void>("/choices/patch", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Tauri binding: patchChoice(patch: ChoicePatch)
+  patchChoice: (patch: { id: number; text?: string | null; target_page?: number | null }) =>
+    apiCall<void>("/choices/patch", post(patch)),
 
   // Flags
   getStoryFlags: (storyId: number) => apiCall<any[]>(`/stories/${storyId}/flags`),
 
-  createFlag: (flag: any) =>
-    apiCall<number>("/flags", {
-      method: "POST",
-      body: JSON.stringify(flag),
-    }),
+  // Tauri binding: createFlag(create: CreateFlag)
+  createFlag: (create: { story_id: number; name: string; default_value: boolean }) =>
+    apiCall<number>("/flags", post(create)),
 
-  patchFlag: (patch: any) =>
-    apiCall<void>("/flags/patch", {
-      method: "POST",
-      body: JSON.stringify(patch),
-    }),
+  // Tauri binding: patchFlag(patch: FlagPatch)
+  patchFlag: (patch: { id: number; name?: string | null; default_value?: boolean | null }) =>
+    apiCall<void>("/flags/patch", post(patch)),
 
   deleteFlag: (id: number) =>
-    apiCall<void>(`/flags/${id}`, {
-      method: "DELETE",
-    }),
+    apiCall<void>(`/flags/${id}`, { method: "DELETE" }),
 
-  // Flag operations
-  setFlagOperation: (req: any) =>
-    apiCall<void>("/flags/operation", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Flag operations — Tauri binding: setFlagOperation(op: SetFlagOperation)
+  setFlagOperation: (op: { choice_id: number | null; page_id: number | null; flag_id: number; operation: string }) =>
+    apiCall<number>("/flags/operation", post(op)),
 
-  removeFlagOperation: (req: any) =>
-    apiCall<void>("/flags/operation/remove", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Tauri binding: removeFlagOperation(choiceId, pageId, flagId)
+  removeFlagOperation: (choiceId: number | null, pageId: number | null, flagId: number) =>
+    apiCall<void>("/flags/operation/remove", post({
+      choice_id: choiceId,
+      page_id: pageId,
+      flag_id: flagId,
+    })),
 
   getChoiceFlagOperations: (choiceId: number) =>
     apiCall<any[]>(`/flags/operations/choice/${choiceId}`),
@@ -129,18 +110,16 @@ const httpApi = {
   getPageFlagOperations: (pageId: number) =>
     apiCall<any[]>(`/flags/operations/page/${pageId}`),
 
-  // Choice conditions
-  setChoiceCondition: (req: any) =>
-    apiCall<void>("/flags/condition", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Choice conditions — Tauri binding: setChoiceCondition(cond: SetChoiceCondition)
+  setChoiceCondition: (cond: { choice_id: number; flag_id: number; required_value: boolean }) =>
+    apiCall<number>("/flags/condition", post(cond)),
 
-  removeChoiceCondition: (req: any) =>
-    apiCall<void>("/flags/condition/remove", {
-      method: "POST",
-      body: JSON.stringify(req),
-    }),
+  // Tauri binding: removeChoiceCondition(choiceId, flagId)
+  removeChoiceCondition: (choiceId: number, flagId: number) =>
+    apiCall<void>("/flags/condition/remove", post({
+      choice_id: choiceId,
+      flag_id: flagId,
+    })),
 
   getChoiceConditions: (choiceId: number) =>
     apiCall<any[]>(`/flags/conditions/${choiceId}`),
