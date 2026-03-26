@@ -19,6 +19,9 @@ function App() {
   const [_, setLocation] = useLocation();
 
   useEffect(() => {
+    // Skip Tauri event listeners when running outside Tauri (e.g. in e2e tests)
+    if (!(window as any).__TAURI_INTERNALS__) return;
+
     const unlisten = listen("database-reset", async () => {
       setLocation("/");
       await message(translations.status.databaseReset, { title: "", kind: "info" });

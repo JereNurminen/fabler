@@ -49,6 +49,7 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
                 </span>
                 <button
                   onClick={() => onRemove(op.flag_id)}
+                  aria-label={`Remove ${flag?.name ?? "operation"}`}
                   className="text-danger text-xl w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
                 >
                   ×
@@ -62,6 +63,7 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
       {availableForAdd.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mt-1">
           <select
+            aria-label={t.labels.flag}
             className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedFlagId ?? ""}
             onChange={(e) => setSelectedFlagId(e.target.value ? Number(e.target.value) : null)}
@@ -75,6 +77,7 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
           </select>
 
           <select
+            aria-label={t.labels.operation}
             className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedOperation}
             onChange={(e) => setSelectedOperation(e.target.value)}

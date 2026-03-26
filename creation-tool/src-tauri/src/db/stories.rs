@@ -283,6 +283,9 @@ impl Database {
         // Get flags for this story
         let flags = self.get_flags_for_story(story_id).await?;
 
+        let mut pages = story.pages;
+        pages.sort_by_key(|p| p.id);
+
         Ok(ExportedStory {
             story: StoryMetadata {
                 id: story.id,
@@ -290,7 +293,7 @@ impl Database {
                 start_page: story.start_page,
             },
             flags,
-            pages: story.pages,
+            pages,
         })
     }
 }

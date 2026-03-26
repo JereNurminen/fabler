@@ -37,7 +37,7 @@ export const translations = {
     whenSelected: "When selected, set flags:",
     whenPageShown: "When page is shown, set flags:",
     operation: "Operation",
-    requiredValue: "Required Value",
+    requiredValue: "Required value",
     flag: "Flag",
   },
 

@@ -244,7 +244,7 @@ export default ({ pageId }: { pageId: number }) => {
 
       {/* Page Flag Operations */}
       {flags.length > 0 && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200" data-testid="page-flag-operations">
           <h3 className="text-sm font-medium text-gray-900 mb-3">{t.labels.whenPageShown}</h3>
           <FlagOperations
             operations={page.flag_operations}

@@ -1,0 +1,70 @@
+[story]
+id = 1
+title = "The Dark Cave"
+start_page = 2
+
+[[flags]]
+id = 3
+story_id = 1
+name = "found_key"
+default_value = false
+
+[[flags]]
+id = 4
+story_id = 1
+name = "has_torch"
+default_value = false
+
+[[pages]]
+id = 2
+story_id = 1
+name = "Entrance"
+body = "You stand at the entrance of a dark cave. The air is cold and damp."
+flag_operations = []
+
+[[pages.options]]
+id = 5
+page_id = 2
+text = "Enter the tunnel"
+target_page = 6
+flag_operations = []
+conditions = []
+
+[[pages.options]]
+id = 7
+page_id = 2
+text = "Search for a torch"
+target_page = 2
+flag_operations = []
+conditions = []
+
+[[pages]]
+id = 6
+story_id = 1
+name = "Dark Tunnel"
+body = "The tunnel is dark and winding. You hear dripping water echoing off the walls."
+flag_operations = []
+
+[[pages.options]]
+id = 8
+page_id = 6
+text = "Enter the treasure room"
+target_page = 9
+flag_operations = []
+conditions = []
+
+[[pages.options]]
+id = 10
+page_id = 6
+text = "Go back to entrance"
+target_page = 2
+flag_operations = []
+conditions = []
+
+[[pages]]
+id = 9
+story_id = 1
+name = "Treasure Room"
+body = "Golden light floods the chamber. You have found the legendary treasure!"
+options = []
+flag_operations = []
