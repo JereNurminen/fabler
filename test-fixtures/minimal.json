@@ -1,0 +1,19 @@
+{
+  "format_version": 1,
+  "story": {
+    "id": "minimal-1",
+    "title": "Minimal Story",
+    "start_page": "page-1"
+  },
+  "flags": [],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "The Only Page",
+      "body": "This is a story with just one page. There is nothing else to do.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": []
+    }
+  ]
+}

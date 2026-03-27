@@ -1,0 +1,101 @@
+{
+  "format_version": 1,
+  "story": {
+    "id": "flags-1",
+    "title": "The Key and the Door",
+    "start_page": "room"
+  },
+  "flags": [
+    { "id": "has_key", "name": "Has the key", "default_value": false },
+    { "id": "door_unlocked", "name": "Door is unlocked", "default_value": false }
+  ],
+  "pages": [
+    {
+      "id": "room",
+      "name": "The Room",
+      "body": "You are in a small room. There is a locked door on the north wall and a table in the corner.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "search-table",
+          "text": "Search the table",
+          "target": "table",
+          "flag_operations": [],
+          "conditions": []
+        },
+        {
+          "id": "try-door-locked",
+          "text": "Try the door",
+          "target": "door-locked",
+          "flag_operations": [],
+          "conditions": [
+            { "flag_id": "door_unlocked", "required_value": false }
+          ]
+        },
+        {
+          "id": "open-door",
+          "text": "Open the door",
+          "target": "freedom",
+          "flag_operations": [],
+          "conditions": [
+            { "flag_id": "door_unlocked", "required_value": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "table",
+      "name": "The Table",
+      "body": "You find a rusty key under some papers.",
+      "assets": [],
+      "flag_operations": [
+        { "flag_id": "has_key", "operation": "set_true" }
+      ],
+      "choices": [
+        {
+          "id": "back-from-table",
+          "text": "Go back to the room",
+          "target": "room",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "door-locked",
+      "name": "Locked Door",
+      "body": "The door is locked tight.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "use-key",
+          "text": "Use the key",
+          "target": "room",
+          "flag_operations": [
+            { "flag_id": "door_unlocked", "operation": "set_true" }
+          ],
+          "conditions": [
+            { "flag_id": "has_key", "required_value": true }
+          ]
+        },
+        {
+          "id": "back-from-door",
+          "text": "Go back",
+          "target": "room",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "freedom",
+      "name": "Freedom",
+      "body": "You step through the door into the sunlight. You are free!",
+      "assets": [],
+      "flag_operations": [],
+      "choices": []
+    }
+  ]
+}

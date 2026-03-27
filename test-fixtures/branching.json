@@ -1,0 +1,96 @@
+{
+  "format_version": 1,
+  "story": {
+    "id": "branching-1",
+    "title": "The Forking Path",
+    "start_page": "entrance"
+  },
+  "flags": [],
+  "pages": [
+    {
+      "id": "entrance",
+      "name": "Entrance",
+      "body": "You stand at a fork in the road. Two paths stretch out before you.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "go-left",
+          "text": "Take the left path",
+          "target": "forest",
+          "flag_operations": [],
+          "conditions": []
+        },
+        {
+          "id": "go-right",
+          "text": "Take the right path",
+          "target": "mountain",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "forest",
+      "name": "Deep Forest",
+      "body": "The trees close in around you. Sunlight filters through the canopy.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "forest-continue",
+          "text": "Press deeper into the forest",
+          "target": "clearing",
+          "flag_operations": [],
+          "conditions": []
+        },
+        {
+          "id": "forest-back",
+          "text": "Turn back to the fork",
+          "target": "entrance",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "mountain",
+      "name": "Mountain Trail",
+      "body": "The path winds upward. Rocks crunch beneath your feet.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "mountain-summit",
+          "text": "Climb to the summit",
+          "target": "summit",
+          "flag_operations": [],
+          "conditions": []
+        },
+        {
+          "id": "mountain-back",
+          "text": "Turn back to the fork",
+          "target": "entrance",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "clearing",
+      "name": "Sunlit Clearing",
+      "body": "You emerge into a beautiful clearing. Wildflowers sway in the breeze. Your journey ends here, at peace.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": []
+    },
+    {
+      "id": "summit",
+      "name": "The Summit",
+      "body": "You reach the top. The world stretches out below you in every direction. Your journey ends here, triumphant.",
+      "assets": [],
+      "flag_operations": [],
+      "choices": []
+    }
+  ]
+}
