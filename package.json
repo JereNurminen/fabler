@@ -2,6 +2,7 @@
   "private": true,
   "workspaces": [
     "player",
-    "creation-tool"
+    "creation-tool",
+    "reader"
   ]
 }
