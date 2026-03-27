@@ -13,6 +13,7 @@
     "test:e2e:headed": "./scripts/test-with-backend.sh --headed"
   },
   "dependencies": {
+    "@fabler/player": "file:../player",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@tauri-apps/api": "^2.0.0-rc.5",
