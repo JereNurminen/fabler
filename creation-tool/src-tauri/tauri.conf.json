@@ -24,6 +24,7 @@
             "core:default",
             "dialog:default",
             "fs:allow-write-text-file",
+            "fs:allow-write-file",
             "fs:allow-read-text-file"
           ],
           "windows": ["main"]

@@ -1,18 +1,23 @@
 import { useState } from "react";
 import { IconButton } from "../ui/IconButton";
-import { Cog6ToothIcon, FlagIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { Cog6ToothIcon, FlagIcon, DocumentTextIcon, PlayIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { FlagsDialog } from "../FlagsDialog";
 import { StorySettingsDialog } from "../StorySettingsDialog";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
+import clsx from "clsx";
 
 interface TabletSidebarProps {
   storyId: number;
   storyTitle: string;
   pages: Array<{ id: number; name: string }>;
   startPage: number | null;
+  onPlaytest?: () => void;
+  onTogglePreview?: () => void;
+  showPreview?: boolean;
+  hasPageSelected?: boolean;
 }
 
 type Panel = "settings" | "flags" | "pages" | null;
@@ -22,6 +27,10 @@ export const TabletSidebar = ({
   storyTitle,
   pages,
   startPage,
+  onPlaytest,
+  onTogglePreview,
+  showPreview,
+  hasPageSelected,
 }: TabletSidebarProps) => {
   const [activePanel, setActivePanel] = useState<Panel>(null);
   const { flags, patchStory } = useStoryAtoms();
@@ -62,6 +71,20 @@ export const TabletSidebar = ({
           badge={pages.length}
           onClick={() => setActivePanel(activePanel === "pages" ? null : "pages")}
         />
+        <IconButton
+          icon={PlayIcon}
+          label={t.buttons.playtest}
+          onClick={onPlaytest}
+          className="text-indigo-600 hover:bg-indigo-50"
+        />
+        {hasPageSelected && (
+          <IconButton
+            icon={EyeIcon}
+            label={t.buttons.preview}
+            onClick={onTogglePreview}
+            className={clsx(showPreview && "bg-blue-100 text-blue-700 hover:bg-blue-100")}
+          />
+        )}
       </div>
 
       {/* Floating Panels */}

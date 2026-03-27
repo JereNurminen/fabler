@@ -9,6 +9,10 @@ interface MainLayoutProps {
   pages: Array<{ id: number; name: string }>;
   startPage: number | null;
   children: ReactNode;
+  onPlaytest?: () => void;
+  onTogglePreview?: () => void;
+  showPreview?: boolean;
+  hasPageSelected?: boolean;
 }
 
 export const MainLayout = ({
@@ -17,6 +21,10 @@ export const MainLayout = ({
   pages,
   startPage,
   children,
+  onPlaytest,
+  onTogglePreview,
+  showPreview,
+  hasPageSelected,
 }: MainLayoutProps) => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
@@ -26,6 +34,10 @@ export const MainLayout = ({
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
+        onPlaytest={onPlaytest}
+        onTogglePreview={onTogglePreview}
+        showPreview={showPreview}
+        hasPageSelected={hasPageSelected}
       />
 
       {/* Tablet Sidebar (640px - 1024px) */}
@@ -34,6 +46,10 @@ export const MainLayout = ({
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
+        onPlaytest={onPlaytest}
+        onTogglePreview={onTogglePreview}
+        showPreview={showPreview}
+        hasPageSelected={hasPageSelected}
       />
 
       {/* Mobile Navigation (< 640px) */}
@@ -42,6 +58,10 @@ export const MainLayout = ({
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
+        onPlaytest={onPlaytest}
+        onTogglePreview={onTogglePreview}
+        showPreview={showPreview}
+        hasPageSelected={hasPageSelected}
       />
 
       {/* Main Content Area */}

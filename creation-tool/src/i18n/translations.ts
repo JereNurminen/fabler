@@ -11,6 +11,7 @@ export const translations = {
     newStory: "New Story",
     goToPage: "Go to page →",
     exportStory: "Export Story",
+    exportBundle: "Export .fabler",
     exportSchema: "Export Schema",
     importStory: "Import Story",
     exportSchemaTemplate: "Export Schema Template",
@@ -20,6 +21,10 @@ export const translations = {
     addOperation: "Add Operation",
     menu: "Menu",
     closeMenu: "Close Menu",
+    playtest: "Playtest",
+    preview: "Preview",
+    closePlaytest: "Close Playtest",
+    closePreview: "Close Preview",
   },
 
   // Labels
@@ -39,6 +44,8 @@ export const translations = {
     operation: "Operation",
     requiredValue: "Required value",
     flag: "Flag",
+    playtestMode: "Playtest Mode",
+    previewMode: "Preview",
   },
 
   // Placeholders
@@ -64,6 +71,7 @@ export const translations = {
     loading: "Loading...",
     databaseReset: "Database reset successfully",
     selectPage: "Select a page from the sidebar to edit",
+    loadingPlaytest: "Loading story for playtest...",
   },
 
   // Empty states

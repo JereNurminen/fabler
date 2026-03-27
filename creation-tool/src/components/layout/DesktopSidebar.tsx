@@ -10,7 +10,7 @@ import {
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { writeTextFile, writeFile } from "@tauri-apps/plugin-fs";
 import api from "../../api";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
@@ -22,6 +22,10 @@ interface DesktopSidebarProps {
   storyTitle: string;
   pages: Array<{ id: number; name: string }>;
   startPage: number | null;
+  onPlaytest?: () => void;
+  onTogglePreview?: () => void;
+  showPreview?: boolean;
+  hasPageSelected?: boolean;
 }
 
 export const DesktopSidebar = ({
@@ -29,6 +33,10 @@ export const DesktopSidebar = ({
   storyTitle,
   pages,
   startPage,
+  onPlaytest,
+  onTogglePreview,
+  showPreview,
+  hasPageSelected,
 }: DesktopSidebarProps) => {
   const [showFlags, setShowFlags] = useState(false);
   const { patchStory, flags } = useStoryAtoms();
@@ -53,6 +61,28 @@ export const DesktopSidebar = ({
       }
     } catch (error) {
       console.error("Failed to export story:", error);
+      alert(t.alerts.exportFailed);
+    }
+  };
+
+  const handleExportBundle = async () => {
+    try {
+      const result = await api.exportStoryBundle(storyId);
+      if (result.status === "ok") {
+        const filePath = await save({
+          defaultPath: `${storyTitle}.fabler`,
+          filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
+        });
+
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(result.data));
+          alert(t.alerts.exportSuccess);
+        }
+      } else {
+        alert(t.alerts.exportFailed);
+      }
+    } catch (error) {
+      console.error("Failed to export bundle:", error);
       alert(t.alerts.exportFailed);
     }
   };
@@ -94,6 +124,27 @@ export const DesktopSidebar = ({
         <h1 className="text-xl font-semibold text-gray-900 truncate">
           {storyTitle}
         </h1>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={onPlaytest}
+            className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
+          >
+            {t.buttons.playtest}
+          </button>
+          {hasPageSelected && (
+            <button
+              onClick={onTogglePreview}
+              className={clsx(
+                "flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+                showPreview
+                  ? "text-white bg-blue-600 hover:bg-blue-700"
+                  : "text-gray-700 bg-gray-100 hover:bg-gray-200",
+              )}
+            >
+              {t.buttons.preview}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Scrollable Sections */}
@@ -116,6 +167,13 @@ export const DesktopSidebar = ({
                 </option>
               ))}
             </Select>
+            <Button
+              size="sm"
+              onClick={handleExportBundle}
+              className="w-full"
+            >
+              {t.buttons.exportBundle}
+            </Button>
             <div className="flex gap-2">
               <Button
                 size="sm"

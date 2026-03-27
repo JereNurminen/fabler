@@ -7,6 +7,8 @@ import {
   FlagIcon,
   DocumentTextIcon,
   ArrowUpTrayIcon,
+  PlayIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
@@ -24,6 +26,10 @@ interface MobileNavProps {
   storyTitle: string;
   pages: Array<{ id: number; name: string }>;
   startPage: number | null;
+  onPlaytest?: () => void;
+  onTogglePreview?: () => void;
+  showPreview?: boolean;
+  hasPageSelected?: boolean;
 }
 
 export const MobileNav = ({
@@ -31,6 +37,10 @@ export const MobileNav = ({
   storyTitle,
   pages,
   startPage,
+  onPlaytest,
+  onTogglePreview,
+  showPreview,
+  hasPageSelected,
 }: MobileNavProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFlags, setShowFlags] = useState(false);
@@ -113,6 +123,32 @@ export const MobileNav = ({
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
+          </div>
+
+          {/* Playtest / Preview Actions */}
+          <div className="border-b border-gray-200 px-4 py-3 flex gap-2">
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                onPlaytest?.();
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
+            >
+              <PlayIcon className="w-4 h-4" />
+              {t.buttons.playtest}
+            </button>
+            {hasPageSelected && (
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onTogglePreview?.();
+                }}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${showPreview ? "text-white bg-blue-600 hover:bg-blue-700" : "text-gray-700 bg-gray-100 hover:bg-gray-200"}`}
+              >
+                <EyeIcon className="w-4 h-4" />
+                {t.buttons.preview}
+              </button>
+            )}
           </div>
 
           {/* Story Settings Panel */}
