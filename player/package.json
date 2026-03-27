@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "exports": {
+    "./engine/types": "./engine/types.ts",
+    "./engine": "./engine/index.ts",
+    "./ui": "./ui/index.ts",
+    "./ui/player.css": "./ui/player.css"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

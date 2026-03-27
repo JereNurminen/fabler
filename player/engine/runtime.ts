@@ -14,6 +14,7 @@ export function evaluateConditions(
 ): boolean {
   // AND logic: all conditions must be met
   // Missing flags treated as false
+  if (!conditions || conditions.length === 0) return true;
   return conditions.every(
     (c) => (flags[c.flag_id] ?? false) === c.required_value,
   );
@@ -24,6 +25,7 @@ export function applyFlagOperations(
   flags: FlagState,
 ): FlagState {
   // Returns NEW state (immutable). Supports set_true, set_false, toggle
+  if (!operations || operations.length === 0) return flags;
   const result = { ...flags };
   for (const op of operations) {
     const current = result[op.flag_id] ?? false;
@@ -46,7 +48,7 @@ export function getAvailableChoices(
   page: ManifestPage,
   flags: FlagState,
 ): ManifestChoice[] {
-  return page.choices.filter((c) => evaluateConditions(c.conditions, flags));
+  return (page.choices || []).filter((c) => evaluateConditions(c.conditions, flags));
 }
 
 export function initGameState(manifest: Manifest): GameState {
@@ -66,10 +68,10 @@ export function navigate(
   choice: ManifestChoice,
 ): GameState {
   // Apply choice flag operations first, then target page flag operations
-  let flags = applyFlagOperations(choice.flag_operations, state.flags);
+  let flags = applyFlagOperations(choice.flag_operations || [], state.flags);
   const targetPage = manifest.pages.find((p) => p.id === choice.target);
   if (targetPage) {
-    flags = applyFlagOperations(targetPage.flag_operations, flags);
+    flags = applyFlagOperations(targetPage.flag_operations || [], flags);
   }
   return { currentPageId: choice.target, flags };
 }
