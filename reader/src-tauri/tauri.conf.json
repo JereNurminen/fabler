@@ -1,0 +1,53 @@
+{
+  "build": {
+    "beforeDevCommand": "yarn dev",
+    "beforeBuildCommand": "yarn build",
+    "devUrl": "http://localhost:1421",
+    "frontendDist": "../dist"
+  },
+  "productName": "Fabler Reader",
+  "version": "0.1.0",
+  "app": {
+    "windows": [
+      {
+        "title": "Fabler Reader",
+        "width": 420,
+        "height": 720
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "reader-core",
+          "permissions": [
+            "core:default",
+            "dialog:default",
+            "fs:allow-read-text-file",
+            "fs:allow-write-text-file"
+          ],
+          "windows": ["main"]
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["fabler"],
+        "mimeType": "application/x-fabler",
+        "description": "Fabler Story Bundle"
+      }
+    ]
+  },
+  "identifier": "com.fabler.reader"
+}

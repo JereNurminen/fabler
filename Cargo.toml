@@ -2,5 +2,6 @@
 members = [
     "shared",
     "creation-tool/src-tauri",
+    "reader/src-tauri",
 ]
 resolver = "2"
