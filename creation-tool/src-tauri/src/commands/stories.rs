@@ -72,3 +72,11 @@ pub async fn import_story_toml(toml_content: String, db: State<'_, Database>) ->
 pub fn get_toml_schema() -> String {
     crate::schema::generate_toml_schema()
 }
+
+#[tauri::command]
+#[specta::specta]
+pub async fn export_story_bundle(story_id: i64, db: State<'_, Database>) -> Result<Vec<u8>, String> {
+    db.export_story_bundle(story_id)
+        .await
+        .map_err(|e| e.to_string())
+}

@@ -276,6 +276,17 @@ impl Database {
         Ok(story_id)
     }
 
+    pub async fn export_story_bundle(&self, story_id: StoryId) -> AppResult<Vec<u8>> {
+        let exported = self.export_story(story_id).await?;
+        let manifest = shared::bundle::Manifest::from(&exported);
+        let contents = shared::bundle::BundleContents {
+            manifest,
+            assets: std::collections::HashMap::new(),
+        };
+        shared::bundle::pack_bundle(&contents)
+            .map_err(|e| AppError::Custom(format!("Failed to pack bundle: {e}")))
+    }
+
     pub async fn export_story(&self, story_id: StoryId) -> AppResult<ExportedStory> {
         // Get complete story with all pages and choices
         let story = self.get_story(story_id).await?;
