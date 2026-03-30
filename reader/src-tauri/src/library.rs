@@ -139,27 +139,28 @@ impl Library {
 mod tests {
     use std::collections::HashMap;
 
-    use shared::bundle::{pack_bundle, BundleContents, Manifest, ManifestPage, ManifestStory};
+    use shared::bundle::{pack_bundle, BundleContents, Manifest, ManifestStory};
+    use shared::models::Page;
 
     use super::*;
 
     fn make_manifest(id: &str, title: &str) -> Manifest {
-        Manifest::new(
-            ManifestStory {
+        Manifest {
+            format_version: 1,
+            story: ManifestStory {
                 id: id.to_string(),
                 title: title.to_string(),
                 start_page: "page-1".to_string(),
             },
-            vec![],
-            vec![ManifestPage {
+            flags: vec![],
+            pages: vec![Page {
                 id: "page-1".to_string(),
                 name: "Start".to_string(),
                 body: "You begin your adventure.".to_string(),
-                assets: vec![],
                 choices: vec![],
                 flag_operations: vec![],
             }],
-        )
+        }
     }
 
     fn make_bundle(id: &str, title: &str) -> Vec<u8> {
@@ -260,22 +261,22 @@ mod tests {
         // Install updated bundle with same id but different title
         let bundle_v2 = {
             let contents = BundleContents {
-                manifest: Manifest::new(
-                    ManifestStory {
+                manifest: Manifest {
+                    format_version: 1,
+                    story: ManifestStory {
                         id: "story-overwrite".to_string(),
                         title: "New Title".to_string(),
                         start_page: "page-1".to_string(),
                     },
-                    vec![],
-                    vec![ManifestPage {
+                    flags: vec![],
+                    pages: vec![Page {
                         id: "page-1".to_string(),
                         name: "Start".to_string(),
                         body: "Updated content.".to_string(),
-                        assets: vec![],
                         choices: vec![],
                         flag_operations: vec![],
                     }],
-                ),
+                },
                 assets: HashMap::new(),
             };
             pack_bundle(&contents).expect("pack")
