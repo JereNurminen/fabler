@@ -3,10 +3,10 @@ import type {
   Page,
   Choice,
   FlagOperation,
-  ChoiceCondition,
+  Condition,
   Flag,
-  StoryOutline,
-} from "../../../bindings";
+  Story,
+} from "../../types";
 import {
   convertPageToManifestPage,
   convertToManifest,
@@ -16,8 +16,7 @@ import {
 
 function makeFlag(overrides?: Partial<Flag>): Flag {
   return {
-    id: 1,
-    story_id: 10,
+    id: "3",
     name: "visited_cave",
     default_value: false,
     ...overrides,
@@ -25,19 +24,18 @@ function makeFlag(overrides?: Partial<Flag>): Flag {
 }
 
 function makeFlagOperation(overrides?: Partial<FlagOperation>): FlagOperation {
-  return { id: 1, flag_id: 3, operation: "set_true", ...overrides };
+  return { flag_id: "3", operation: "set_true", ...overrides };
 }
 
-function makeCondition(overrides?: Partial<ChoiceCondition>): ChoiceCondition {
-  return { id: 1, flag_id: 3, required_value: true, ...overrides };
+function makeCondition(overrides?: Partial<Condition>): Condition {
+  return { flag_id: "3", required_value: true, ...overrides };
 }
 
 function makeChoice(overrides?: Partial<Choice>): Choice {
   return {
-    id: 5,
-    page_id: 1,
+    id: "5",
     text: "Go north",
-    target_page: 2,
+    target: "2",
     flag_operations: [],
     conditions: [],
     ...overrides,
@@ -46,22 +44,21 @@ function makeChoice(overrides?: Partial<Choice>): Choice {
 
 function makePage(overrides?: Partial<Page>): Page {
   return {
-    id: 1,
-    story_id: 10,
+    id: "1",
     name: "Start",
     body: "You are at the start.",
-    options: [],
+    choices: [],
     flag_operations: [],
     ...overrides,
   };
 }
 
-function makeOutline(overrides?: Partial<StoryOutline>): StoryOutline {
+function makeStory(overrides?: Partial<Story>): Story {
   return {
-    id: 10,
+    format_version: 1,
     title: "My Story",
-    pages: [{ id: 1, name: "Start" }],
-    start_page: 1,
+    start_page: "1",
+    flags: [],
     ...overrides,
   };
 }
@@ -70,18 +67,18 @@ function makeOutline(overrides?: Partial<StoryOutline>): StoryOutline {
 
 describe("convertPageToManifestPage", () => {
   it("converts a page with choices, flag operations, and conditions", () => {
-    const flagOp = makeFlagOperation({ id: 10, flag_id: 3, operation: "toggle" });
-    const condition = makeCondition({ id: 20, flag_id: 7, required_value: false });
+    const flagOp = makeFlagOperation({ flag_id: "3", operation: "toggle" });
+    const condition = makeCondition({ flag_id: "7", required_value: false });
     const choice = makeChoice({
-      id: 5,
-      target_page: 2,
+      id: "5",
+      target: "2",
       flag_operations: [flagOp],
       conditions: [condition],
     });
-    const pageFlagOp = makeFlagOperation({ id: 11, flag_id: 4, operation: "set_false" });
+    const pageFlagOp = makeFlagOperation({ flag_id: "4", operation: "set_false" });
     const page = makePage({
-      id: 1,
-      options: [choice],
+      id: "1",
+      choices: [choice],
       flag_operations: [pageFlagOp],
     });
 
@@ -116,7 +113,7 @@ describe("convertPageToManifestPage", () => {
   });
 
   it("converts a page with no choices", () => {
-    const page = makePage({ id: 99, options: [], flag_operations: [] });
+    const page = makePage({ id: "99", choices: [], flag_operations: [] });
     const result = convertPageToManifestPage(page);
 
     expect(result.id).toBe("99");
@@ -127,34 +124,30 @@ describe("convertPageToManifestPage", () => {
 });
 
 describe("convertToManifest", () => {
-  it("converts a full story (outline + full pages + flags) to Manifest", () => {
-    const flag1 = makeFlag({ id: 3, story_id: 10, name: "visited_cave", default_value: false });
-    const flag2 = makeFlag({ id: 7, story_id: 10, name: "has_sword", default_value: true });
+  it("converts a full story (story + pages) to Manifest", () => {
+    const flag1 = makeFlag({ id: "3", name: "visited_cave", default_value: false });
+    const flag2 = makeFlag({ id: "7", name: "has_sword", default_value: true });
 
-    const page1 = makePage({ id: 1, story_id: 10, name: "Start", body: "Start page." });
+    const page1 = makePage({ id: "1", name: "Start", body: "Start page." });
     const page2 = makePage({
-      id: 2,
-      story_id: 10,
+      id: "2",
       name: "Cave",
       body: "Dark cave.",
-      flag_operations: [makeFlagOperation({ flag_id: 3, operation: "set_true" })],
+      flag_operations: [makeFlagOperation({ flag_id: "3", operation: "set_true" })],
     });
 
-    const outline = makeOutline({
-      id: 10,
+    const story = makeStory({
+      format_version: 1,
       title: "My Story",
-      start_page: 1,
-      pages: [
-        { id: 1, name: "Start" },
-        { id: 2, name: "Cave" },
-      ],
+      start_page: "1",
+      flags: [flag1, flag2],
     });
 
-    const manifest = convertToManifest(outline, [page1, page2], [flag1, flag2]);
+    const manifest = convertToManifest(story, [page1, page2]);
 
     expect(manifest.format_version).toBe(1);
 
-    expect(manifest.story.id).toBe("10");
+    expect(manifest.story.id).toBe("preview");
     expect(manifest.story.title).toBe("My Story");
     expect(manifest.story.start_page).toBe("1");
 
@@ -169,15 +162,15 @@ describe("convertToManifest", () => {
   });
 
   it("handles empty flags and a single page", () => {
-    const page = makePage({ id: 5, story_id: 20, name: "Only Page", body: "The end." });
-    const outline = makeOutline({
-      id: 20,
+    const page = makePage({ id: "5", name: "Only Page", body: "The end." });
+    const story = makeStory({
+      format_version: 1,
       title: "Short Story",
-      start_page: 5,
-      pages: [{ id: 5, name: "Only Page" }],
+      start_page: "5",
+      flags: [],
     });
 
-    const manifest = convertToManifest(outline, [page], []);
+    const manifest = convertToManifest(story, [page]);
 
     expect(manifest.flags).toEqual([]);
     expect(manifest.pages).toHaveLength(1);

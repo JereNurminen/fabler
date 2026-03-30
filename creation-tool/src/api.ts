@@ -1,42 +1,39 @@
-import { commands } from "./bindings";
-import httpApi from "./api-http";
+import { invoke } from "@tauri-apps/api/core";
+import type { Story, Page, PageListItem } from "./types";
 
-// Use HTTP API if VITE_USE_HTTP_API is set (for testing)
-const useHttpApi = import.meta.env.VITE_USE_HTTP_API === "true";
+const api = {
+  openProject: (path: string) =>
+    invoke<Story>("open_project", { path }),
 
-const tauriApi = {
-  getStoryList: commands.getStories,
-  createStory: commands.addStory,
-  getStory: commands.getStory,
-  getStoryOutline: commands.getStoryOutline,
-  patchStory: commands.patchStory,
-  exportStoryToml: commands.exportStoryToml,
-  exportStoryBundle: commands.exportStoryBundle,
-  importStoryToml: commands.importStoryToml,
-  getTomlSchema: commands.getTomlSchema,
-  getPage: commands.getPage,
-  patchPage: commands.patchPage,
-  createPage: commands.createPage,
-  createChoice: commands.createChoice,
-  deleteChoice: commands.deleteChoice,
-  patchChoice: commands.patchChoice,
-  // Flag CRUD
-  getStoryFlags: commands.getStoryFlags,
-  createFlag: commands.createFlag,
-  patchFlag: commands.patchFlag,
-  deleteFlag: commands.deleteFlag,
-  // Flag operations
-  setFlagOperation: commands.setFlagOperation,
-  removeFlagOperation: commands.removeFlagOperation,
-  getChoiceFlagOperations: commands.getChoiceFlagOperations,
-  getPageFlagOperations: commands.getPageFlagOperations,
-  // Choice conditions
-  setChoiceCondition: commands.setChoiceCondition,
-  removeChoiceCondition: commands.removeChoiceCondition,
-  getChoiceConditions: commands.getChoiceConditions,
+  createProject: (path: string, title: string) =>
+    invoke<Story>("create_project", { path, title }),
+
+  closeProject: () =>
+    invoke<void>("close_project"),
+
+  getStory: () =>
+    invoke<Story>("get_story"),
+
+  saveStory: (story: Story) =>
+    invoke<void>("save_story", { story }),
+
+  listPages: () =>
+    invoke<PageListItem[]>("list_pages"),
+
+  getPage: (id: string) =>
+    invoke<Page>("get_page", { id }),
+
+  savePage: (page: Page) =>
+    invoke<void>("save_page", { page }),
+
+  createPage: (name: string) =>
+    invoke<Page>("create_page", { name }),
+
+  deletePage: (id: string) =>
+    invoke<void>("delete_page", { id }),
+
+  exportBundle: (outputPath: string) =>
+    invoke<void>("export_bundle", { outputPath }),
 };
 
-const api = useHttpApi ? httpApi : tauriApi;
-
 export default api;
-export type { Result } from "./bindings";

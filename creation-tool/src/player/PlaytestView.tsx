@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { StoryPlayer } from "@fabler/player/ui";
 import type { AssetResolver, Manifest } from "@fabler/player/engine/types";
-import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { convertToManifest } from "./convertToManifest";
 import { MemoryStorage } from "./MemoryStorage";
 import { useTranslation } from "../i18n";
 import api from "../api";
+import type { Page } from "../types";
 import "@fabler/player/ui/player.css";
 
 const noopAssets: AssetResolver = {
@@ -17,24 +17,21 @@ interface PlaytestViewProps {
 }
 
 export function PlaytestView({ onClose }: PlaytestViewProps) {
-  const { story, flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const storageRef = useRef(new MemoryStorage());
 
   useEffect(() => {
-    if (!story) return;
-
     async function loadStory() {
-      const result = await api.getStory(story!.id);
-      if (result.status !== "ok") return;
-      // result.data is a full Story with all pages populated
-      const m = convertToManifest(story!, result.data.pages, flags);
-      setManifest(m);
+      const story = await api.getStory();
+      const pageList = await api.listPages();
+      const pages = await Promise.all(
+        pageList.map((p) => api.getPage(p.id)),
+      );
+      setManifest(convertToManifest(story, pages));
     }
-
     loadStory();
-  }, [story, flags]);
+  }, []);
 
   if (!manifest) {
     return (

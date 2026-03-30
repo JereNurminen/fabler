@@ -1,5 +1,5 @@
 import { convertPageToManifestPage } from "./convertToManifest";
-import type { Page } from "../bindings";
+import type { Page } from "../types";
 
 interface PreviewViewProps {
   page: Page;
