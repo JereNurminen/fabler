@@ -6,11 +6,10 @@ import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
 
 type StorySettingsDialogProps = {
-  storyId: number;
   initialTitle: string;
-  initialStartPage: number | null;
-  pages: Array<{ id: number; name: string }>;
-  onConfirm: (title: string, startPage: number) => void;
+  initialStartPage: string | null;
+  pages: Array<{ id: string; name: string }>;
+  onConfirm: (title: string, startPage: string) => void;
   onCancel: () => void;
 };
 
@@ -22,8 +21,8 @@ export const StorySettingsDialog = ({
   onCancel,
 }: StorySettingsDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
-  const [startPage, setStartPage] = useState<number>(
-    initialStartPage ?? pages[0]?.id ?? 0
+  const [startPage, setStartPage] = useState<string>(
+    initialStartPage ?? pages[0]?.id ?? ""
   );
   const { t } = useTranslation();
 
@@ -54,11 +53,11 @@ export const StorySettingsDialog = ({
         <Select
           label={t.labels.startPage}
           value={startPage}
-          onChange={(e) => setStartPage(Number(e.target.value))}
+          onChange={(e) => setStartPage(e.target.value)}
         >
           {pages.map((page) => (
             <option key={page.id} value={page.id}>
-              {t.dynamic.pageDisplay(page.name, page.id)}
+              {page.name || page.id}
             </option>
           ))}
         </Select>

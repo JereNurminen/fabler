@@ -17,10 +17,9 @@ import { FlagsDialog } from "../FlagsDialog";
 import clsx from "clsx";
 
 interface DesktopSidebarProps {
-  storyId: number;
   storyTitle: string;
-  pages: Array<{ id: number; name: string }>;
-  startPage: number | null;
+  pages: Array<{ id: string; name: string }>;
+  startPage: string | null;
   onPlaytest?: () => void;
   onTogglePreview?: () => void;
   showPreview?: boolean;
@@ -28,7 +27,6 @@ interface DesktopSidebarProps {
 }
 
 export const DesktopSidebar = ({
-  storyId,
   storyTitle,
   pages,
   startPage,
@@ -38,7 +36,7 @@ export const DesktopSidebar = ({
   hasPageSelected,
 }: DesktopSidebarProps) => {
   const [showFlags, setShowFlags] = useState(false);
-  const { patchStory, flags } = useStoryAtoms();
+  const { flags } = useStoryAtoms();
   const { t } = useTranslation();
 
   const handleExportBundle = async () => {
@@ -58,15 +56,12 @@ export const DesktopSidebar = ({
     }
   };
 
-  const handleStartPageChange = async (newStartPage: number) => {
+  const handleStartPageChange = async (newStartPage: string) => {
     try {
-      await patchStory({
-        id: storyId,
-        start_page: newStartPage,
-      });
+      const currentStory = await api.getStory();
+      await api.saveStory({ ...currentStory, start_page: newStartPage });
     } catch (error) {
       console.error("Failed to update start page:", error);
-      alert(t.alerts.updateSettingsFailed);
     }
   };
 
@@ -112,11 +107,11 @@ export const DesktopSidebar = ({
             <Select
               label={t.labels.startPage}
               value={startPage || ""}
-              onChange={(e) => handleStartPageChange(parseInt(e.target.value))}
+              onChange={(e) => handleStartPageChange(e.target.value)}
             >
               {pages.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {t.dynamic.pageDisplay(p.name, p.id)}
+                  {p.name || p.id}
                 </option>
               ))}
             </Select>
@@ -178,20 +173,20 @@ export const DesktopSidebar = ({
         >
           <div className="space-y-1 p-2">
             {pages
-              .sort((a, b) => a.id - b.id)
+              .sort((a, b) => a.id.localeCompare(b.id))
               .map((page) => (
-                <PageLink key={page.id} storyId={storyId} pageId={page.id}>
+                <PageLink key={page.id} pageId={page.id}>
                   {page.id === startPage && (
                     <span className="inline-block bg-primary text-white text-xs font-bold px-2 py-0.5 rounded mr-2">
                       {t.badges.start}
                     </span>
                   )}
-                  {t.dynamic.pageDisplay(page.name, page.id)}
+                  {page.name || page.id}
                 </PageLink>
               ))}
           </div>
           <div className="p-2 border-t border-gray-200">
-            <NewPageButton storyId={storyId} />
+            <NewPageButton />
           </div>
         </Collapsible>
       </div>

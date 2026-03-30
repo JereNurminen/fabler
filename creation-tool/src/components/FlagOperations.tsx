@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
-import type { Flag, FlagOperation } from "../bindings";
+import type { Flag, FlagOperation } from "../types";
 
 type FlagOperationsProps = {
   operations: FlagOperation[];
   availableFlags: Flag[];
-  onAdd: (flagId: number, operation: string) => void;
-  onRemove: (flagId: number) => void;
+  onAdd: (flagId: string, operation: string) => void;
+  onRemove: (flagId: string) => void;
 };
 
 export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: FlagOperationsProps) => {
   const { t } = useTranslation();
-  const [selectedFlagId, setSelectedFlagId] = useState<number | null>(null);
+  const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [selectedOperation, setSelectedOperation] = useState<string>("set_true");
 
   const handleAdd = () => {
@@ -37,7 +37,7 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
             const flag = availableFlags.find((f) => f.id === op.flag_id);
             return (
               <div
-                key={op.id}
+                key={op.flag_id}
                 className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
               >
                 <span className="text-gray-900">
@@ -66,7 +66,7 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
             aria-label={t.labels.flag}
             className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedFlagId ?? ""}
-            onChange={(e) => setSelectedFlagId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => setSelectedFlagId(e.target.value || null)}
           >
             <option value="">{t.labels.flag}...</option>
             {availableForAdd.map((flag) => (

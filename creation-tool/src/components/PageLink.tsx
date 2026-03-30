@@ -1,16 +1,14 @@
 import { Link } from "wouter";
-import { getLinkToPagePage } from "../utilities/routing";
+import { getLinkToPage } from "../utilities/routing";
 import { PropsWithChildren } from "react";
 import clsx from "clsx";
 
 export default ({
-  storyId,
   pageId,
   children,
   onClick,
 }: PropsWithChildren<{
-  storyId: number;
-  pageId: number;
+  pageId: string;
   onClick?: () => void;
 }>) => {
   // Base structure
@@ -36,7 +34,7 @@ export default ({
 
   return (
     <Link
-      to={getLinkToPagePage(storyId, pageId)}
+      to={getLinkToPage(pageId)}
       className={clsx(base, light, dark)}
       onClick={onClick}
     >

@@ -8,12 +8,12 @@ import { StorySettingsDialog } from "../StorySettingsDialog";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
 import clsx from "clsx";
+import api from "../../api";
 
 interface TabletSidebarProps {
-  storyId: number;
   storyTitle: string;
-  pages: Array<{ id: number; name: string }>;
-  startPage: number | null;
+  pages: Array<{ id: string; name: string }>;
+  startPage: string | null;
   onPlaytest?: () => void;
   onTogglePreview?: () => void;
   showPreview?: boolean;
@@ -23,7 +23,6 @@ interface TabletSidebarProps {
 type Panel = "settings" | "flags" | "pages" | null;
 
 export const TabletSidebar = ({
-  storyId,
   storyTitle,
   pages,
   startPage,
@@ -33,16 +32,13 @@ export const TabletSidebar = ({
   hasPageSelected,
 }: TabletSidebarProps) => {
   const [activePanel, setActivePanel] = useState<Panel>(null);
-  const { flags, patchStory } = useStoryAtoms();
+  const { flags } = useStoryAtoms();
   const { t } = useTranslation();
 
-  const handleSaveSettings = async (title: string, newStartPage: number) => {
+  const handleSaveSettings = async (title: string, newStartPage: string) => {
     try {
-      await patchStory({
-        id: storyId,
-        title,
-        start_page: newStartPage,
-      });
+      const currentStory = await api.getStory();
+      await api.saveStory({ ...currentStory, title, start_page: newStartPage });
       setActivePanel(null);
     } catch (error) {
       console.error("Failed to update story settings:", error);
@@ -90,7 +86,6 @@ export const TabletSidebar = ({
       {/* Floating Panels */}
       {activePanel === "settings" && (
         <StorySettingsDialog
-          storyId={storyId}
           initialTitle={storyTitle}
           initialStartPage={startPage}
           pages={pages}
@@ -119,11 +114,10 @@ export const TabletSidebar = ({
             <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-1">
                 {pages
-                  .sort((a, b) => a.id - b.id)
+                  .sort((a, b) => a.id.localeCompare(b.id))
                   .map((page) => (
                     <PageLink
                       key={page.id}
-                      storyId={storyId}
                       pageId={page.id}
                       onClick={() => setActivePanel(null)}
                     >
@@ -132,13 +126,13 @@ export const TabletSidebar = ({
                           {t.badges.start}
                         </span>
                       )}
-                      {t.dynamic.pageDisplay(page.name, page.id)}
+                      {page.name || page.id}
                     </PageLink>
                   ))}
               </div>
             </div>
             <div className="p-4 border-t border-gray-200">
-              <NewPageButton storyId={storyId} />
+              <NewPageButton />
             </div>
           </div>
         </>

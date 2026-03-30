@@ -1,11 +1,13 @@
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
-import { pageAtomFamily, allPagesAtom } from "../atoms/storyAtoms";
+import { pageAtomFamily, pageListAtom } from "../atoms/storyAtoms";
+import { savePageAtom } from "../atoms/storyActions";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
-import type { Choice } from "../bindings";
+import type { Choice } from "../types";
+import { generateId } from "../utilities/id";
 import { useLocation } from "wouter";
-import { getLinkToPagePage } from "../utilities/routing";
+import { getLinkToPage } from "../utilities/routing";
 import { FlagOperations } from "./FlagOperations";
 import { ChoiceConditions } from "./ChoiceConditions";
 import { Input } from "./ui/Input";
@@ -14,23 +16,14 @@ import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
 
-export default ({ pageId }: { pageId: number }) => {
+export default ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [choices, setChoices] = useState<Choice[]>([]);
-  const [page] = useAtom(pageAtomFamily(pageId));
-  const pages = useAtomValue(allPagesAtom);
-  const {
-    patchPage,
-    createChoice,
-    deleteChoice,
-    patchChoice,
-    flags,
-    setFlagOperation,
-    removeFlagOperation,
-    setChoiceCondition,
-    removeChoiceCondition,
-  } = useStoryAtoms();
+  const page = useAtomValue(pageAtomFamily(pageId));
+  const pages = useAtomValue(pageListAtom);
+  const savePage = useSetAtom(savePageAtom);
+  const { flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
@@ -38,183 +31,187 @@ export default ({ pageId }: { pageId: number }) => {
     if (page) {
       setName(page.name);
       setBody(page.body);
-      setChoices(page.options);
+      setChoices(page.choices);
     }
   }, [page]);
 
-  const patch = useCallback(async () => {
-    try {
-      await patchPage({ id: pageId, name, body });
-    } catch (error) {
-      console.error("Failed to patch page:", error);
-    }
-  }, [pageId, name, body, patchPage]);
-
-  const handleCreateChoice = async () => {
+  const handleSave = useCallback(async () => {
     if (!page) return;
-
-    try {
-      const defaultTargetPage = pages[0]?.id || page.id;
-      const newChoiceId = await createChoice({
-        pageId: page.id,
-        text: "",
-        targetPageId: defaultTargetPage,
-      });
-
-      setChoices([
-        ...choices,
-        {
-          id: newChoiceId,
-          page_id: page.id,
-          text: "",
-          target_page: defaultTargetPage,
-          flag_operations: [],
-          conditions: [],
-        },
-      ]);
-    } catch (error) {
-      console.error("Failed to create choice:", error);
-    }
-  };
-
-  const handleDeleteChoice = async (choiceId: number) => {
-    if (!page) return;
-
-    try {
-      setChoices(choices.filter((c) => c.id !== choiceId));
-      await deleteChoice({ choiceId, pageId: page.id });
-    } catch (error) {
-      console.error("Failed to delete choice:", error);
-      if (page) {
-        setChoices(page.options);
+    if (name !== page.name || body !== page.body) {
+      try {
+        await savePage({ ...page, name, body });
+      } catch (error) {
+        console.error("Failed to save page:", error);
       }
     }
-  };
+  }, [page, name, body, savePage]);
 
-  const handlePatchChoice = async (
-    choiceId: number,
-    updates: { text?: string; target_page?: number }
-  ) => {
+  const handleAddChoice = async () => {
     if (!page) return;
 
     try {
-      await patchChoice({
-        patch: {
-          id: choiceId,
-          text: updates.text !== undefined ? updates.text : null,
-          target_page: updates.target_page !== undefined ? updates.target_page : null,
-        },
-        pageId: page.id,
-      });
+      const updatedPage = {
+        ...page,
+        choices: [
+          ...page.choices,
+          {
+            id: generateId(),
+            text: "",
+            target: pages[0]?.id ?? "",
+            flag_operations: [],
+            conditions: [],
+          },
+        ],
+      };
+      await savePage(updatedPage);
     } catch (error) {
-      console.error("Failed to patch choice:", error);
+      console.error("Failed to add choice:", error);
     }
   };
 
-  const handleAddPageFlagOperation = async (flagId: number, operation: string) => {
+  const handleDeleteChoice = async (choiceId: string) => {
+    if (!page) return;
+
+    try {
+      await savePage({
+        ...page,
+        choices: page.choices.filter((c) => c.id !== choiceId),
+      });
+    } catch (error) {
+      console.error("Failed to delete choice:", error);
+    }
+  };
+
+  const handleChoiceTextSave = async (choiceId: string, text: string) => {
+    if (!page) return;
+
+    try {
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId ? { ...c, text } : c
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to save choice text:", error);
+    }
+  };
+
+  const handleChoiceTargetChange = async (choiceId: string, target: string) => {
+    if (!page) return;
+
+    try {
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId ? { ...c, target } : c
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to save choice target:", error);
+    }
+  };
+
+  const handleSetPageFlagOp = async (flagId: string, operation: string) => {
     if (!page) return;
     try {
-      await setFlagOperation({
-        op: { choice_id: null, page_id: page.id, flag_id: flagId, operation },
-        pageId: page.id,
+      await savePage({
+        ...page,
+        flag_operations: [
+          ...page.flag_operations.filter((op) => op.flag_id !== flagId),
+          { flag_id: flagId, operation: operation as "set_true" | "set_false" | "toggle" },
+        ],
       });
     } catch (error) {
       console.error("Failed to add page flag operation:", error);
     }
   };
 
-  const handleRemovePageFlagOperation = async (flagId: number) => {
+  const handleRemovePageFlagOp = async (flagId: string) => {
     if (!page) return;
     try {
-      await removeFlagOperation({ pageId: page.id, flagId });
+      await savePage({
+        ...page,
+        flag_operations: page.flag_operations.filter((op) => op.flag_id !== flagId),
+      });
     } catch (error) {
       console.error("Failed to remove page flag operation:", error);
     }
   };
 
-  const handleAddChoiceFlagOperation = async (choiceId: number, flagId: number, operation: string) => {
+  const handleSetChoiceFlagOp = async (choiceId: string, flagId: string, operation: string) => {
     if (!page) return;
     try {
-      setChoices(choices.map((c) => {
-        if (c.id === choiceId) {
-          return {
-            ...c,
-            flag_operations: [...c.flag_operations, { id: Date.now(), flag_id: flagId, operation }]
-          };
-        }
-        return c;
-      }));
-
-      await setFlagOperation({
-        op: { choice_id: choiceId, page_id: null, flag_id: flagId, operation },
-        pageId: page.id,
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId
+            ? {
+                ...c,
+                flag_operations: [
+                  ...c.flag_operations.filter((op) => op.flag_id !== flagId),
+                  { flag_id: flagId, operation: operation as "set_true" | "set_false" | "toggle" },
+                ],
+              }
+            : c
+        ),
       });
     } catch (error) {
       console.error("Failed to add choice flag operation:", error);
-      if (page) setChoices(page.options);
     }
   };
 
-  const handleRemoveChoiceFlagOperation = async (choiceId: number, flagId: number) => {
+  const handleRemoveChoiceFlagOp = async (choiceId: string, flagId: string) => {
     if (!page) return;
     try {
-      setChoices(choices.map((c) => {
-        if (c.id === choiceId) {
-          return {
-            ...c,
-            flag_operations: c.flag_operations.filter((op) => op.flag_id !== flagId)
-          };
-        }
-        return c;
-      }));
-
-      await removeFlagOperation({ choiceId, pageId: page.id, flagId });
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId
+            ? { ...c, flag_operations: c.flag_operations.filter((op) => op.flag_id !== flagId) }
+            : c
+        ),
+      });
     } catch (error) {
       console.error("Failed to remove choice flag operation:", error);
-      if (page) setChoices(page.options);
     }
   };
 
-  const handleAddChoiceCondition = async (choiceId: number, flagId: number, requiredValue: boolean) => {
+  const handleSetCondition = async (choiceId: string, flagId: string, requiredValue: boolean) => {
     if (!page) return;
     try {
-      setChoices(choices.map((c) => {
-        if (c.id === choiceId) {
-          return {
-            ...c,
-            conditions: [...c.conditions, { id: Date.now(), flag_id: flagId, required_value: requiredValue }]
-          };
-        }
-        return c;
-      }));
-
-      await setChoiceCondition({
-        cond: { choice_id: choiceId, flag_id: flagId, required_value: requiredValue },
-        pageId: page.id,
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId
+            ? {
+                ...c,
+                conditions: [
+                  ...c.conditions.filter((cond) => cond.flag_id !== flagId),
+                  { flag_id: flagId, required_value: requiredValue },
+                ],
+              }
+            : c
+        ),
       });
     } catch (error) {
       console.error("Failed to add choice condition:", error);
-      if (page) setChoices(page.options);
     }
   };
 
-  const handleRemoveChoiceCondition = async (choiceId: number, flagId: number) => {
+  const handleRemoveCondition = async (choiceId: string, flagId: string) => {
     if (!page) return;
     try {
-      setChoices(choices.map((c) => {
-        if (c.id === choiceId) {
-          return {
-            ...c,
-            conditions: c.conditions.filter((cond) => cond.flag_id !== flagId)
-          };
-        }
-        return c;
-      }));
-
-      await removeChoiceCondition({ choiceId, pageId: page.id, flagId });
+      await savePage({
+        ...page,
+        choices: page.choices.map((c) =>
+          c.id === choiceId
+            ? { ...c, conditions: c.conditions.filter((cond) => cond.flag_id !== flagId) }
+            : c
+        ),
+      });
     } catch (error) {
       console.error("Failed to remove choice condition:", error);
-      if (page) setChoices(page.options);
     }
   };
 
@@ -229,7 +226,7 @@ export default ({ pageId }: { pageId: number }) => {
           type="text"
           id="page-title-input"
           onChange={(e) => setName(e.target.value)}
-          onBlur={patch}
+          onBlur={handleSave}
           value={name}
         />
 
@@ -237,7 +234,7 @@ export default ({ pageId }: { pageId: number }) => {
           label={t.labels.pageContent}
           id="page-body-input"
           onChange={(e) => setBody(e.target.value)}
-          onBlur={patch}
+          onBlur={handleSave}
           value={body}
         />
       </div>
@@ -249,8 +246,8 @@ export default ({ pageId }: { pageId: number }) => {
           <FlagOperations
             operations={page.flag_operations}
             availableFlags={flags}
-            onAdd={handleAddPageFlagOperation}
-            onRemove={handleRemovePageFlagOperation}
+            onAdd={handleSetPageFlagOp}
+            onRemove={handleRemovePageFlagOp}
           />
         </div>
       )}
@@ -282,7 +279,7 @@ export default ({ pageId }: { pageId: number }) => {
                         )
                       );
                     }}
-                    onBlur={() => handlePatchChoice(choice.id, { text: choice.text })}
+                    onBlur={() => handleChoiceTextSave(choice.id, choice.text)}
                     placeholder={t.placeholders.choiceText}
                   />
 
@@ -290,15 +287,15 @@ export default ({ pageId }: { pageId: number }) => {
                     <Select
                       label={t.labels.leadsTo}
                       id={`choice-target-${choice.id}`}
-                      value={choice.target_page}
+                      value={choice.target}
                       onChange={(e) => {
-                        const newTarget = parseInt(e.target.value);
+                        const newTarget = e.target.value;
                         setChoices(
                           choices.map((c) =>
-                            c.id === choice.id ? { ...c, target_page: newTarget } : c
+                            c.id === choice.id ? { ...c, target: newTarget } : c
                           )
                         );
-                        handlePatchChoice(choice.id, { target_page: newTarget });
+                        handleChoiceTargetChange(choice.id, newTarget);
                       }}
                     >
                       {pages.map((p) => (
@@ -308,7 +305,7 @@ export default ({ pageId }: { pageId: number }) => {
                       ))}
                     </Select>
                     <button
-                      onClick={() => setLocation(getLinkToPagePage(page.story_id, choice.target_page))}
+                      onClick={() => setLocation(getLinkToPage(choice.target))}
                       className={clsx(
                         "text-sm font-medium mt-1",
                         "text-primary dark:text-blue-400",
@@ -331,9 +328,9 @@ export default ({ pageId }: { pageId: number }) => {
                         conditions={choice.conditions}
                         availableFlags={flags}
                         onAdd={(flagId, requiredValue) =>
-                          handleAddChoiceCondition(choice.id, flagId, requiredValue)
+                          handleSetCondition(choice.id, flagId, requiredValue)
                         }
-                        onRemove={(flagId) => handleRemoveChoiceCondition(choice.id, flagId)}
+                        onRemove={(flagId) => handleRemoveCondition(choice.id, flagId)}
                       />
                     </div>
 
@@ -345,9 +342,9 @@ export default ({ pageId }: { pageId: number }) => {
                         operations={choice.flag_operations}
                         availableFlags={flags}
                         onAdd={(flagId, operation) =>
-                          handleAddChoiceFlagOperation(choice.id, flagId, operation)
+                          handleSetChoiceFlagOp(choice.id, flagId, operation)
                         }
-                        onRemove={(flagId) => handleRemoveChoiceFlagOperation(choice.id, flagId)}
+                        onRemove={(flagId) => handleRemoveChoiceFlagOp(choice.id, flagId)}
                       />
                     </div>
                   </div>
@@ -369,7 +366,7 @@ export default ({ pageId }: { pageId: number }) => {
         <Button
           variant="success"
           className="mt-4 w-full sm:w-auto"
-          onClick={handleCreateChoice}
+          onClick={handleAddChoice}
         >
           {t.buttons.addChoice}
         </Button>

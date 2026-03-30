@@ -13,7 +13,6 @@ import {
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
 import api from "../../api";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
@@ -22,10 +21,9 @@ import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 
 interface MobileNavProps {
-  storyId: number;
   storyTitle: string;
-  pages: Array<{ id: number; name: string }>;
-  startPage: number | null;
+  pages: Array<{ id: string; name: string }>;
+  startPage: string | null;
   onPlaytest?: () => void;
   onTogglePreview?: () => void;
   showPreview?: boolean;
@@ -33,7 +31,6 @@ interface MobileNavProps {
 }
 
 export const MobileNav = ({
-  storyId,
   storyTitle,
   pages,
   startPage,
@@ -44,7 +41,7 @@ export const MobileNav = ({
 }: MobileNavProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFlags, setShowFlags] = useState(false);
-  const { patchStory, flags } = useStoryAtoms();
+  const { flags } = useStoryAtoms();
   const { t } = useTranslation();
 
   const handleExportBundle = async () => {
@@ -64,12 +61,10 @@ export const MobileNav = ({
     }
   };
 
-  const handleStartPageChange = async (newStartPage: number) => {
+  const handleStartPageChange = async (newStartPage: string) => {
     try {
-      await patchStory({
-        id: storyId,
-        start_page: newStartPage,
-      });
+      const currentStory = await api.getStory();
+      await api.saveStory({ ...currentStory, start_page: newStartPage });
     } catch (error) {
       console.error("Failed to update start page:", error);
       alert(t.alerts.updateSettingsFailed);
@@ -155,11 +150,11 @@ export const MobileNav = ({
               <Select
                 label={t.labels.startPage}
                 value={startPage || ""}
-                onChange={(e) => handleStartPageChange(parseInt(e.target.value))}
+                onChange={(e) => handleStartPageChange(e.target.value)}
               >
                 {pages.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {t.dynamic.pageDisplay(p.name, p.id)}
+                    {p.name || p.id}
                   </option>
                 ))}
               </Select>
@@ -202,11 +197,10 @@ export const MobileNav = ({
             </div>
             <div className="px-2 py-3 space-y-1">
               {pages
-                .sort((a, b) => a.id - b.id)
+                .sort((a, b) => a.id.localeCompare(b.id))
                 .map((page) => (
                   <PageLink
                     key={page.id}
-                    storyId={storyId}
                     pageId={page.id}
                     onClick={() => setMenuOpen(false)}
                   >
@@ -215,12 +209,12 @@ export const MobileNav = ({
                         {t.badges.start}
                       </span>
                     )}
-                    {t.dynamic.pageDisplay(page.name, page.id)}
+                    {page.name || page.id}
                   </PageLink>
                 ))}
             </div>
             <div className="px-2 py-3 border-t border-gray-200">
-              <NewPageButton storyId={storyId} />
+              <NewPageButton />
             </div>
           </div>
         </div>

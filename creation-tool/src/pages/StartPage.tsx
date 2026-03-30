@@ -1,113 +1,100 @@
-import { useCallback, useEffect, useState } from "react";
-import { StoryListing } from "../bindings";
-import api from "../api";
-import { handleResult, Loadable } from "../utilities/loadable";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
-import { Link, useLocation } from "wouter";
-import { open } from "@tauri-apps/plugin-dialog";
-import { readTextFile } from "@tauri-apps/plugin-fs";
-import { getLinkToStoryPage } from "../utilities/routing";
-import { NewStoryDialog } from "../components/NewStoryDialog";
-import { Button } from "../components/ui/Button";
+import { getLinkToEditor } from "../utilities/routing";
 
 export const StartPage = () => {
-  const [stories, setStories] = useState<Loadable<StoryListing[]>>({
-    status: "not-loaded",
-  });
-  const [showNewStoryModal, setShowStoryModal] = useState(false);
   const [_, setLocation] = useLocation();
+  const { openProject, createProject } = useStoryAtoms();
   const { t } = useTranslation();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const loadStories = useCallback(async () => {
-    setStories({ status: "loading" });
-    const result = await api.getStoryList();
-
-    if (result.status === "ok") {
-      setStories({ status: "loaded", value: result });
-    } else {
-      // TODO: Error handling
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadStories();
-  }, []);
-
-  const createNewStory = useCallback(async (title: string) => {
-    const newStoryId = await api.createStory(title);
-    await loadStories();
-    return newStoryId;
-  }, []);
-
-  const handleImportStory = useCallback(async () => {
+  const handleOpen = async () => {
     try {
-      const filePath = await open({
-        filters: [{ name: "TOML", extensions: ["toml"] }],
+      const filePath = await openDialog({
+        filters: [{ name: "Fabler Story", extensions: ["story.json"] }],
       });
       if (!filePath) return;
-
-      const tomlContent = await readTextFile(filePath);
-      const result = await api.importStoryToml(tomlContent);
-      if (result.status === "ok") {
-        setLocation(getLinkToStoryPage(result.data));
-      } else {
-        alert(t.alerts.importFailed);
-      }
-    } catch (error) {
-      console.error("Failed to import story:", error);
-      alert(t.alerts.importFailed);
+      await openProject(filePath);
+      setLocation(getLinkToEditor());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to open project");
     }
-  }, [setLocation, t]);
+  };
 
-  const content = (() => {
-    switch (stories.status) {
-      case "not-loaded":
-      case "loading":
-        return <p className="text-gray-600">{t.status.loading}</p>;
-      case "loaded":
-        return handleResult(
-          stories.value,
-          (ok) => (
-            <div className="flex flex-col items-center justify-center gap-2">
-              {ok.data.map((story) => (
-                <Link
-                  key={story.id}
-                  href={getLinkToStoryPage(story.id)}
-                  className="px-4 py-2 border border-gray-900 rounded hover:bg-gray-100 transition-colors min-w-64 text-center"
-                >
-                  {t.dynamic.storyListItem(story.id, story.title)}
-                </Link>
-              ))}
-            </div>
-          ),
-          (err) => <p className="text-red-600">{t.dynamic.errorMessage(err.error)}</p>,
-        );
+  const handleCreate = async () => {
+    if (!newTitle.trim()) return;
+    try {
+      const dirPath = await openDialog({
+        directory: true,
+        title: "Choose project location",
+      });
+      if (!dirPath) return;
+      await createProject({ path: dirPath, title: newTitle.trim() });
+      setLocation(getLinkToEditor());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to create project");
     }
-  })();
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen w-screen bg-gray-50">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900">{t.headings.hello}</h1>
-      <div className="mb-6">{content}</div>
-      <div className="flex gap-2">
-        <Button onClick={() => setShowStoryModal(true)}>
-          {t.buttons.newStory}
-        </Button>
-        <Button variant="secondary" onClick={handleImportStory}>
-          {t.buttons.importStory}
-        </Button>
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="max-w-md w-full p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          Fabler
+        </h1>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        <div className="space-y-3">
+          <button
+            onClick={handleOpen}
+            className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+          >
+            {t.buttons.openProject || "Open Project"}
+          </button>
+          {!showCreate ? (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+            >
+              {t.buttons.newProject || "New Project"}
+            </button>
+          ) : (
+            <div className="p-4 border border-gray-200 rounded-lg space-y-3">
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder={t.placeholders.storyTitle || "Story title"}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCreate}
+                  className="flex-1 py-2 px-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                >
+                  {t.buttons.create || "Create"}
+                </button>
+                <button
+                  onClick={() => setShowCreate(false)}
+                  className="py-2 px-3 text-gray-600 hover:text-gray-800"
+                >
+                  {t.buttons.cancel || "Cancel"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      {showNewStoryModal ? (
-        <NewStoryDialog
-          onConfirm={async (title) => {
-            const result = await createNewStory(title);
-            if (result.status === "ok") {
-              setLocation(getLinkToStoryPage(result.data));
-            }
-          }}
-          onCancel={() => setShowStoryModal(false)}
-        />
-      ) : null}
     </div>
   );
 };

@@ -25,6 +25,8 @@ export const translations = {
     preview: "Preview",
     closePlaytest: "Close Playtest",
     closePreview: "Close Preview",
+    openProject: "Open Project",
+    newProject: "New Project",
   },
 
   // Labels
@@ -127,11 +129,11 @@ export const translations = {
 
   // Dynamic strings (with interpolation)
   dynamic: {
-    storyListItem: (id: number, title: string) => `${id}: ${title}`,
-    pageFallback: (id: number) => `Page ${id}`,
-    pageDisplay: (name: string, id: number) => name || `Page ${id}`,
+    storyListItem: (_id: string, title: string) => `${title}`,
+    pageFallback: (id: string) => `Page ${id}`,
+    pageDisplay: (name: string, id: string) => name || `Page ${id}`,
     errorMessage: (error: string) => `Error: ${error}`,
-    flagFallback: (id: number) => `Flag ${id}`,
+    flagFallback: (id: string) => `Flag ${id}`,
     moreFlags: (count: number) => `+${count} more...`,
   },
 } as const;

@@ -4,10 +4,9 @@ import { TabletSidebar } from "./TabletSidebar";
 import { MobileNav } from "./MobileNav";
 
 interface MainLayoutProps {
-  storyId: number;
   storyTitle: string;
-  pages: Array<{ id: number; name: string }>;
-  startPage: number | null;
+  pages: Array<{ id: string; name: string }>;
+  startPage: string | null;
   children: ReactNode;
   onPlaytest?: () => void;
   onTogglePreview?: () => void;
@@ -16,7 +15,6 @@ interface MainLayoutProps {
 }
 
 export const MainLayout = ({
-  storyId,
   storyTitle,
   pages,
   startPage,
@@ -30,7 +28,6 @@ export const MainLayout = ({
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
       {/* Desktop Sidebar (>= 1024px) */}
       <DesktopSidebar
-        storyId={storyId}
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
@@ -42,7 +39,6 @@ export const MainLayout = ({
 
       {/* Tablet Sidebar (640px - 1024px) */}
       <TabletSidebar
-        storyId={storyId}
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
@@ -54,7 +50,6 @@ export const MainLayout = ({
 
       {/* Mobile Navigation (< 640px) */}
       <MobileNav
-        storyId={storyId}
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}

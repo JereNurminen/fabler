@@ -3,14 +3,9 @@ import { Dialog } from "./ui/Dialog";
 import { Input } from "./ui/Input";
 import { Button } from "./ui/Button";
 import { useTranslation, translations } from "../i18n";
-import { useAtomValue, useSetAtom } from "jotai";
-import { currentStoryIdAtom, storyFlagsAtom } from "../atoms/storyAtoms";
-import {
-  createFlagAtom,
-  patchFlagAtom,
-  deleteFlagAtom,
-} from "../atoms/storyActions";
-import type { Flag } from "../bindings";
+import { useStoryAtoms } from "../atoms/useStoryAtoms";
+import { generateId } from "../utilities/id";
+import type { Flag } from "../types";
 
 type FlagsDialogProps = {
   onClose: () => void;
@@ -18,30 +13,28 @@ type FlagsDialogProps = {
 
 const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
   const { t } = useTranslation();
-  const storyId = useAtomValue(currentStoryIdAtom);
-  const flags = useAtomValue(storyFlagsAtom);
-  const createFlag = useSetAtom(createFlagAtom);
-  const patchFlag = useSetAtom(patchFlagAtom);
-  const deleteFlag = useSetAtom(deleteFlagAtom);
+  const { story, flags, saveStory } = useStoryAtoms();
 
   const [newFlagName, setNewFlagName] = useState("");
   const [newFlagDefaultValue, setNewFlagDefaultValue] = useState(false);
   const [editingFlags, setEditingFlags] = useState<
-    Record<number, { name: string; defaultValue: boolean }>
+    Record<string, { name: string; defaultValue: boolean }>
   >({});
 
   const handleCreateFlag = async () => {
-    if (!storyId) return;
+    if (!story) return;
     if (newFlagName.trim() === "") {
       alert(t.alerts.flagNameEmpty);
       return;
     }
 
     try {
-      await createFlag({
-        story_id: storyId,
-        name: newFlagName.trim(),
-        default_value: newFlagDefaultValue,
+      await saveStory({
+        ...story,
+        flags: [
+          ...story.flags,
+          { id: generateId(), name: newFlagName.trim(), default_value: newFlagDefaultValue },
+        ],
       });
       setNewFlagName("");
       setNewFlagDefaultValue(false);
@@ -51,17 +44,18 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
   };
 
   const handleUpdateFlag = async (flag: Flag) => {
+    if (!story) return;
     const edited = editingFlags[flag.id];
     if (!edited) return;
 
     try {
-      await patchFlag({
-        id: flag.id,
-        name: edited.name !== flag.name ? edited.name : null,
-        default_value:
-          edited.defaultValue !== flag.default_value
-            ? edited.defaultValue
-            : null,
+      await saveStory({
+        ...story,
+        flags: story.flags.map((f) =>
+          f.id === flag.id
+            ? { ...f, name: edited.name, default_value: edited.defaultValue }
+            : f
+        ),
       });
       setEditingFlags((prev) => {
         const next = { ...prev };
@@ -73,16 +67,20 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
     }
   };
 
-  const handleDeleteFlag = async (id: number) => {
+  const handleDeleteFlag = async (id: string) => {
+    if (!story) return;
     try {
-      await deleteFlag(id);
+      await saveStory({
+        ...story,
+        flags: story.flags.filter((f) => f.id !== id),
+      });
     } catch (error) {
       console.error("Failed to delete flag:", error);
     }
   };
 
   const handleFlagChange = (
-    flagId: number,
+    flagId: string,
     field: "name" | "defaultValue",
     value: string | boolean,
   ) => {
@@ -144,21 +142,16 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
                             "defaultValue",
                             e.target.checked,
                           );
-                          setEditingFlags((prev) => ({
-                            ...prev,
-                            [flag.id]: {
-                              name: edited.name,
-                              defaultValue: e.target.checked,
-                            },
-                          }));
+                          if (!story) return;
                           // Auto-save on checkbox change
-                          setTimeout(() => {
-                            patchFlag({
-                              id: flag.id,
-                              name: null,
-                              default_value: e.target.checked,
-                            });
-                          }, 0);
+                          saveStory({
+                            ...story,
+                            flags: story.flags.map((f) =>
+                              f.id === flag.id
+                                ? { ...f, default_value: e.target.checked }
+                                : f
+                            ),
+                          });
                         }}
                         className="cursor-pointer"
                       />

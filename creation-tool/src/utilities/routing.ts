@@ -1,4 +1,10 @@
-export const storyRoute = '/story/:story';
-export const getLinkToStoryPage = (story: number) => `/story/${story}`;
-export const pageRoute = `${storyRoute}/page/:page`;
-export const getLinkToPagePage = (story: number, page: number) => `${getLinkToStoryPage(story)}/page/${page}`;
+export const editorRoute = "/editor";
+export const editorPageRoute = "/editor/page/:pageId";
+
+export function getLinkToEditor(): string {
+  return "/editor";
+}
+
+export function getLinkToPage(pageId: string): string {
+  return `/editor/page/${pageId}`;
+}

@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
-import type { Flag, ChoiceCondition } from "../bindings";
+import type { Flag, Condition } from "../types";
 
 type ChoiceConditionsProps = {
-  conditions: ChoiceCondition[];
+  conditions: Condition[];
   availableFlags: Flag[];
-  onAdd: (flagId: number, requiredValue: boolean) => void;
-  onRemove: (flagId: number) => void;
+  onAdd: (flagId: string, requiredValue: boolean) => void;
+  onRemove: (flagId: string) => void;
 };
 
 export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove }: ChoiceConditionsProps) => {
   const { t } = useTranslation();
-  const [selectedFlagId, setSelectedFlagId] = useState<number | null>(null);
+  const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
   const [requiredValue, setRequiredValue] = useState<boolean>(true);
 
   const handleAdd = () => {
@@ -37,7 +37,7 @@ export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove }
             const flag = availableFlags.find((f) => f.id === cond.flag_id);
             return (
               <div
-                key={cond.id}
+                key={cond.flag_id}
                 className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
               >
                 <span className="text-gray-900">
@@ -70,7 +70,7 @@ export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove }
             aria-label={t.labels.flag}
             className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={selectedFlagId ?? ""}
-            onChange={(e) => setSelectedFlagId(e.target.value ? Number(e.target.value) : null)}
+            onChange={(e) => setSelectedFlagId(e.target.value || null)}
           >
             <option value="">{t.labels.flag}...</option>
             {availableForAdd.map((flag) => (
