@@ -29,24 +29,14 @@ function App() {
     });
 
     const unlistenExport = listen("export-story", async () => {
-      const match = window.location.pathname.match(/\/story\/(\d+)/);
-      if (!match) return;
-      const storyId = parseInt(match[1]);
-
       try {
-        const result = await api.exportStoryToml(storyId);
-        if (result.status !== "ok") {
-          alert(translations.alerts.exportFailed);
-          return;
-        }
-
         const filePath = await save({
-          defaultPath: `story-${storyId}.toml`,
-          filters: [{ name: "TOML", extensions: ["toml"] }],
+          defaultPath: "story.fabler",
+          filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
         });
         if (!filePath) return;
 
-        await writeTextFile(filePath, result.data);
+        await api.exportBundle(filePath);
         alert(translations.alerts.exportSuccess);
       } catch (error) {
         console.error("Failed to export story:", error);
@@ -54,25 +44,8 @@ function App() {
       }
     });
 
-    const unlistenImport = listen("import-story", async () => {
-      try {
-        const filePath = await open({
-          filters: [{ name: "TOML", extensions: ["toml"] }],
-        });
-        if (!filePath) return;
-
-        const tomlContent = await readTextFile(filePath);
-        const result = await api.importStoryToml(tomlContent);
-        if (result.status === "ok") {
-          setLocation(getLinkToStoryPage(result.data));
-        } else {
-          alert(translations.alerts.importFailed);
-        }
-      } catch (error) {
-        console.error("Failed to import story:", error);
-        alert(translations.alerts.importFailed);
-      }
-    });
+    // TODO: Import story handler needs redesign for project-based workflow
+    const unlistenImport = listen("import-story", async () => {});
 
     // Cleanup listeners when component unmounts
     return () => {

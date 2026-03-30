@@ -10,7 +10,6 @@ import {
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile, writeFile } from "@tauri-apps/plugin-fs";
 import api from "../../api";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
@@ -42,66 +41,20 @@ export const DesktopSidebar = ({
   const { patchStory, flags } = useStoryAtoms();
   const { t } = useTranslation();
 
-  const handleExportStory = async () => {
-    try {
-      const result = await api.exportStoryToml(storyId);
-      if (result.status === "ok") {
-        const tomlContent = result.data;
-        const filePath = await save({
-          defaultPath: `${storyTitle}.toml`,
-          filters: [{ name: "TOML", extensions: ["toml"] }],
-        });
-
-        if (filePath) {
-          await writeTextFile(filePath, tomlContent);
-          alert(t.alerts.exportSuccess);
-        }
-      } else {
-        alert(t.alerts.exportFailed);
-      }
-    } catch (error) {
-      console.error("Failed to export story:", error);
-      alert(t.alerts.exportFailed);
-    }
-  };
-
   const handleExportBundle = async () => {
     try {
-      const result = await api.exportStoryBundle(storyId);
-      if (result.status === "ok") {
-        const filePath = await save({
-          defaultPath: `${storyTitle}.fabler`,
-          filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
-        });
+      const filePath = await save({
+        defaultPath: `${storyTitle}.fabler`,
+        filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
+      });
 
-        if (filePath) {
-          await writeFile(filePath, new Uint8Array(result.data));
-          alert(t.alerts.exportSuccess);
-        }
-      } else {
-        alert(t.alerts.exportFailed);
+      if (filePath) {
+        await api.exportBundle(filePath);
+        alert(t.alerts.exportSuccess);
       }
     } catch (error) {
       console.error("Failed to export bundle:", error);
       alert(t.alerts.exportFailed);
-    }
-  };
-
-  const handleExportSchema = async () => {
-    try {
-      const schema = await api.getTomlSchema();
-      const filePath = await save({
-        defaultPath: "story-schema.toml",
-        filters: [{ name: "TOML", extensions: ["toml"] }],
-      });
-
-      if (filePath) {
-        await writeTextFile(filePath, schema);
-        alert(t.alerts.schemaExported);
-      }
-    } catch (error) {
-      console.error("Failed to export schema:", error);
-      alert(t.alerts.schemaExportFailed);
     }
   };
 
@@ -174,24 +127,6 @@ export const DesktopSidebar = ({
             >
               {t.buttons.exportBundle}
             </Button>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleExportStory}
-                className="flex-1"
-              >
-                {t.buttons.exportStory}
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleExportSchema}
-                className="flex-1"
-              >
-                {t.buttons.exportSchema}
-              </Button>
-            </div>
           </div>
         </Collapsible>
 

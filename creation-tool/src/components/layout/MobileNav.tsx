@@ -47,25 +47,19 @@ export const MobileNav = ({
   const { patchStory, flags } = useStoryAtoms();
   const { t } = useTranslation();
 
-  const handleExportStory = async () => {
+  const handleExportBundle = async () => {
     try {
-      const result = await api.exportStoryToml(storyId);
-      if (result.status === "ok") {
-        const tomlContent = result.data;
-        const filePath = await save({
-          defaultPath: `${storyTitle}.toml`,
-          filters: [{ name: "TOML", extensions: ["toml"] }],
-        });
+      const filePath = await save({
+        defaultPath: `${storyTitle}.fabler`,
+        filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
+      });
 
-        if (filePath) {
-          await writeTextFile(filePath, tomlContent);
-          alert(t.alerts.exportSuccess);
-        }
-      } else {
-        alert(t.alerts.exportFailed);
+      if (filePath) {
+        await api.exportBundle(filePath);
+        alert(t.alerts.exportSuccess);
       }
     } catch (error) {
-      console.error("Failed to export story:", error);
+      console.error("Failed to export bundle:", error);
       alert(t.alerts.exportFailed);
     }
   };
@@ -96,7 +90,7 @@ export const MobileNav = ({
           {storyTitle}
         </h1>
         <button
-          onClick={handleExportStory}
+          onClick={handleExportBundle}
           className="p-2 text-gray-600 hover:text-gray-900"
         >
           <ArrowUpTrayIcon className="w-6 h-6" />
