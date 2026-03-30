@@ -1,90 +1,128 @@
 use serde::{Deserialize, Serialize};
-use specta::Type;
-use ts_rs::TS;
 
-pub type PageId = i64;
-
-pub type StoryId = i64;
-
-pub type OptionId = i64;
-
-pub type FlagId = i64;
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Story {
-    pub id: StoryId,
+    pub format_version: u32,
     pub title: String,
-    pub pages: Vec<Page>,
-    pub start_page: PageId,
+    pub start_page: String,
+    #[serde(default)]
+    pub flags: Vec<Flag>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct StoryListing {
-    pub id: StoryId,
-    pub title: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct PageListItem {
-    pub id: PageId,
-    pub name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct StoryOutline {
-    pub id: StoryId,
-    pub title: String,
-    pub pages: Vec<PageListItem>,
-    pub start_page: PageId,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct Page {
-    pub id: PageId,
-    pub story_id: StoryId,
-    pub name: String,
-    pub body: String,
-    pub options: Vec<Choice>,
-    pub flag_operations: Vec<FlagOperation>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct Choice {
-    pub id: OptionId,
-    pub page_id: PageId,
-    pub text: String,
-    pub target_page: PageId,
-    pub flag_operations: Vec<FlagOperation>,
-    pub conditions: Vec<ChoiceCondition>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Flag {
-    pub id: FlagId,
-    pub story_id: StoryId,
+    pub id: String,
     pub name: String,
     pub default_value: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Page {
+    pub id: String,
+    pub name: String,
+    pub body: String,
+    #[serde(default)]
+    pub choices: Vec<Choice>,
+    #[serde(default)]
+    pub flag_operations: Vec<FlagOperation>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Choice {
+    pub id: String,
+    pub text: String,
+    pub target: String,
+    #[serde(default)]
+    pub flag_operations: Vec<FlagOperation>,
+    #[serde(default)]
+    pub conditions: Vec<Condition>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FlagOperation {
-    pub id: i64,
-    pub flag_id: FlagId,
+    pub flag_id: String,
     pub operation: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TS, Type)]
-#[ts(export)]
-pub struct ChoiceCondition {
-    pub id: i64,
-    pub flag_id: FlagId,
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Condition {
+    pub flag_id: String,
     pub required_value: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct PageListItem {
+    pub id: String,
+    pub name: String,
+}
+
+impl From<&Page> for PageListItem {
+    fn from(page: &Page) -> Self {
+        PageListItem {
+            id: page.id.clone(),
+            name: page.name.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn story_round_trip_json() {
+        let story = Story {
+            format_version: 1,
+            title: "Test".into(),
+            start_page: "a1b2c".into(),
+            flags: vec![Flag {
+                id: "f1a2c".into(),
+                name: "has_key".into(),
+                default_value: false,
+            }],
+        };
+        let json = serde_json::to_string(&story).unwrap();
+        let parsed: Story = serde_json::from_str(&json).unwrap();
+        assert_eq!(story, parsed);
+    }
+
+    #[test]
+    fn page_round_trip_json() {
+        let page = Page {
+            id: "a1b2c".into(),
+            name: "Entrance".into(),
+            body: "Hello world".into(),
+            choices: vec![Choice {
+                id: "c1b2c".into(),
+                text: "Go north".into(),
+                target: "d1e2f".into(),
+                flag_operations: vec![FlagOperation {
+                    flag_id: "f1a2c".into(),
+                    operation: "set_true".into(),
+                }],
+                conditions: vec![Condition {
+                    flag_id: "f1a2c".into(),
+                    required_value: true,
+                }],
+            }],
+            flag_operations: vec![],
+        };
+        let json = serde_json::to_string(&page).unwrap();
+        let parsed: Page = serde_json::from_str(&json).unwrap();
+        assert_eq!(page, parsed);
+    }
+
+    #[test]
+    fn page_list_item_from_page() {
+        let page = Page {
+            id: "abc12".into(),
+            name: "Test Page".into(),
+            body: String::new(),
+            choices: vec![],
+            flag_operations: vec![],
+        };
+        let item = PageListItem::from(&page);
+        assert_eq!(item.id, "abc12");
+        assert_eq!(item.name, "Test Page");
+    }
 }
