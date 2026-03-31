@@ -75,6 +75,7 @@ export function SaveLoadMenu({
         className="relative w-full max-w-md max-h-[80vh] rounded-t-2xl sm:rounded-2xl p-[1.5em]
                     flex flex-col"
         style={{
+          position: "relative",
           backgroundColor: "var(--player-surface)",
           color: "var(--player-text)",
         }}

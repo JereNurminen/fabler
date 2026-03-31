@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
-import { DesktopSidebar } from "./DesktopSidebar";
-import { TabletSidebar } from "./TabletSidebar";
-import { MobileNav } from "./MobileNav";
+import { Sidebar } from "./Sidebar";
+import { BottomBar } from "./BottomBar";
 
 interface MainLayoutProps {
   storyTitle: string;
@@ -26,8 +25,8 @@ export const MainLayout = ({
 }: MainLayoutProps) => {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-50">
-      {/* Desktop Sidebar (>= 1024px) */}
-      <DesktopSidebar
+      {/* Landscape: Sidebar */}
+      <Sidebar
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
@@ -37,19 +36,8 @@ export const MainLayout = ({
         hasPageSelected={hasPageSelected}
       />
 
-      {/* Tablet Sidebar (640px - 1024px) */}
-      <TabletSidebar
-        storyTitle={storyTitle}
-        pages={pages}
-        startPage={startPage}
-        onPlaytest={onPlaytest}
-        onTogglePreview={onTogglePreview}
-        showPreview={showPreview}
-        hasPageSelected={hasPageSelected}
-      />
-
-      {/* Mobile Navigation (< 640px) */}
-      <MobileNav
+      {/* Portrait: Bottom Bar */}
+      <BottomBar
         storyTitle={storyTitle}
         pages={pages}
         startPage={startPage}
@@ -60,7 +48,7 @@ export const MainLayout = ({
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto pt-14 sm:pt-0">
+      <main className="layout-main flex-1 overflow-auto">
         {children}
       </main>
     </div>

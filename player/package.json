@@ -7,7 +7,8 @@
     "./engine/types": "./engine/types.ts",
     "./engine": "./engine/index.ts",
     "./ui": "./ui/index.ts",
-    "./ui/player.css": "./ui/player.css"
+    "./ui/player.css": "./ui/player.css",
+    "./ui/theme.css": "./ui/theme.css"
   },
   "scripts": {
     "test": "vitest run",
@@ -16,7 +17,7 @@
     "test:e2e:headed": "playwright test --headed",
     "dev:test-app": "vite serve e2e/test-app --config e2e/test-app/vite.config.ts"
   },
-  "dependencies": {
+  "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

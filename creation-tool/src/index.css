@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../player/ui/**/*.tsx";
 
 /* Configure class-based dark mode for Tailwind v4 */
 @variant dark (&:where(.dark, .dark *));
@@ -18,4 +19,42 @@ body {
 body.dark {
   color: rgb(243 244 246);
   background-color: rgb(17 24 39);
+}
+
+/* Orientation-based layout switching */
+.layout-sidebar {
+  display: none;
+}
+
+.layout-bottombar {
+  display: none;
+}
+
+@media (orientation: landscape) {
+  .layout-sidebar {
+    display: flex;
+  }
+
+  .layout-bottombar {
+    display: none;
+  }
+}
+
+@media (orientation: portrait) {
+  .layout-sidebar {
+    display: none;
+  }
+
+  .layout-bottombar {
+    display: flex;
+  }
+
+  .layout-main {
+    padding-bottom: 4.5rem;
+  }
+}
+
+/* Safe area inset for bottom bar on devices with home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

@@ -6,7 +6,7 @@ import { MemoryStorage } from "./MemoryStorage";
 import { useTranslation } from "../i18n";
 import api from "../api";
 import type { Page } from "../types";
-import "@fabler/player/ui/player.css";
+import "../../../player/ui/theme.css";
 
 const noopAssets: AssetResolver = {
   getAssetUrl: (path: string) => path,

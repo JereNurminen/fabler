@@ -7,6 +7,9 @@ export default defineConfig({
     port: 1421,
     strictPort: true,
   },
+  resolve: {
+    dedupe: ["react", "react-dom"],
+  },
   clearScreen: false,
   envPrefix: ["VITE_", "TAURI_"],
 });

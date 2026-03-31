@@ -1,7 +1,78 @@
 @import "tailwindcss";
-@import "@fabler/player/ui/player.css";
+@import "../../player/ui/theme.css";
+@source "../../player/ui/**/*.tsx";
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
+}
+
+/* Responsive player navigation bar */
+.player-bar {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  z-index: 40;
+  background-color: var(--player-surface);
+  border-color: var(--player-border);
+}
+
+@media (orientation: portrait) {
+  .player-bar {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    flex-direction: row;
+    justify-content: space-around;
+    border-top: 1px solid var(--player-border);
+  }
+}
+
+@media (orientation: landscape) {
+  .player-bar {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 56px;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 8px;
+    padding-top: 16px;
+    border-right: 1px solid var(--player-border);
+  }
+}
+
+.player-bar-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--player-text-muted);
+  font-size: 1.25rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.player-bar-btn:hover {
+  background-color: var(--player-border);
+}
+
+/* Offset content area for the player bar */
+@media (orientation: portrait) {
+  .player-bar-offset {
+    padding-bottom: 56px;
+  }
+}
+
+@media (orientation: landscape) {
+  .player-bar-offset {
+    padding-left: 56px;
+  }
 }

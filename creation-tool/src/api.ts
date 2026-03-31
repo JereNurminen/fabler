@@ -2,11 +2,11 @@ import { invoke } from "@tauri-apps/api/core";
 import type { Story, Page, PageListItem } from "./types";
 
 const api = {
-  openProject: (path: string) =>
-    invoke<Story>("open_project", { path }),
+  openProject: (storyJsonPath: string) =>
+    invoke<Story>("open_project", { storyJsonPath }),
 
-  createProject: (path: string, title: string) =>
-    invoke<Story>("create_project", { path, title }),
+  createProject: (dirPath: string, title: string) =>
+    invoke<Story>("create_project", { dirPath, title }),
 
   closeProject: () =>
     invoke<void>("close_project"),

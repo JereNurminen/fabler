@@ -37,6 +37,7 @@ export function Settings({ preferences, onUpdate, onClose }: SettingsProps) {
       <div
         className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl p-[1.5em]"
         style={{
+          position: "relative",
           backgroundColor: "var(--player-surface)",
           color: "var(--player-text)",
         }}

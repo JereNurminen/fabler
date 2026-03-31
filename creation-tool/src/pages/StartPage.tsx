@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { useStoryAtoms } from "../atoms/useStoryAtoms";
+import { useSetAtom } from "jotai";
+import { openProjectAtom, createProjectAtom } from "../atoms/storyActions";
 import { useTranslation } from "../i18n";
 import { getLinkToEditor } from "../utilities/routing";
 
 export const StartPage = () => {
   const [_, setLocation] = useLocation();
-  const { openProject, createProject } = useStoryAtoms();
+  const openProject = useSetAtom(openProjectAtom);
+  const createProject = useSetAtom(createProjectAtom);
   const { t } = useTranslation();
   const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -22,7 +24,7 @@ export const StartPage = () => {
       await openProject(filePath);
       setLocation(getLinkToEditor());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to open project");
+      setError(String(e));
     }
   };
 
@@ -37,7 +39,7 @@ export const StartPage = () => {
       await createProject({ path: dirPath, title: newTitle.trim() });
       setLocation(getLinkToEditor());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create project");
+      setError(String(e));
     }
   };
 
