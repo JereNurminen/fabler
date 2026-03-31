@@ -127,7 +127,7 @@ mod tests {
         Page {
             id: id.into(),
             name: name.into(),
-            body: "Some body text".into(),
+            body: shared::content::Document::from_plain_text("Some body text"),
             choices: vec![],
             flag_operations: vec![],
         }

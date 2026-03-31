@@ -156,7 +156,7 @@ mod tests {
             pages: vec![Page {
                 id: "page-1".to_string(),
                 name: "Start".to_string(),
-                body: "You begin your adventure.".to_string(),
+                body: shared::content::Document::from_plain_text("You begin your adventure."),
                 choices: vec![],
                 flag_operations: vec![],
             }],
@@ -272,7 +272,7 @@ mod tests {
                     pages: vec![Page {
                         id: "page-1".to_string(),
                         name: "Start".to_string(),
-                        body: "Updated content.".to_string(),
+                        body: shared::content::Document::from_plain_text("Updated content."),
                         choices: vec![],
                         flag_operations: vec![],
                     }],
@@ -290,7 +290,7 @@ mod tests {
 
         let manifest = lib.get_manifest("story-overwrite").unwrap();
         assert_eq!(manifest.story.title, "New Title");
-        assert_eq!(manifest.pages[0].body, "Updated content.");
+        assert_eq!(manifest.pages[0].body, shared::content::Document::from_plain_text("Updated content."));
     }
 
     #[test]

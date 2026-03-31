@@ -55,7 +55,7 @@ impl Project {
         let page = Page {
             id: page_id.clone(),
             name: "Start".into(),
-            body: String::new(),
+            body: shared::content::Document::empty(),
             choices: vec![],
             flag_operations: vec![],
         };
@@ -120,7 +120,7 @@ impl Project {
         let page = Page {
             id,
             name: name.into(),
-            body: String::new(),
+            body: shared::content::Document::empty(),
             choices: vec![],
             flag_operations: vec![],
         };
