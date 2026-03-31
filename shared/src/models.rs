@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::content::Document;
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Story {
     pub format_version: u32,
@@ -20,7 +22,7 @@ pub struct Flag {
 pub struct Page {
     pub id: String,
     pub name: String,
-    pub body: String,
+    pub body: Document,
     #[serde(default)]
     pub choices: Vec<Choice>,
     #[serde(default)]
@@ -91,7 +93,7 @@ mod tests {
         let page = Page {
             id: "a1b2c".into(),
             name: "Entrance".into(),
-            body: "Hello world".into(),
+            body: Document::from_plain_text("Hello world"),
             choices: vec![Choice {
                 id: "c1b2c".into(),
                 text: "Go north".into(),
@@ -117,7 +119,7 @@ mod tests {
         let page = Page {
             id: "abc12".into(),
             name: "Test Page".into(),
-            body: String::new(),
+            body: Document::empty(),
             choices: vec![],
             flag_operations: vec![],
         };

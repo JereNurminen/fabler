@@ -121,6 +121,7 @@ pub enum BundleError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::content::Document;
     use crate::models::*;
 
     fn sample_story() -> crate::models::Story {
@@ -141,7 +142,7 @@ mod tests {
             Page {
                 id: "p1".into(),
                 name: "Start".into(),
-                body: "You are here.".into(),
+                body: Document::from_plain_text("You are here."),
                 choices: vec![Choice {
                     id: "c1".into(),
                     text: "Go".into(),
@@ -157,7 +158,7 @@ mod tests {
             Page {
                 id: "p2".into(),
                 name: "End".into(),
-                body: "The end.".into(),
+                body: Document::from_plain_text("The end."),
                 choices: vec![],
                 flag_operations: vec![],
             },
