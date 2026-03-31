@@ -28,6 +28,13 @@ export default ({ pageId }: { pageId: string }) => {
   const { flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+  const [assetsBaseUrl, setAssetsBaseUrl] = useState<string | undefined>();
+
+  useEffect(() => {
+    api.getProjectAssetsDir().then((dir) => {
+      setAssetsBaseUrl(dir);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (page) {
@@ -222,7 +229,10 @@ export default ({ pageId }: { pageId: string }) => {
       filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }],
     });
     if (!filePath) return null;
-    return api.copyAsset(filePath);
+    const filename = await api.copyAsset(filePath);
+    // Return full path so TipTap can display the image;
+    // the conversion layer strips it back to filename on save
+    return assetsBaseUrl ? `${assetsBaseUrl}/${filename}` : filename;
   };
 
   if (!page) return null;
@@ -242,7 +252,16 @@ export default ({ pageId }: { pageId: string }) => {
 
         <RichTextEditor
           document={body}
-          onUpdate={(doc) => setBody(doc)}
+          assetsBaseUrl={assetsBaseUrl}
+          onUpdate={(doc) => {
+            setBody(doc);
+            // Save immediately when editor content changes (on blur)
+            if (page && (name !== page.name || JSON.stringify(doc) !== JSON.stringify(page.body))) {
+              savePage({ ...page, name, body: doc }).catch((e) =>
+                console.error("Failed to save page:", e)
+              );
+            }
+          }}
           onImageInsert={handleImageInsert}
         />
       </div>

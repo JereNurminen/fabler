@@ -9,9 +9,10 @@ interface RichTextEditorProps {
   document: Document;
   onUpdate: (doc: Document) => void;
   onImageInsert?: () => Promise<string | null>;
+  assetsBaseUrl?: string;
 }
 
-export function RichTextEditor({ document, onUpdate, onImageInsert }: RichTextEditorProps) {
+export function RichTextEditor({ document, onUpdate, onImageInsert, assetsBaseUrl }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -27,9 +28,9 @@ export function RichTextEditor({ document, onUpdate, onImageInsert }: RichTextEd
         allowBase64: false,
       }),
     ],
-    content: documentToTipTap(document),
+    content: documentToTipTap(document, assetsBaseUrl),
     onBlur: ({ editor }) => {
-      const doc = tipTapToDocument(editor.getJSON());
+      const doc = tipTapToDocument(editor.getJSON(), assetsBaseUrl);
       onUpdate(doc);
     },
   });
@@ -37,12 +38,12 @@ export function RichTextEditor({ document, onUpdate, onImageInsert }: RichTextEd
   useEffect(() => {
     if (editor && !editor.isFocused) {
       const currentJSON = JSON.stringify(editor.getJSON());
-      const newJSON = JSON.stringify(documentToTipTap(document));
+      const newJSON = JSON.stringify(documentToTipTap(document, assetsBaseUrl));
       if (currentJSON !== newJSON) {
-        editor.commands.setContent(documentToTipTap(document));
+        editor.commands.setContent(documentToTipTap(document, assetsBaseUrl));
       }
     }
-  }, [document, editor]);
+  }, [document, editor, assetsBaseUrl]);
 
   if (!editor) return null;
 

@@ -10,14 +10,14 @@ interface TipTapNode {
 
 // --- Document → TipTap ---
 
-export function documentToTipTap(doc: Document): TipTapNode {
+export function documentToTipTap(doc: Document, assetsBaseUrl?: string): TipTapNode {
   return {
     type: "doc",
-    content: doc.content.map(blockToTipTap),
+    content: doc.content.map((b) => blockToTipTap(b, assetsBaseUrl)),
   };
 }
 
-function blockToTipTap(block: Block): TipTapNode {
+function blockToTipTap(block: Block, assetsBaseUrl?: string): TipTapNode {
   switch (block.type) {
     case "paragraph":
       return {
@@ -29,13 +29,15 @@ function blockToTipTap(block: Block): TipTapNode {
     case "blockquote":
       return {
         type: "blockquote",
-        content: block.content.map(blockToTipTap),
+        content: block.content.map((b) => blockToTipTap(b, assetsBaseUrl)),
       };
-    case "image":
+    case "image": {
+      const src = assetsBaseUrl ? `${assetsBaseUrl}/${block.src}` : block.src;
       return {
         type: "image",
-        attrs: { src: block.src, alt: block.alt },
+        attrs: { src, alt: block.alt },
       };
+    }
     case "horizontal_rule":
       return { type: "horizontalRule" };
   }
@@ -51,13 +53,13 @@ function inlineToTipTap(inline: Inline): TipTapNode {
 
 // --- TipTap → Document ---
 
-export function tipTapToDocument(tiptap: TipTapNode): Document {
+export function tipTapToDocument(tiptap: TipTapNode, assetsBaseUrl?: string): Document {
   return {
-    content: (tiptap.content || []).map(tipTapToBlock),
+    content: (tiptap.content || []).map((n) => tipTapToBlock(n, assetsBaseUrl)),
   };
 }
 
-function tipTapToBlock(node: TipTapNode): Block {
+function tipTapToBlock(node: TipTapNode, assetsBaseUrl?: string): Block {
   switch (node.type) {
     case "paragraph":
       return {
@@ -67,14 +69,23 @@ function tipTapToBlock(node: TipTapNode): Block {
     case "blockquote":
       return {
         type: "blockquote",
-        content: (node.content || []).map(tipTapToBlock),
+        content: (node.content || []).map((n) => tipTapToBlock(n, assetsBaseUrl)),
       };
-    case "image":
+    case "image": {
+      let src = node.attrs?.src || "";
+      // Strip base URL to store just the filename
+      if (assetsBaseUrl && src.startsWith(assetsBaseUrl + "/")) {
+        src = src.slice(assetsBaseUrl.length + 1);
+      } else if (src.includes("/")) {
+        // If it's a full path, extract just the filename
+        src = src.split("/").pop() || src;
+      }
       return {
         type: "image",
-        src: node.attrs?.src || "",
+        src,
         alt: node.attrs?.alt || "",
       };
+    }
     case "horizontalRule":
       return { type: "horizontal_rule" };
     default:
