@@ -1,13 +1,16 @@
-import { convertPageToManifestPage } from "./convertToManifest";
+import { ContentRenderer } from "@fabler/player/ui/ContentRenderer";
 import type { Page } from "../types";
+import type { AssetResolver } from "@fabler/player/engine/types";
+
+const noopAssets: AssetResolver = {
+  getAssetUrl: (path: string) => path,
+};
 
 interface PreviewViewProps {
   page: Page;
 }
 
 export function PreviewView({ page }: PreviewViewProps) {
-  const manifestPage = convertPageToManifestPage(page);
-
   return (
     <div
       className="h-full overflow-y-auto p-6"
@@ -16,15 +19,13 @@ export function PreviewView({ page }: PreviewViewProps) {
     >
       <article className="max-w-prose mx-auto">
         <h1 className="text-xl font-bold mb-4 text-gray-900">
-          {manifestPage.name}
+          {page.name}
         </h1>
-        <div className="leading-relaxed whitespace-pre-wrap text-gray-900">
-          {manifestPage.body}
-        </div>
-        {manifestPage.choices.length > 0 && (
+        <ContentRenderer document={page.body} assets={noopAssets} />
+        {page.choices.length > 0 && (
           <nav className="mt-8 pt-4 border-t border-gray-200">
             <ul className="list-none p-0 m-0 flex flex-col gap-3">
-              {manifestPage.choices.map((choice) => (
+              {page.choices.map((choice) => (
                 <li key={choice.id}>
                   <div className="w-full text-left p-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-500">
                     {choice.text}
@@ -34,7 +35,7 @@ export function PreviewView({ page }: PreviewViewProps) {
             </ul>
           </nav>
         )}
-        {manifestPage.choices.length === 0 && (
+        {page.choices.length === 0 && (
           <div className="mt-8 pt-4 border-t border-gray-200">
             <p className="text-center italic text-gray-400">The End</p>
           </div>

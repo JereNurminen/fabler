@@ -1,4 +1,5 @@
 import type { AssetResolver, ManifestPage } from "../engine/types";
+import { ContentRenderer } from "./ContentRenderer";
 
 interface PageViewProps {
   page: ManifestPage;
@@ -18,12 +19,7 @@ export function PageView({ page, assets }: PageViewProps) {
       >
         {page.name}
       </h1>
-      <div
-        className="leading-relaxed whitespace-pre-wrap"
-        style={{ color: "var(--player-text)" }}
-      >
-        {page.body}
-      </div>
+      <ContentRenderer document={page.body} assets={assets} />
     </article>
   );
 }

@@ -93,3 +93,13 @@ pub fn export_bundle(
 ) -> Result<(), String> {
     with_project(&state, |p| p.export_bundle(&output_path))
 }
+
+#[tauri::command]
+pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<String, String> {
+    with_project(&state, |p| p.copy_asset(&source_path))
+}
+
+#[tauri::command]
+pub fn get_project_assets_dir(state: State<ProjectState>) -> Result<String, String> {
+    with_project(&state, |p| Ok(p.get_assets_dir().to_string_lossy().to_string()))
+}

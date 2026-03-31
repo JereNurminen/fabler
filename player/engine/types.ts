@@ -22,7 +22,7 @@ export interface ManifestFlag {
 export interface ManifestPage {
   id: string;
   name: string;
-  body: string;
+  body: Document;
   assets: string[];
   flag_operations: ManifestFlagOperation[];
   choices: ManifestChoice[];
@@ -45,6 +45,25 @@ export interface ManifestCondition {
   flag_id: string;
   required_value: boolean;
 }
+
+// -- Rich text document types --
+
+export interface Document {
+  content: Block[];
+}
+
+export type Block =
+  | { type: "paragraph"; content: Inline[] }
+  | { type: "blockquote"; content: Block[] }
+  | { type: "image"; src: string; alt: string }
+  | { type: "horizontal_rule" };
+
+export interface Inline {
+  text: string;
+  marks: Mark[];
+}
+
+export type Mark = "bold" | "italic";
 
 // -- Game state --
 

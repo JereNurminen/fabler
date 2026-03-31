@@ -143,4 +143,42 @@ impl Project {
     pub fn dir(&self) -> &Path {
         &self.dir
     }
+
+    pub fn copy_asset(&self, source_path: &str) -> AppResult<String> {
+        let source = std::path::PathBuf::from(source_path);
+        let filename = source
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| AppError::Custom("Invalid source path".into()))?
+            .to_string();
+
+        let assets_dir = self.dir.join("assets");
+        std::fs::create_dir_all(&assets_dir)?;
+
+        let mut target_name = filename.clone();
+        let mut counter = 2;
+        while assets_dir.join(&target_name).exists() {
+            let stem = std::path::Path::new(&filename)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("file");
+            let ext = std::path::Path::new(&filename)
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("");
+            target_name = if ext.is_empty() {
+                format!("{}-{}", stem, counter)
+            } else {
+                format!("{}-{}.{}", stem, counter, ext)
+            };
+            counter += 1;
+        }
+
+        std::fs::copy(&source, assets_dir.join(&target_name))?;
+        Ok(target_name)
+    }
+
+    pub fn get_assets_dir(&self) -> std::path::PathBuf {
+        self.dir.join("assets")
+    }
 }

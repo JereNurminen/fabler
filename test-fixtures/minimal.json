@@ -10,7 +10,14 @@
     {
       "id": "page-1",
       "name": "The Only Page",
-      "body": "This is a story with just one page. There is nothing else to do.",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "text": "This is a story with just one page. There is nothing else to do.", "marks": [] }]
+          }
+        ]
+      },
       "assets": [],
       "flag_operations": [],
       "choices": []

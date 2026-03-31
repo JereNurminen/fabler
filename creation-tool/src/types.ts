@@ -11,10 +11,29 @@ export interface Flag {
   default_value: boolean;
 }
 
+// -- Rich text document types --
+
+export interface Document {
+  content: Block[];
+}
+
+export type Block =
+  | { type: "paragraph"; content: Inline[] }
+  | { type: "blockquote"; content: Block[] }
+  | { type: "image"; src: string; alt: string }
+  | { type: "horizontal_rule" };
+
+export interface Inline {
+  text: string;
+  marks: Mark[];
+}
+
+export type Mark = "bold" | "italic";
+
 export interface Page {
   id: string;
   name: string;
-  body: string;
+  body: Document;
   choices: Choice[];
   flag_operations: FlagOperation[];
 }

@@ -34,6 +34,12 @@ const api = {
 
   exportBundle: (outputPath: string) =>
     invoke<void>("export_bundle", { outputPath }),
+
+  copyAsset: (sourcePath: string) =>
+    invoke<string>("copy_asset", { sourcePath }),
+
+  getProjectAssetsDir: () =>
+    invoke<string>("get_project_assets_dir"),
 };
 
 export default api;

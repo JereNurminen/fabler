@@ -7,6 +7,7 @@
     "./engine/types": "./engine/types.ts",
     "./engine": "./engine/index.ts",
     "./ui": "./ui/index.ts",
+    "./ui/ContentRenderer": "./ui/ContentRenderer.tsx",
     "./ui/player.css": "./ui/player.css",
     "./ui/theme.css": "./ui/theme.css"
   },

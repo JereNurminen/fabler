@@ -4,21 +4,23 @@ import { pageAtomFamily, pageListAtom } from "../atoms/storyAtoms";
 import { savePageAtom } from "../atoms/storyActions";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
-import type { Choice } from "../types";
+import type { Choice, Document } from "../types";
 import { generateId } from "../utilities/id";
 import { useLocation } from "wouter";
 import { getLinkToPage } from "../utilities/routing";
 import { FlagOperations } from "./FlagOperations";
 import { ChoiceConditions } from "./ChoiceConditions";
 import { Input } from "./ui/Input";
-import { Textarea } from "./ui/Textarea";
+import { RichTextEditor } from "./RichTextEditor";
 import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import api from "../api";
 
 export default ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState<Document>({ content: [] });
   const [choices, setChoices] = useState<Choice[]>([]);
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
@@ -37,7 +39,7 @@ export default ({ pageId }: { pageId: string }) => {
 
   const handleSave = useCallback(async () => {
     if (!page) return;
-    if (name !== page.name || body !== page.body) {
+    if (name !== page.name || JSON.stringify(body) !== JSON.stringify(page.body)) {
       try {
         await savePage({ ...page, name, body });
       } catch (error) {
@@ -215,6 +217,14 @@ export default ({ pageId }: { pageId: string }) => {
     }
   };
 
+  const handleImageInsert = async (): Promise<string | null> => {
+    const filePath = await openDialog({
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }],
+    });
+    if (!filePath) return null;
+    return api.copyAsset(filePath);
+  };
+
   if (!page) return null;
 
   return (
@@ -230,12 +240,10 @@ export default ({ pageId }: { pageId: string }) => {
           value={name}
         />
 
-        <Textarea
-          label={t.labels.pageContent}
-          id="page-body-input"
-          onChange={(e) => setBody(e.target.value)}
-          onBlur={handleSave}
-          value={body}
+        <RichTextEditor
+          document={body}
+          onUpdate={(doc) => setBody(doc)}
+          onImageInsert={handleImageInsert}
         />
       </div>
 

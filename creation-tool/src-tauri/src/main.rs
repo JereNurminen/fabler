@@ -33,6 +33,8 @@ fn main() {
             commands::create_page,
             commands::delete_page,
             commands::export_bundle,
+            commands::copy_asset,
+            commands::get_project_assets_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

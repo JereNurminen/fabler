@@ -13,7 +13,14 @@
     {
       "id": "room",
       "name": "The Room",
-      "body": "You are in a small room. There is a locked door on the north wall and a table in the corner.",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "text": "You are in a small room. There is a locked door on the north wall and a table in the corner.", "marks": [] }]
+          }
+        ]
+      },
       "assets": [],
       "flag_operations": [],
       "choices": [
@@ -47,7 +54,14 @@
     {
       "id": "table",
       "name": "The Table",
-      "body": "You find a rusty key under some papers.",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "text": "You find a rusty key under some papers.", "marks": [] }]
+          }
+        ]
+      },
       "assets": [],
       "flag_operations": [
         { "flag_id": "has_key", "operation": "set_true" }
@@ -65,7 +79,14 @@
     {
       "id": "door-locked",
       "name": "Locked Door",
-      "body": "The door is locked tight.",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "text": "The door is locked tight.", "marks": [] }]
+          }
+        ]
+      },
       "assets": [],
       "flag_operations": [],
       "choices": [
@@ -92,7 +113,14 @@
     {
       "id": "freedom",
       "name": "Freedom",
-      "body": "You step through the door into the sunlight. You are free!",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [{ "text": "You step through the door into the sunlight. You are free!", "marks": [] }]
+          }
+        ]
+      },
       "assets": [],
       "flag_operations": [],
       "choices": []
