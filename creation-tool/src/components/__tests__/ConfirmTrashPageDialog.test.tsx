@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { DeleteImpact } from "@fabler/types";
 import { ConfirmTrashPageDialog } from "../ConfirmTrashPageDialog";
+import { translations } from "../../i18n";
 
 const base: DeleteImpact = {
   page_id: "b7c1d",
@@ -50,8 +51,13 @@ describe("ConfirmTrashPageDialog", () => {
     );
     const items = screen.getAllByTestId("trash-stranded-choice");
     expect(items).toHaveLength(2);
-    expect(items[0].textContent).toContain("Entrance");
-    expect(items[0].textContent).toContain("Go north");
+    // Exact-match the whole rendered sentence (built from the same
+    // translation function the component uses) rather than two independent
+    // `.toContain()` checks -- those pass regardless of argument order, so
+    // they would not catch a `strandedItem(pageName, choiceText)` call
+    // accidentally getting its two arguments swapped.
+    expect(items[0].textContent).toBe(translations.trash.strandedItem("Entrance", "Go north"));
+    expect(items[1].textContent).toBe(translations.trash.strandedItem("Great Hall", "Descend"));
   });
 
   it("confirms and cancels", async () => {
