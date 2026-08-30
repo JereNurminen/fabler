@@ -178,6 +178,7 @@ export const translations = {
     retry: "Retry",
     empty: "This story has no pages yet",
     danglingTarget: "leads nowhere",
+    autoArrange: "Auto-arrange",
   },
 
   // Dynamic strings (with interpolation)

@@ -2,7 +2,14 @@ import { describe, it, expect } from "vitest";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import type { PositionedNode } from "../layout";
 import { NODE_WIDTH, NODE_HEIGHT } from "../layout";
-import { severityByPage, toFlowNodes, toFlowEdges, resolveGraphViewMode } from "../StoryGraphView";
+import {
+  severityByPage,
+  toFlowNodes,
+  toFlowEdges,
+  resolveGraphViewMode,
+  missingNodeId,
+  buildMissingNodes,
+} from "../StoryGraphView";
 
 const problem = (over: Partial<Problem> = {}): Problem => ({
   severity: "error",
@@ -88,10 +95,20 @@ describe("toFlowEdges", () => {
     { id: "a:c2", source: "a", target: "gone9", label: "Nowhere", is_dangling: true },
   ];
 
-  it("drops dangling edges rather than handing React Flow an unroutable target", () => {
+  it("keeps dangling edges rather than dropping them", () => {
     const flowEdges = toFlowEdges(edges);
-    expect(flowEdges).toHaveLength(1);
-    expect(flowEdges[0].id).toBe("a:c1");
+    expect(flowEdges).toHaveLength(2);
+    expect(flowEdges.map((e) => e.id)).toEqual(["a:c1", "a:c2"]);
+  });
+
+  it("re-routes a dangling edge to the synthetic missing-target node instead of the nonexistent id", () => {
+    // React Flow cannot route to a node that does not exist, so a dangling
+    // edge's `target` must never remain the raw (missing) page id.
+    const flowEdges = toFlowEdges(edges);
+    const dangling = flowEdges.find((e) => e.id === "a:c2");
+    expect(dangling?.source).toBe("a");
+    expect(dangling?.target).toBe(missingNodeId("gone9"));
+    expect(dangling?.label).toBe("Nowhere");
   });
 
   it("carries source, target and label through for a live edge", () => {
@@ -104,6 +121,60 @@ describe("toFlowEdges", () => {
       { id: "x:c1", source: "x", target: "y", label: "", is_dangling: false },
     ]);
     expect(edge.label).toBeUndefined();
+  });
+});
+
+describe("missingNodeId", () => {
+  it("namespaces a missing target id so it can never collide with a real page id", () => {
+    expect(missingNodeId("gone9")).toBe("missing:gone9");
+  });
+});
+
+describe("buildMissingNodes", () => {
+  const positioned: PositionedNode[] = [
+    { id: "a", name: "Start", is_start: true, position: { x: 100, y: 200 } },
+  ];
+
+  it("creates a stub node for a dangling edge, labelled and styled as missing", () => {
+    const edges: GraphEdge[] = [
+      { id: "a:c1", source: "a", target: "gone9", label: "Nowhere", is_dangling: true },
+    ];
+    const [stub] = buildMissingNodes(edges, positioned, "leads nowhere");
+    expect(stub.id).toBe(missingNodeId("gone9"));
+    expect(stub.data.label).toBe("leads nowhere");
+    expect(stub.className).toContain("story-node--missing");
+  });
+
+  it("ignores non-dangling edges entirely", () => {
+    const edges: GraphEdge[] = [
+      { id: "a:c1", source: "a", target: "b", label: "Go", is_dangling: false },
+    ];
+    expect(buildMissingNodes(edges, positioned, "leads nowhere")).toHaveLength(0);
+  });
+
+  it("deduplicates multiple dangling edges that share the same missing target", () => {
+    const edges: GraphEdge[] = [
+      { id: "a:c1", source: "a", target: "gone9", label: "One", is_dangling: true },
+      { id: "a:c2", source: "a", target: "gone9", label: "Two", is_dangling: true },
+    ];
+    expect(buildMissingNodes(edges, positioned, "leads nowhere")).toHaveLength(1);
+  });
+
+  it("does not let the stub node's size drift from NODE_WIDTH/NODE_HEIGHT", () => {
+    const edges: GraphEdge[] = [
+      { id: "a:c1", source: "a", target: "gone9", label: "One", is_dangling: true },
+    ];
+    const [stub] = buildMissingNodes(edges, positioned, "leads nowhere");
+    expect(stub.style).toEqual({ width: NODE_WIDTH, height: NODE_HEIGHT });
+  });
+
+  it("positions distinct missing targets so they do not stack on top of each other", () => {
+    const edges: GraphEdge[] = [
+      { id: "a:c1", source: "a", target: "gone9", label: "One", is_dangling: true },
+      { id: "a:c2", source: "a", target: "gone8", label: "Two", is_dangling: true },
+    ];
+    const [first, second] = buildMissingNodes(edges, positioned, "leads nowhere");
+    expect(first.position).not.toEqual(second.position);
   });
 });
 

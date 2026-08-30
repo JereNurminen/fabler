@@ -21,6 +21,18 @@
 .story-node--warning { opacity: 0.55; border-style: dashed; }
 
 /*
+ * A dangling choice's stub target: not a real page, so it is styled to
+ * read as an author-facing warning rather than as content.
+ */
+.story-node--missing {
+  border-style: dashed;
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+  font-style: italic;
+}
+
+/*
  * The label lives in its own element (not text directly inside .story-node)
  * specifically so it can be clamped without an explicit height: clamping
  * needs to compute its own height from line-height * line count, and that

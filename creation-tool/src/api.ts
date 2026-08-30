@@ -34,6 +34,7 @@ function buildHttpApi() {
     exportBundle: (_outputPath: string) => call<void>("export_bundle"),
     validateStory: () => call<Report>("validate_story"),
     getStoryGraph: () => call<StoryGraph>("get_story_graph"),
+    clearEditorPositions: () => call<void>("clear_editor_positions"),
     copyAsset: async (_sourcePath: string) => "test-asset.png" as string,
     getProjectAssetsDir: () => call<string>("get_project_assets_dir"),
     listAssets: () => call<string[]>("list_assets"),
@@ -66,6 +67,7 @@ function buildTauriApi() {
       invoke<void>("export_bundle", { outputPath }),
     validateStory: () => invoke<Report>("validate_story"),
     getStoryGraph: () => invoke<StoryGraph>("get_story_graph"),
+    clearEditorPositions: () => invoke<void>("clear_editor_positions"),
     copyAsset: (sourcePath: string) =>
       invoke<string>("copy_asset", { sourcePath }),
     getProjectAssetsDir: () => invoke<string>("get_project_assets_dir"),

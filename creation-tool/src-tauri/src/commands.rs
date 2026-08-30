@@ -94,6 +94,11 @@ pub fn get_story_graph(state: State<ProjectState>) -> Result<shared::graph::Stor
 }
 
 #[tauri::command]
+pub fn clear_editor_positions(state: State<ProjectState>) -> Result<(), String> {
+    with_project(&state, |p| p.clear_editor_positions())
+}
+
+#[tauri::command]
 pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<String, String> {
     with_project(&state, |p| p.copy_asset(&source_path))
 }

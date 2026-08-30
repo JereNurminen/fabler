@@ -179,6 +179,33 @@ impl Project {
         Ok(shared::graph::build_graph(&story, &pages))
     }
 
+    /// Clear every page's saved editor position, in one pass, so the map's
+    /// "Auto-arrange" control can return to a clean dagre layout.
+    ///
+    /// One `save_page` per changed page (not per page in the project): only
+    /// pages that actually carried a position are rewritten, and this is
+    /// still a single command round-trip from the frontend rather than one
+    /// `save_page` invocation per node — a few hundred sequential round-trips
+    /// would be unacceptable for a single button click.
+    pub fn clear_editor_positions(&self) -> AppResult<()> {
+        for item in self.list_pages()? {
+            let mut page = self.read_page(&item.id)?;
+            let had_position = page
+                .editor
+                .as_ref()
+                .and_then(|e| e.position.as_ref())
+                .is_some();
+            if !had_position {
+                continue;
+            }
+            if let Some(editor) = page.editor.as_mut() {
+                editor.position = None;
+            }
+            self.save_page(&page)?;
+        }
+        Ok(())
+    }
+
     pub fn copy_asset(&self, source_path: &str) -> AppResult<String> {
         let source = std::path::PathBuf::from(source_path);
         let filename = source
@@ -270,6 +297,42 @@ mod tests {
 
         assert_eq!(project.story().id, original_id);
         assert_eq!(project.story().title, "Renamed");
+    }
+
+    #[test]
+    fn clear_editor_positions_clears_positioned_pages_and_leaves_others_untouched() {
+        use shared::models::{EditorMetadata, Position};
+
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Title").unwrap();
+
+        // The page `create` seeds has no editor metadata at all. Give it a
+        // saved position, and add a second page that never got one, so the
+        // test covers both "had a position" and "never had one".
+        let start_id = project.story().start_page;
+        let mut start_page = project.read_page(&start_id).unwrap();
+        start_page.editor = Some(EditorMetadata {
+            position: Some(Position { x: 12.0, y: 34.0 }),
+        });
+        project.save_page(&start_page).unwrap();
+
+        let unpositioned = project.create_page("Second").unwrap();
+        assert!(unpositioned.editor.is_none());
+
+        project.clear_editor_positions().unwrap();
+
+        let reread_start = project.read_page(&start_id).unwrap();
+        assert!(
+            reread_start
+                .editor
+                .as_ref()
+                .and_then(|e| e.position.as_ref())
+                .is_none(),
+            "position must be cleared"
+        );
+
+        let reread_second = project.read_page(&unpositioned.id).unwrap();
+        assert!(reread_second.editor.is_none(), "still has no editor metadata");
     }
 
     #[test]

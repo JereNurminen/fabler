@@ -45,6 +45,7 @@ fn main() {
             commands::export_bundle,
             commands::validate_story,
             commands::get_story_graph,
+            commands::clear_editor_positions,
             commands::copy_asset,
             commands::get_project_assets_dir,
             commands::list_assets,

@@ -14,14 +14,20 @@ import {
   type NodeMouseHandler,
   type NodeProps,
   type NodeTypes,
+  type OnNodeDrag,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import api from "../api";
 import { useTranslation } from "../i18n";
+import { useTrackedAction } from "../hooks/useTrackedAction";
 import { getLinkToPage } from "../utilities/routing";
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT, type PositionedNode } from "./layout";
+import { MISSING_NODE_PREFIX, missingNodeId } from "./missingNode";
+import { usePositionPersistence } from "./usePositionPersistence";
 import "./graph.css";
+
+export { MISSING_NODE_PREFIX, missingNodeId };
 
 interface StoryGraphViewProps {
   onClose: () => void;
@@ -104,20 +110,63 @@ export function toFlowNodes(
 }
 
 /**
- * Convert graph edges to React Flow's edge shape, dropping dangling edges —
- * React Flow cannot route an edge to a node that does not exist. Task 5
- * replaces this filter with rendered stubs; the underlying data is untouched,
- * only what is handed to the renderer is filtered.
+ * Convert graph edges to React Flow's edge shape.
+ *
+ * Dangling edges are kept rather than dropped — a choice that leads nowhere
+ * is the most important thing the map can show an author — but their
+ * `target` is redirected to the synthetic missing-target node id, since
+ * React Flow cannot route an edge to a node that does not exist. Pair with
+ * `buildMissingNodes`, which creates that synthetic node.
  */
 export function toFlowEdges(edges: GraphEdge[]): Edge[] {
-  return edges
-    .filter((e) => !e.is_dangling)
-    .map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      label: e.label || undefined,
-    }));
+  return edges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.is_dangling ? missingNodeId(e.target) : e.target,
+    label: e.label || undefined,
+  }));
+}
+
+/**
+ * Build one synthetic stub node per unique dangling-edge target, so
+ * `toFlowEdges`'s redirected edges have somewhere to point.
+ *
+ * Deduplicated by target: two different choices dangling to the same
+ * missing id share one stub, same as two choices to the same real page
+ * share one real node. Not draggable — there is no backing page to persist
+ * a position onto — and positioned near the first source that references
+ * it (offset per distinct target) since dagre never laid these out: they
+ * are not real pages and were deliberately kept out of the dagre pass.
+ */
+export function buildMissingNodes(
+  edges: GraphEdge[],
+  positioned: PositionedNode[],
+  label: string,
+): StoryNode[] {
+  const positionById = new Map(positioned.map((n) => [n.id, n.position]));
+  const bySourceOfTarget = new Map<string, string>();
+  for (const edge of edges) {
+    if (!edge.is_dangling) continue;
+    if (!bySourceOfTarget.has(edge.target)) {
+      bySourceOfTarget.set(edge.target, edge.source);
+    }
+  }
+
+  return [...bySourceOfTarget.entries()].map(([target, source], index): StoryNode => {
+    const sourcePosition = positionById.get(source) ?? { x: 0, y: 0 };
+    return {
+      id: missingNodeId(target),
+      type: "storyNode",
+      position: {
+        x: sourcePosition.x + index * (NODE_WIDTH + 40),
+        y: sourcePosition.y + NODE_HEIGHT + 60,
+      },
+      data: { label },
+      style: { width: NODE_WIDTH, height: NODE_HEIGHT },
+      className: "story-node story-node--missing",
+      draggable: false,
+    };
+  });
 }
 
 /**
@@ -195,8 +244,10 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
 
   useEffect(() => {
     if (!laidOut) return;
-    setNodes(toFlowNodes(laidOut.nodes, severityByPage(problems)));
-  }, [laidOut, problems]);
+    const realNodes = toFlowNodes(laidOut.nodes, severityByPage(problems));
+    const stubNodes = buildMissingNodes(laidOut.edges, laidOut.nodes, t.graph.danglingTarget);
+    setNodes([...realNodes, ...stubNodes]);
+  }, [laidOut, problems, t]);
 
   const viewMode = resolveGraphViewMode({ graph, loadError });
 
@@ -206,8 +257,20 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     setNodes((prev) => applyNodeChanges(changes, prev));
   }, []);
 
+  const savePosition = usePositionPersistence();
+  const onNodeDragStop = useCallback<OnNodeDrag<StoryNode>>(
+    (_event, node) => savePosition(node),
+    [savePosition],
+  );
+
+  const autoArrange = useTrackedAction(async () => {
+    await api.clearEditorPositions();
+    retry();
+  });
+
   const openPage = useCallback<NodeMouseHandler<StoryNode>>(
     (_event, node) => {
+      if (node.id.startsWith(MISSING_NODE_PREFIX)) return;
       setLocation(getLinkToPage(node.id));
       onClose();
     },
@@ -218,12 +281,20 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     <div className="fixed inset-0 z-50 flex flex-col bg-white" data-testid="story-graph">
       <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b shrink-0">
         <span className="text-sm font-medium text-gray-600">{t.graph.title}</span>
-        <button
-          onClick={onClose}
-          className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
-        >
-          {t.graph.close}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={autoArrange}
+            className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+          >
+            {t.graph.autoArrange}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+          >
+            {t.graph.close}
+          </button>
+        </div>
       </div>
       <div className="flex-1">
         {viewMode === "loading" ? (
@@ -247,6 +318,7 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onNodeClick={openPage}
+            onNodeDragStop={onNodeDragStop}
             fitView
           >
             <Background />

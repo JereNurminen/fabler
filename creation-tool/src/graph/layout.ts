@@ -23,9 +23,10 @@ export interface PositionedNode {
  * positions are substituted in only afterwards, so dagre's placement for a
  * new, unsaved node knows nothing about where manually-placed nodes ended
  * up. A newly added page can therefore land on top of one an author has
- * moved. Accepted for now; the planned remedy is an "Auto-arrange" control
- * that clears saved positions and re-runs layout from scratch, rather than
- * a collision-avoidance algorithm here.
+ * moved. The remedy is the "Auto-arrange" control in `StoryGraphView`,
+ * which clears every saved position (via `clearEditorPositions`) and
+ * re-runs layout from scratch, rather than a collision-avoidance algorithm
+ * here.
  */
 export function layoutGraph(graph: StoryGraph): {
   nodes: PositionedNode[];

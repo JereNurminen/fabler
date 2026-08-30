@@ -136,6 +136,11 @@ async fn invoke_handler(
                 .map(|g| json!(g))
                 .map_err(|e| e.to_string()),
 
+            "clear_editor_positions" => {
+                project.clear_editor_positions().map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
             // Export in test mode writes to a fixed temp path so e2e can
             // assert on blocked vs successful export. Safe because
             // playwright.config.ts pins `workers: 1, fullyParallel: false`.
