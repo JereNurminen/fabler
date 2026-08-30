@@ -19,8 +19,21 @@ pub fn export_bundle(project: &Project, output_path: &str) -> AppResult<()> {
 
     let manifest = build_manifest(&story, all_pages);
 
-    // No assets for now — could scan for referenced images later
-    let assets: HashMap<String, Vec<u8>> = HashMap::new();
+    // Include all files from the assets directory
+    let mut assets: HashMap<String, Vec<u8>> = HashMap::new();
+    let assets_dir = project.get_assets_dir();
+    if assets_dir.exists() {
+        for entry in std::fs::read_dir(&assets_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    let data = std::fs::read(&path)?;
+                    assets.insert(name.to_string(), data);
+                }
+            }
+        }
+    }
 
     let contents = BundleContents { manifest, assets };
     let data = pack_bundle(&contents)?;
