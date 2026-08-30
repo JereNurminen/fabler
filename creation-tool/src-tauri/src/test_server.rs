@@ -105,12 +105,6 @@ async fn invoke_handler(
                 Ok(json!(null))
             }
 
-            "delete_page" => {
-                let id = args["id"].as_str().ok_or("missing id".to_string())?;
-                project.delete_page(id).map_err(|e| e.to_string())?;
-                Ok(json!(null))
-            }
-
             "list_assets" => project
                 .list_assets()
                 .map(|a| json!(a))

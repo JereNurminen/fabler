@@ -13,7 +13,7 @@ use crate::error::{AppError, AppResult};
 /// A project backed by a directory containing story.json and a pages/ subfolder.
 pub struct Project {
     /// Path to the project directory (parent of story.json).
-    dir: PathBuf,
+    pub(crate) dir: PathBuf,
     /// Cached story metadata.
     story_cache: Mutex<Story>,
 }
@@ -86,6 +86,21 @@ impl Project {
         })
     }
 
+    fn pages_dir(&self) -> PathBuf {
+        self.dir.join("pages")
+    }
+
+    /// Created lazily by `pages::move_page` on the first trash, so opening a
+    /// project never adds an empty directory to it.
+    fn trash_dir(&self) -> PathBuf {
+        self.dir.join("trash")
+    }
+
+    /// True when this id names a file in `trash/`.
+    fn is_trashed(&self, id: &str) -> bool {
+        pages::find_page_file(&self.trash_dir(), id).is_ok()
+    }
+
     /// Get a clone of the cached story.
     pub fn story(&self) -> Story {
         self.story_cache.lock().unwrap().clone()
@@ -109,29 +124,43 @@ impl Project {
 
     /// List all pages (lightweight: id + name only).
     pub fn list_pages(&self) -> AppResult<Vec<PageListItem>> {
-        let pages_dir = self.dir.join("pages");
-        pages::list_pages(&pages_dir)
+        pages::list_pages(&self.pages_dir())
     }
 
     /// Read a full page by ID.
     pub fn read_page(&self, id: &str) -> AppResult<Page> {
-        let pages_dir = self.dir.join("pages");
-        pages::read_page(&pages_dir, id)
+        pages::read_page(&self.pages_dir(), id)
     }
 
     /// Save (create or update) a page.
+    ///
+    /// Refuses a page that is currently in the trash. Without this guard the
+    /// write would create a FRESH file in `pages/` — resurrecting the page as
+    /// a duplicate of the trashed one, with two files sharing an id. This is
+    /// the backend half of "a trashed page cannot be edited"; the read-only
+    /// UI is the other half, and neither alone is sufficient.
     pub fn save_page(&self, page: &Page) -> AppResult<()> {
-        let pages_dir = self.dir.join("pages");
-        pages::write_page(&pages_dir, page)
+        if self.is_trashed(&page.id) {
+            return Err(AppError::PageInTrash(page.id.clone()));
+        }
+        pages::write_page(&self.pages_dir(), page)
     }
 
     /// Create a new page with the given name, returning it.
     pub fn create_page(&self, name: &str) -> AppResult<Page> {
-        let pages_dir = self.dir.join("pages");
+        let pages_dir = self.pages_dir();
 
-        // Collect existing IDs to avoid collision
-        let existing_pages = pages::list_pages(&pages_dir)?;
-        let existing_ids: Vec<&str> = existing_pages.iter().map(|p| p.id.as_str()).collect();
+        // Seeded from BOTH directories. If trashed ids were left out, a new
+        // page could be minted with a trashed page's id; restoring later
+        // would put two files with one id on disk, and `find_page_file`
+        // would return whichever `read_dir` yielded first.
+        let live = pages::list_pages(&pages_dir)?;
+        let trashed = pages::list_pages(&self.trash_dir())?;
+        let existing_ids: Vec<&str> = live
+            .iter()
+            .chain(trashed.iter())
+            .map(|p| p.id.as_str())
+            .collect();
         let id = shared::id::generate_unique_id(&existing_ids);
 
         let page = Page {
@@ -147,10 +176,54 @@ impl Project {
         Ok(page)
     }
 
-    /// Delete a page by ID.
-    pub fn delete_page(&self, id: &str) -> AppResult<()> {
-        let pages_dir = self.dir.join("pages");
-        pages::delete_page(&pages_dir, id)
+    /// Soft-delete: move the page's file into `trash/`.
+    pub fn trash_page(&self, id: &str) -> AppResult<()> {
+        pages::move_page(&self.pages_dir(), &self.trash_dir(), id)
+    }
+
+    /// Move a trashed page's file back into `pages/`.
+    pub fn restore_page(&self, id: &str) -> AppResult<()> {
+        // `create_page` is supposed to make this impossible by never minting
+        // a trashed id. This is the second line of defence, so a bug there
+        // surfaces as an error instead of two files sharing an id.
+        if pages::find_page_file(&self.pages_dir(), id).is_ok() {
+            return Err(AppError::PageIdInUse(id.into()));
+        }
+        pages::move_page(&self.trash_dir(), &self.pages_dir(), id)
+    }
+
+    /// Permanently remove one page from the trash.
+    pub fn delete_trashed_page(&self, id: &str) -> AppResult<()> {
+        pages::delete_page(&self.trash_dir(), id)
+    }
+
+    /// Permanently remove every page from the trash.
+    pub fn empty_trash(&self) -> AppResult<()> {
+        for item in self.list_trashed_pages()? {
+            pages::delete_page(&self.trash_dir(), &item.id)?;
+        }
+        Ok(())
+    }
+
+    /// List the trash, newest first, ties broken by name.
+    ///
+    /// `last_modified` is `Option`, and `None` sorts last under this
+    /// comparison (a page file predating the timestamp field has no claim to
+    /// being recent). RFC3339 with fixed precision sorts lexicographically in
+    /// chronological order, so no parsing is needed.
+    pub fn list_trashed_pages(&self) -> AppResult<Vec<PageListItem>> {
+        let mut items = pages::list_pages(&self.trash_dir())?;
+        items.sort_by(|a, b| {
+            b.last_modified
+                .cmp(&a.last_modified)
+                .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+        });
+        Ok(items)
+    }
+
+    /// Read a full page from the trash by ID.
+    pub fn read_trashed_page(&self, id: &str) -> AppResult<Page> {
+        pages::read_page(&self.trash_dir(), id)
     }
 
     /// Export the project as a .fabler bundle to the given output path.
@@ -338,6 +411,213 @@ mod tests {
             reread_second.editor.is_none(),
             "still has no editor metadata"
         );
+    }
+
+    fn project_with_pages() -> (TempDir, Project) {
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Title").unwrap();
+        (tmp, project)
+    }
+
+    #[test]
+    fn trash_page_moves_it_out_of_the_live_list() {
+        let (_tmp, project) = project_with_pages();
+        let doomed = project.create_page("Doomed").unwrap();
+
+        project.trash_page(&doomed.id).unwrap();
+
+        let live: Vec<String> = project
+            .list_pages()
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+        assert!(!live.contains(&doomed.id), "trashed page must leave pages/");
+
+        let trashed: Vec<String> = project
+            .list_trashed_pages()
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+        assert_eq!(trashed, vec![doomed.id.clone()]);
+    }
+
+    #[test]
+    fn trash_then_restore_round_trips_content() {
+        let (_tmp, project) = project_with_pages();
+        let mut page = project.create_page("Storeroom").unwrap();
+        page.choices.push(shared::models::Choice {
+            id: "c1a2b".into(),
+            text: "Go north".into(),
+            target: "zzzzz".into(),
+            flag_operations: vec![],
+            conditions: vec![],
+        });
+        project.save_page(&page).unwrap();
+        let before = project.read_page(&page.id).unwrap();
+
+        project.trash_page(&page.id).unwrap();
+        project.restore_page(&page.id).unwrap();
+
+        let after = project.read_page(&page.id).unwrap();
+        assert_eq!(after.name, before.name);
+        assert_eq!(after.choices, before.choices);
+        assert_eq!(after.body, before.body);
+        assert!(project.list_trashed_pages().unwrap().is_empty());
+    }
+
+    #[test]
+    fn trashing_restamps_last_modified() {
+        let (_tmp, project) = project_with_pages();
+        let page = project.create_page("Doomed").unwrap();
+        let before = project.read_page(&page.id).unwrap().last_modified;
+
+        project.trash_page(&page.id).unwrap();
+        let after = project.read_trashed_page(&page.id).unwrap().last_modified;
+
+        assert!(after.is_some());
+        assert!(after >= before, "the move is a write, so it restamps");
+    }
+
+    #[test]
+    fn save_page_refuses_a_trashed_page() {
+        let (_tmp, project) = project_with_pages();
+        let page = project.create_page("Doomed").unwrap();
+        project.trash_page(&page.id).unwrap();
+
+        // Without this guard, saving would write a FRESH file into pages/ and
+        // resurrect the page as a duplicate of the trashed one.
+        let result = project.save_page(&page);
+
+        match result {
+            Err(AppError::PageInTrash(id)) => assert_eq!(id, page.id),
+            other => panic!("Expected PageInTrash, got: {other:?}"),
+        }
+        assert!(
+            project.list_pages().unwrap().iter().all(|p| p.id != page.id),
+            "the refused save must not have created a live file"
+        );
+    }
+
+    #[test]
+    fn create_page_never_reuses_a_trashed_id() {
+        let (_tmp, project) = project_with_pages();
+
+        // Trash enough pages that a colliding mint would be likely if the
+        // uniqueness set ignored trash/.
+        let mut trashed_ids = Vec::new();
+        for n in 0..8 {
+            let p = project.create_page(&format!("Doomed {n}")).unwrap();
+            project.trash_page(&p.id).unwrap();
+            trashed_ids.push(p.id);
+        }
+
+        for n in 0..30 {
+            let fresh = project.create_page(&format!("Fresh {n}")).unwrap();
+            assert!(
+                !trashed_ids.contains(&fresh.id),
+                "minted {} which is already in the trash",
+                fresh.id
+            );
+        }
+    }
+
+    #[test]
+    fn restore_refuses_when_the_id_is_already_live() {
+        let (_tmp, project) = project_with_pages();
+        let page = project.create_page("Doomed").unwrap();
+        project.trash_page(&page.id).unwrap();
+
+        // Force the collision create_page is designed to prevent, to prove
+        // restore is a second line of defence and not just an assumption.
+        let pages_dir = project.dir.join("pages");
+        crate::project::pages::write_page(&pages_dir, &page).unwrap();
+
+        match project.restore_page(&page.id) {
+            Err(AppError::PageIdInUse(id)) => assert_eq!(id, page.id),
+            other => panic!("Expected PageIdInUse, got: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn delete_trashed_page_removes_it_for_good() {
+        let (_tmp, project) = project_with_pages();
+        let page = project.create_page("Doomed").unwrap();
+        project.trash_page(&page.id).unwrap();
+
+        project.delete_trashed_page(&page.id).unwrap();
+
+        assert!(project.list_trashed_pages().unwrap().is_empty());
+        assert!(project.read_trashed_page(&page.id).is_err());
+    }
+
+    #[test]
+    fn empty_trash_removes_everything_and_leaves_live_pages_alone() {
+        let (_tmp, project) = project_with_pages();
+        let keeper = project.create_page("Keeper").unwrap();
+        for n in 0..3 {
+            let p = project.create_page(&format!("Doomed {n}")).unwrap();
+            project.trash_page(&p.id).unwrap();
+        }
+
+        project.empty_trash().unwrap();
+
+        assert!(project.list_trashed_pages().unwrap().is_empty());
+        assert!(project.read_page(&keeper.id).is_ok());
+    }
+
+    #[test]
+    fn list_trashed_pages_is_newest_first_then_by_name() {
+        use crate::project::pages::write_page_at;
+
+        let (_tmp, project) = project_with_pages();
+        let trash_dir = project.dir.join("trash");
+        std::fs::create_dir_all(&trash_dir).unwrap();
+
+        let mut mk = |id: &str, name: &str, stamp: &str| {
+            let page = Page {
+                id: id.into(),
+                name: name.into(),
+                body: shared::content::Document::empty(),
+                choices: vec![],
+                flag_operations: vec![],
+                editor: None,
+                last_modified: None,
+            };
+            write_page_at(&trash_dir, &page, stamp).unwrap();
+        };
+        mk("aaa11", "Older", "2026-08-01T00:00:00.000Z");
+        mk("bbb22", "Zebra", "2026-08-27T00:00:00.000Z");
+        mk("ccc33", "Apple", "2026-08-27T00:00:00.000Z");
+
+        let names: Vec<String> = project
+            .list_trashed_pages()
+            .unwrap()
+            .into_iter()
+            .map(|p| p.name)
+            .collect();
+
+        // Newest first; the two same-instant entries break the tie by name.
+        assert_eq!(names, vec!["Apple", "Zebra", "Older"]);
+    }
+
+    #[test]
+    fn list_trashed_pages_is_empty_when_no_trash_directory_exists() {
+        let (_tmp, project) = project_with_pages();
+        assert!(!project.dir.join("trash").exists());
+        assert!(project.list_trashed_pages().unwrap().is_empty());
+    }
+
+    #[test]
+    fn opening_a_project_does_not_create_a_trash_directory() {
+        // Lazy creation matters: opening the checked-in lantern-loop fixture
+        // must not modify it.
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("p");
+        Project::create(dir.to_str().unwrap(), "Title").unwrap();
+        let reopened = Project::open(dir.join("story.json").to_str().unwrap()).unwrap();
+        assert!(!reopened.dir.join("trash").exists());
     }
 
     #[test]

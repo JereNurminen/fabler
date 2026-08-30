@@ -117,6 +117,25 @@ pub fn delete_page(pages_dir: &Path, id: &str) -> AppResult<()> {
     Ok(())
 }
 
+/// Move a page's file from one directory to another, restamping it.
+///
+/// Implemented as a write plus a delete rather than a `rename`, so the move
+/// goes through `write_page` and picks up a fresh `last_modified` — which is
+/// what makes trashing and restoring update the timestamp. Trash and restore
+/// are this function with the arguments swapped, so the two directions cannot
+/// drift apart.
+///
+/// Creates `to_dir` if it is missing. This is where `trash/` comes into
+/// existence: lazily, on the first trash, so opening a project never creates
+/// an empty one.
+pub fn move_page(from_dir: &Path, to_dir: &Path, id: &str) -> AppResult<()> {
+    let page = read_page(from_dir, id)?;
+    std::fs::create_dir_all(to_dir)?;
+    write_page(to_dir, &page)?;
+    delete_page(from_dir, id)?;
+    Ok(())
+}
+
 /// List all pages in the pages directory, sorted by name.
 pub fn list_pages(pages_dir: &Path) -> AppResult<Vec<PageListItem>> {
     let mut items = Vec::new();
@@ -290,6 +309,38 @@ mod tests {
             Some("2026-08-27T12:00:00.000Z"),
             "the caller's stamp wins over whatever the page carried in"
         );
+    }
+
+    #[test]
+    fn move_page_leaves_no_file_behind_and_creates_the_target_dir() {
+        let tmp = TempDir::new().unwrap();
+        let from = tmp.path().join("pages");
+        let to = tmp.path().join("trash");
+        std::fs::create_dir_all(&from).unwrap();
+
+        write_page(&from, &make_page("ab12c", "Dark Tunnel")).unwrap();
+        move_page(&from, &to, "ab12c").unwrap();
+
+        assert!(read_page(&from, "ab12c").is_err(), "source file must be gone");
+        assert_eq!(read_page(&to, "ab12c").unwrap().name, "Dark Tunnel");
+        assert_eq!(
+            std::fs::read_dir(&from).unwrap().count(),
+            0,
+            "no stray file left in the source directory"
+        );
+    }
+
+    #[test]
+    fn move_page_reports_a_missing_source() {
+        let tmp = TempDir::new().unwrap();
+        let from = tmp.path().join("pages");
+        let to = tmp.path().join("trash");
+        std::fs::create_dir_all(&from).unwrap();
+
+        match move_page(&from, &to, "zzzzz") {
+            Err(AppError::PageNotFound(id)) => assert_eq!(id, "zzzzz"),
+            other => panic!("Expected PageNotFound, got: {other:?}"),
+        }
     }
 
     #[test]

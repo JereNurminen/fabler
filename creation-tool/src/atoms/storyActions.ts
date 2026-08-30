@@ -42,17 +42,11 @@ export const createPageAtom = atom(null, async (_get, set, name: string) => {
   return page;
 });
 
-export const deletePageAtom = atom(null, async (_get, set, id: string) => {
-  await api.deletePage(id);
-  pageAtomFamily.remove(id);
-  set(refreshAtom, (c) => c + 1);
-});
-
 /**
  * Invalidate every currently-cached page atom, then force mounted consumers
  * to re-read.
  *
- * For a single-page write, `savePageAtom`/`deletePageAtom` already handle
+ * For a single-page write, `savePageAtom`/`trashPageAtom` already handle
  * just that page. But some backend operations rewrite a field on every page
  * in one call — auto-arrange's `clear_editor_positions` is the one that
  * exists today — and after that, every page this session has cached is

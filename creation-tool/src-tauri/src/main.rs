@@ -41,7 +41,6 @@ fn main() {
             commands::get_page,
             commands::save_page,
             commands::create_page,
-            commands::delete_page,
             commands::export_bundle,
             commands::validate_story,
             commands::get_story_graph,

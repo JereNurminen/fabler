@@ -74,11 +74,6 @@ pub fn create_page(state: State<ProjectState>, name: String) -> Result<Page, Str
 }
 
 #[tauri::command]
-pub fn delete_page(state: State<ProjectState>, id: String) -> Result<(), String> {
-    with_project(&state, |p| p.delete_page(&id))
-}
-
-#[tauri::command]
 pub fn export_bundle(state: State<ProjectState>, output_path: String) -> Result<(), String> {
     with_project(&state, |p| p.export_bundle(&output_path))
 }

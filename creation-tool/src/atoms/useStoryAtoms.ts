@@ -12,7 +12,6 @@ import {
   saveStoryAtom,
   savePageAtom,
   createPageAtom,
-  deletePageAtom,
 } from "./storyActions";
 
 export const useStoryAtoms = () => {
@@ -26,7 +25,6 @@ export const useStoryAtoms = () => {
   const saveStory = useSetAtom(saveStoryAtom);
   const savePage = useSetAtom(savePageAtom);
   const createPage = useSetAtom(createPageAtom);
-  const deletePage = useSetAtom(deletePageAtom);
 
   return {
     story,
@@ -38,7 +36,6 @@ export const useStoryAtoms = () => {
     saveStory,
     savePage,
     createPage,
-    deletePage,
   };
 };
 

@@ -30,7 +30,6 @@ function buildHttpApi() {
     getPage: (id: string) => call<Page>("get_page", { id }),
     savePage: (page: Page) => call<void>("save_page", { page }),
     createPage: (name: string) => call<Page>("create_page", { name }),
-    deletePage: (id: string) => call<void>("delete_page", { id }),
     exportBundle: (_outputPath: string) => call<void>("export_bundle"),
     validateStory: () => call<Report>("validate_story"),
     getStoryGraph: () => call<StoryGraph>("get_story_graph"),
@@ -62,7 +61,6 @@ function buildTauriApi() {
     getPage: (id: string) => invoke<Page>("get_page", { id }),
     savePage: (page: Page) => invoke<void>("save_page", { page }),
     createPage: (name: string) => invoke<Page>("create_page", { name }),
-    deletePage: (id: string) => invoke<void>("delete_page", { id }),
     exportBundle: (outputPath: string) =>
       invoke<void>("export_bundle", { outputPath }),
     validateStory: () => invoke<Report>("validate_story"),
