@@ -30,15 +30,24 @@ const DEBOUNCE_MS = 500;
  *
  * Clobber avoidance, backward direction: PageCard (and its PreviewPanel
  * sibling) stay mounted while the map overlay is open — they're siblings,
- * not swapped — so their `pageAtomFamily` cache entry for this page
- * survives the drag untouched. If this write went straight through
- * `api.savePage`, that cache entry would still hold the pre-drag `editor`
- * field; the next ordinary edit through PageCard would then do
- * `save({ ...staleCachedPage, ...patch })` and write the OLD position back
- * over the one just persisted here, silently. Routing the write through
- * `savePageAtom` (rather than calling `api.savePage` directly) is what
- * invalidates that cache entry, the same as every other write path in the
- * app already does.
+ * not swapped — so whatever they read for this page before the drag is
+ * still what they hold after it. If this write went straight through
+ * `api.savePage`, PageCard would still be sitting on the pre-drag `editor`
+ * field; the next ordinary edit would then do
+ * `save({ ...stalePage, ...patch })` and write the OLD position back over
+ * the one just persisted here, silently. Routing the write through
+ * `savePageAtom` is what prevents that, the same as every other write path
+ * in the app.
+ *
+ * Precisely which part of `savePageAtom` does the work is worth being
+ * exact about, because it is easy to credit the wrong half:
+ * `pageAtomFamily.remove()` only drops the family's cached entry, and a
+ * mounted component keeps holding the atom instance it already has, so
+ * `remove()` alone would change nothing here. The load-bearing part is the
+ * `refreshAtom` bump — it recomputes `pageListAtom`, which PageCard
+ * subscribes to, which re-renders PageCard, which only then asks the family
+ * for the page again and (thanks to the removal) gets a fresh atom. Both
+ * calls are needed; the bump is what makes them reach the screen.
  */
 export function usePositionPersistence() {
   const timers = useRef(new Map<string, number>());

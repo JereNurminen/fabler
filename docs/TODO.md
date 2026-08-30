@@ -218,8 +218,15 @@ they are not silently lost now that the run's scratch workspace is gone.
   the graph-view Task 2 review; pre-existing, never observed.
 - `layoutGraph` (graph-view Task 3) lays out unsaved nodes without knowing
   where saved-position nodes ended up, so a new page can land on top of a
-  manually-placed one; accepted until the graph-view "Auto-arrange" control
-  ships, which will clear saved positions and re-run layout.
+  manually-placed one. **Remedy shipped** in graph-view Task 5: the
+  "Auto-arrange" control clears every saved position and re-runs layout from
+  scratch, so an author who hits an overlap is one click from a clean board.
+  Left open because that is an escape hatch, not a fix — the overlap still
+  happens first, and it discards every manual placement to undo one. A
+  collision-avoiding pass in `layoutGraph` (place saved nodes first, lay out
+  the rest around them) would remove the overlap instead of recovering from
+  it; deliberately not built yet, since it is only worth it if authors report
+  hitting this often.
 - Neither full-screen overlay — `StoryGraphView` (the story map) nor
   `PlaytestView` — closes on Escape. Surfaced during the graph-view Task 4
   review; add the handler to both together so the two overlays stay

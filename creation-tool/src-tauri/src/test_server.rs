@@ -137,7 +137,9 @@ async fn invoke_handler(
                 .map_err(|e| e.to_string()),
 
             "clear_editor_positions" => {
-                project.clear_editor_positions().map_err(|e| e.to_string())?;
+                project
+                    .clear_editor_positions()
+                    .map_err(|e| e.to_string())?;
                 Ok(json!(null))
             }
 

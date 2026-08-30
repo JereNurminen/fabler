@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import type { PositionedNode } from "../layout";
 import { NODE_WIDTH, NODE_HEIGHT } from "../layout";
+import { missingNodeId } from "../missingNode";
 import {
   severityByPage,
   toFlowNodes,
   toFlowEdges,
   resolveGraphViewMode,
-  missingNodeId,
+  applySeverity,
   buildMissingNodes,
 } from "../StoryGraphView";
 
@@ -127,6 +128,59 @@ describe("toFlowEdges", () => {
 describe("missingNodeId", () => {
   it("namespaces a missing target id so it can never collide with a real page id", () => {
     expect(missingNodeId("gone9")).toBe("missing:gone9");
+  });
+});
+
+describe("applySeverity", () => {
+  // The graph and the validation report arrive from separate promises. A
+  // report landing after the author dragged a node must be able to update
+  // that node's badge WITHOUT moving it back to where the layout put it.
+  const nodes = () =>
+    toFlowNodes(
+      [
+        { id: "a", name: "Start", is_start: true, position: { x: 1, y: 2 } },
+        { id: "b", name: "Next", is_start: false, position: { x: 3, y: 4 } },
+      ],
+      new Map(),
+    );
+
+  it("adds a badge without touching the node's position", () => {
+    const dragged = nodes();
+    dragged[1].position = { x: 900, y: 900 };
+
+    const [, b] = applySeverity(dragged, new Map([["b", "error" as const]]));
+
+    expect(b.position).toEqual({ x: 900, y: 900 });
+    expect(b.className).toContain("story-node--error");
+  });
+
+  it("keeps the start marker when re-skinning", () => {
+    const [a] = applySeverity(nodes(), new Map([["a", "warning" as const]]));
+    expect(a.className).toContain("story-node--start");
+    expect(a.className).toContain("story-node--warning");
+  });
+
+  it("clears a badge that no longer applies", () => {
+    const withError = applySeverity(nodes(), new Map([["a", "error" as const]]));
+    const cleared = applySeverity(withError, new Map());
+    expect(cleared[0].className).not.toContain("story-node--error");
+  });
+
+  it("returns unchanged nodes by identity so React Flow re-renders only what changed", () => {
+    const before = nodes();
+    const after = applySeverity(before, new Map([["b", "error" as const]]));
+    expect(after[0]).toBe(before[0]);
+    expect(after[1]).not.toBe(before[1]);
+  });
+
+  it("leaves the synthetic missing-target stub alone", () => {
+    const stubs = buildMissingNodes(
+      [{ id: "a:c1", source: "a", target: "gone9", label: "Nowhere", is_dangling: true }],
+      [{ id: "a", name: "Start", is_start: true, position: { x: 0, y: 0 } }],
+      "leads nowhere",
+    );
+    const [stub] = applySeverity(stubs, new Map([[missingNodeId("gone9"), "error" as const]]));
+    expect(stub.className).toBe("story-node story-node--missing");
   });
 });
 

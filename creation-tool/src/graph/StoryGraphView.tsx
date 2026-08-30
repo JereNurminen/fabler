@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSetAtom } from "jotai";
 import { useLocation } from "wouter";
 import {
   Background,
@@ -20,15 +21,13 @@ import "@xyflow/react/dist/style.css";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import api from "../api";
 import { useTranslation } from "../i18n";
-import { invalidateAllCachedPages } from "../atoms/storyActions";
+import { invalidateAllCachedPagesAtom } from "../atoms/storyActions";
 import { useTrackedAction } from "../hooks/useTrackedAction";
 import { getLinkToPage } from "../utilities/routing";
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT, type PositionedNode } from "./layout";
 import { MISSING_NODE_PREFIX, missingNodeId } from "./missingNode";
 import { usePositionPersistence } from "./usePositionPersistence";
 import "./graph.css";
-
-export { MISSING_NODE_PREFIX, missingNodeId };
 
 interface StoryGraphViewProps {
   onClose: () => void;
@@ -42,6 +41,12 @@ interface StoryGraphViewProps {
  */
 export interface StoryNodeData extends Record<string, unknown> {
   label: string;
+  /**
+   * Carried on the node itself so `applySeverity` can rebuild the class
+   * list from the node alone, without going back to the laid-out data (and
+   * therefore without touching `position`).
+   */
+  isStart: boolean;
 }
 
 export type StoryNode = Node<StoryNodeData>;
@@ -82,6 +87,18 @@ export function severityByPage(problems: Problem[]): Map<string, "error" | "warn
   return worst;
 }
 
+/** The class list for a real (page-backed) node, given what we know of it. */
+function storyNodeClassName(isStart: boolean, severity?: "error" | "warning"): string {
+  return [
+    "story-node",
+    isStart && "story-node--start",
+    severity === "error" && "story-node--error",
+    severity === "warning" && "story-node--warning",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
  * Convert dagre-positioned nodes into React Flow's node shape, driving the
  * inline size from NODE_WIDTH/NODE_HEIGHT so it can never drift from what
@@ -96,18 +113,39 @@ export function toFlowNodes(
       id: n.id,
       type: "storyNode",
       position: n.position,
-      data: { label: n.name || n.id },
+      data: { label: n.name || n.id, isStart: n.is_start },
       style: { width: NODE_WIDTH, height: NODE_HEIGHT },
-      className: [
-        "story-node",
-        n.is_start && "story-node--start",
-        severity.get(n.id) === "error" && "story-node--error",
-        severity.get(n.id) === "warning" && "story-node--warning",
-      ]
-        .filter(Boolean)
-        .join(" "),
+      className: storyNodeClassName(n.is_start, severity.get(n.id)),
     }),
   );
+}
+
+/**
+ * Re-skin nodes that already exist with a new severity map, leaving every
+ * other field — crucially `position` — exactly as it is.
+ *
+ * The graph and the validation report arrive from two separate promises. If
+ * validation lands second (it usually does; it re-reads every page) and the
+ * author has already dragged a node in the meantime, rebuilding the nodes
+ * from the layout would snap that node back to where dagre put it. Disk is
+ * never affected — the drag was already persisted — but the author sees
+ * their node visibly jump. So badges arriving late are patched onto the
+ * nodes on screen instead of regenerated from the layout.
+ *
+ * The synthetic missing-target stubs are skipped: they have no page id, so
+ * no severity can ever apply to them, and their class list is a constant.
+ * Unchanged nodes are returned by identity, so React Flow re-renders only
+ * the nodes whose badge actually changed.
+ */
+export function applySeverity(
+  nodes: StoryNode[],
+  severity: Map<string, "error" | "warning">,
+): StoryNode[] {
+  return nodes.map((node) => {
+    if (node.id.startsWith(MISSING_NODE_PREFIX)) return node;
+    const className = storyNodeClassName(node.data.isStart, severity.get(node.id));
+    return className === node.className ? node : { ...node, className };
+  });
 }
 
 /**
@@ -162,7 +200,7 @@ export function buildMissingNodes(
         x: sourcePosition.x + index * (NODE_WIDTH + 40),
         y: sourcePosition.y + NODE_HEIGHT + 60,
       },
-      data: { label },
+      data: { label, isStart: false },
       style: { width: NODE_WIDTH, height: NODE_HEIGHT },
       className: "story-node story-node--missing",
       draggable: false,
@@ -242,13 +280,29 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
   const laidOut = useMemo(() => (graph ? layoutGraph(graph) : null), [graph]);
+  const severity = useMemo(() => severityByPage(problems), [problems]);
 
+  // Read (not depended on) by the node-building effect below, so that a
+  // fresh validation report does not by itself trigger a rebuild from the
+  // layout — see `applySeverity`.
+  const severityRef = useRef(severity);
+
+  // Rebuild every node from the layout. This DOES reset positions, which is
+  // exactly what a fresh graph (including the one Auto-arrange refetches
+  // after clearing saved positions) needs.
   useEffect(() => {
     if (!laidOut) return;
-    const realNodes = toFlowNodes(laidOut.nodes, severityByPage(problems));
+    const realNodes = toFlowNodes(laidOut.nodes, severityRef.current);
     const stubNodes = buildMissingNodes(laidOut.edges, laidOut.nodes, t.graph.danglingTarget);
     setNodes([...realNodes, ...stubNodes]);
-  }, [laidOut, problems, t]);
+  }, [laidOut, t]);
+
+  // Badges only. Patches the nodes already on screen, so a validation
+  // report that resolves after a drag updates styling without undoing it.
+  useEffect(() => {
+    severityRef.current = severity;
+    setNodes((prev) => applySeverity(prev, severity));
+  }, [severity]);
 
   const viewMode = resolveGraphViewMode({ graph, loadError });
 
@@ -264,13 +318,18 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     [savePosition],
   );
 
+  const invalidateAllCachedPages = useSetAtom(invalidateAllCachedPagesAtom);
   const autoArrange = useTrackedAction(async () => {
     await api.clearEditorPositions();
     // clear_editor_positions rewrites EVERY page's editor.position in one
     // backend call, so every page cached in pageAtomFamily is now stale —
-    // not just the nodes currently on screen. Without this, the next
-    // ordinary edit through PageCard on any page would read its stale
-    // cached copy and write the old position straight back.
+    // not just the nodes currently on screen. Invalidating both drops those
+    // cached entries AND bumps `refreshAtom`; the bump is the part that
+    // reaches a PageCard which is already mounted behind this overlay,
+    // since it keeps holding its old family atom until a re-render makes it
+    // ask for a new one. Without it, the next ordinary edit through PageCard
+    // would read its stale cached copy and write the old position straight
+    // back over the one just cleared.
     invalidateAllCachedPages();
     retry();
   });

@@ -4,9 +4,9 @@
  * page id, and checked by `usePositionPersistence` to skip persisting a
  * drag of a stub that has no backing page.
  *
- * Lives in its own module (rather than in `StoryGraphView.tsx`, which is
- * where it is re-exported from) so that `usePositionPersistence.ts` can
- * import it without a circular dependency between the two files.
+ * Lives in its own module (rather than alongside its main consumer,
+ * `StoryGraphView.tsx`) so that `usePositionPersistence.ts` can import it
+ * without a circular dependency between the two files.
  */
 export const MISSING_NODE_PREFIX = "missing:";
 

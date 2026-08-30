@@ -332,7 +332,10 @@ mod tests {
         );
 
         let reread_second = project.read_page(&unpositioned.id).unwrap();
-        assert!(reread_second.editor.is_none(), "still has no editor metadata");
+        assert!(
+            reread_second.editor.is_none(),
+            "still has no editor metadata"
+        );
     }
 
     #[test]

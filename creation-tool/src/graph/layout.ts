@@ -36,14 +36,16 @@ export function layoutGraph(graph: StoryGraph): {
   g.setGraph({ rankdir: "TB", nodesep: 40, ranksep: 70 });
   g.setDefaultEdgeLabel(() => ({}));
 
-  const known = new Set(graph.nodes.map((n) => n.id));
   for (const node of graph.nodes) {
     g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
   }
   for (const edge of graph.edges) {
     // A dangling edge names a target that does not exist. Handing it to
-    // dagre would silently create a phantom node for it.
-    if (known.has(edge.source) && known.has(edge.target)) {
+    // dagre would silently create a phantom node for it. `is_dangling` is
+    // computed once in `shared/src/graph.rs`, where the full page-id set
+    // lives; recomputing it here would be a second, drifting definition of
+    // the same fact.
+    if (!edge.is_dangling) {
       g.setEdge(edge.source, edge.target);
     }
   }
