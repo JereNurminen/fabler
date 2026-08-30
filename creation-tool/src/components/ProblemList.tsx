@@ -1,5 +1,5 @@
 import { useTranslation } from "../i18n";
-import type { Problem } from "../types";
+import type { Problem, Severity } from "../types";
 import { problemMessage } from "../utilities/problemMessage";
 import clsx from "clsx";
 
@@ -8,6 +8,18 @@ interface ProblemListProps {
   /** Called with the page id when the author follows a problem's link. */
   onNavigate?: (pageId: string) => void;
 }
+
+const CONTAINER_CLASSES: Record<Severity, string> = {
+  error: "bg-red-50 border-red-200",
+  warning: "bg-amber-50 border-amber-200",
+  info: "bg-blue-50 border-blue-200",
+};
+
+const LABEL_CLASSES: Record<Severity, string> = {
+  error: "text-red-700",
+  warning: "text-amber-700",
+  info: "text-blue-700",
+};
 
 export const ProblemList = ({ problems, onNavigate }: ProblemListProps) => {
   const { t } = useTranslation();
@@ -25,19 +37,14 @@ export const ProblemList = ({ problems, onNavigate }: ProblemListProps) => {
       {problems.map((problem, i) => (
         <li
           key={`${problem.page_id ?? "story"}-${problem.detail.code}-${i}`}
-          className={clsx(
-            "p-2.5 rounded border text-xs",
-            problem.severity === "error"
-              ? "bg-red-50 border-red-200"
-              : "bg-amber-50 border-amber-200",
-          )}
+          className={clsx("p-2.5 rounded border text-xs", CONTAINER_CLASSES[problem.severity])}
           data-testid={`problem-${problem.detail.code}`}
         >
           <div className="flex items-center gap-2 mb-1">
             <span
               className={clsx(
                 "font-semibold uppercase tracking-wide text-[10px]",
-                problem.severity === "error" ? "text-red-700" : "text-amber-700",
+                LABEL_CLASSES[problem.severity],
               )}
             >
               {t.problems.severity[problem.severity]}

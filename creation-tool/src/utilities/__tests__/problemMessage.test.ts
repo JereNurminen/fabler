@@ -12,6 +12,19 @@ const ALL_CODES: ProblemDetail[] = [
   { code: "unreachable_page" },
 ];
 
+// Expected substrings per code. Distinguishes each variant's own fields so a
+// builder wired to the wrong same-shaped field (e.g. choice_text where flag_id
+// belongs) fails, rather than merely producing "some non-empty string".
+const EXPECTED_SUBSTRINGS: Record<ProblemDetail["code"], string[]> = {
+  dangling_choice_target: ["Go deeper", "gone9"],
+  dangling_page_flag_operation: ["gonef"],
+  dangling_choice_flag_operation: ["Open", "gonef"],
+  dangling_choice_condition: ["Open", "gonef"],
+  start_page_unset: [],
+  start_page_missing: ["nope9"],
+  unreachable_page: [],
+};
+
 describe("problemMessage", () => {
   it("produces a non-empty message for every problem code", () => {
     // Guards against adding a ProblemDetail variant without a message.
@@ -22,9 +35,14 @@ describe("problemMessage", () => {
     }
   });
 
-  it("names the offending choice and target", () => {
-    const message = problemMessage(ALL_CODES[0]);
-    expect(message).toContain("Go deeper");
-    expect(message).toContain("gone9");
+  it("names the specific values carried by each problem variant", () => {
+    // For the two variants that carry both choice_text and flag_id, this
+    // catches a swap between those two fields, not just a missing one.
+    for (const detail of ALL_CODES) {
+      const message = problemMessage(detail);
+      for (const expected of EXPECTED_SUBSTRINGS[detail.code]) {
+        expect(message, `expected "${expected}" in message for ${detail.code}`).toContain(expected);
+      }
+    }
   });
 });
