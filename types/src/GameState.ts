@@ -7,7 +7,7 @@
  * These three types serialise in camelCase, unlike every other type in this
  * crate. That is deliberate and load-bearing: the player's TypeScript has
  * always used camelCase here, and the renames are what let the generated
- * bindings match it exactly. Normalising the wire format is tracked
- * separately in docs/TODO.md.
+ * bindings match it exactly. Normalising the wire format is tracked in
+ * docs/TODO.md, under "Deferred from type generation".
  */
 export type GameState = { currentPageId: string, flags: { [key in string]: boolean }, };

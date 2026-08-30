@@ -83,6 +83,11 @@ jobs:
         run: |
           node types/generate-index.mjs
           git diff --exit-code types/
+          if [ -n "$(git status --porcelain types/)" ]; then
+            echo "::error::types/ has untracked or orphaned files after regeneration. A removed #[derive(TS)] or deleted Rust type leaves a stale file behind that 'git diff' alone won't catch. Run 'yarn codegen' locally and commit the result (including any deletions)."
+            git status --porcelain types/
+            exit 1
+          fi
 
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings

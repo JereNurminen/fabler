@@ -15,7 +15,7 @@ import { Input } from "./ui/Input";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "./ui/Button";
 import api from "../api";
-import type { Choice } from "@fabler/types";
+import type { Choice, FlagOperation } from "@fabler/types";
 
 const PageCard = ({ pageId }: { pageId: string }) => {
   // Draft state: edits are local until blur, matching the previous behaviour.
@@ -125,7 +125,7 @@ const PageCard = ({ pageId }: { pageId: string }) => {
               updatePage({
                 flag_operations: upsertFlagRule(page.flag_operations, {
                   flag_id: flagId,
-                  operation: operation as "set_true" | "set_false" | "toggle",
+                  operation: operation as FlagOperation["operation"],
                 }),
               })
             }

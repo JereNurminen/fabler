@@ -63,11 +63,15 @@ see `docs/superpowers/specs/2026-08-26-component-cleanup-design.md`.
 - [ ] **Stop drilling seven props through `MainLayout`** [12] — *small*
       `Sidebar` and `BottomBar` take the same seven props and already call
       `useStoryAtoms()` internally anyway.
-- [ ] **Generate TS types from Rust** [13] — *medium*
+- [x] **Generate TS types from Rust** [13] — *medium*
       `Document`/`Block`/`Inline`/`Mark` and the flag/choice/condition shapes
-      are hand-maintained in three places. `ManifestPage.assets` is already a
-      ghost field — present in TS, absent in Rust. `ts-rs` or `typeshare`
-      removes the whole category.
+      were hand-maintained in three places. `ManifestPage.assets` was a
+      ghost field — present in TS, absent in Rust. `ts-rs` now generates 21
+      types into `@fabler/types`; the ghost field is gone along with the
+      hand-written mirrors. See
+      `docs/superpowers/specs/2026-08-26-type-generation-design.md`.
+      What the freshness gate does and does not catch is recorded below,
+      "The codegen gate's guarantee, precisely".
 - [ ] **Clear remaining dead code** — *small*
       `import.rs` (`import_bundle_to_project` is unreachable — the Import menu
       item is wired to an empty listener), `migration.rs` (never called),
@@ -86,6 +90,38 @@ see `docs/superpowers/specs/2026-08-26-component-cleanup-design.md`.
       `StoryEditorPage`, `PreviewView`); `StartPage` hedges with
       `t.buttons.x || "literal"` for keys that exist. The reader and the
       player package have no i18n layer at all.
+
+## Deferred from type generation
+
+- [ ] **Normalise the save wire format** — *medium*
+      `GameState`/`SavedState`/`SlotInfo` serialise in camelCase
+      (`gameState`, `slotId`, `currentPageId`) via serde renames while
+      everything else in the crate is snake_case. Deliberate: it kept the
+      generated TypeScript matching the hand-written TypeScript it replaced,
+      so the type-generation migration needed no consumer churn. Worth
+      normalising eventually, but it is a wire-format change, not a
+      type-generation one, so it needs its own consideration.
+- [ ] **Make `FlagOperation.operation` a real enum** — *small*
+      It is a Rust `String` with a `#[ts(type = ...)]` override asserting the
+      literal union `"set_true" | "set_false" | "toggle"`. Rust does not
+      enforce it, `validation.rs` emits no problem code for an unknown
+      operation, so an imported or hand-edited story with a bad value
+      deserialises fine and falls through the switch in
+      `player/engine/runtime.ts`. Should be a proper Rust enum.
+- [ ] **`convertPageToManifestPage` is dead code** — *trivial*
+      `creation-tool/src/player/convertToManifest.ts`. No production caller,
+      only its own test, and with the `assets` field gone it deep-copies a
+      `Page` into the same shape under a name referencing a type
+      (`ManifestPage`) that no longer exists.
+
+**The codegen gate's guarantee, precisely:** drift in a derived type is
+impossible to commit; a forgotten derive is not caught. `yarn codegen:check`
+regenerates `types/src/*.ts` and fails on any diff or leftover untracked
+file, so a changed Rust field that was not regenerated, a hand-edit of a
+generated file, and an orphaned file left behind by a removed type all fail
+the build. It does nothing for a new boundary-crossing Rust type that never
+gets `#[derive(TS)]` in the first place — nothing is generated for it, so
+there is nothing to diff, and the gate is silent.
 
 ## Deferred from the component cleanup
 
