@@ -19,3 +19,20 @@
 .story-node--start { border-color: #4f46e5; border-width: 2px; }
 .story-node--error { border-color: #dc2626; background: #fef2f2; }
 .story-node--warning { opacity: 0.55; border-style: dashed; }
+
+/*
+ * The label lives in its own element (not text directly inside .story-node)
+ * specifically so it can be clamped without an explicit height: clamping
+ * needs to compute its own height from line-height * line count, and that
+ * breaks (extra lines paint past the clip) when the SAME element also has
+ * the fixed inline height that .story-node's parent node wrapper carries.
+ * See the StoryFlowNode component in StoryGraphView.tsx.
+ */
+.story-node__label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}

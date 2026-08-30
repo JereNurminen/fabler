@@ -3,13 +3,17 @@ import { useLocation } from "wouter";
 import {
   Background,
   Controls,
+  Handle,
   MiniMap,
+  Position,
   ReactFlow,
   applyNodeChanges,
   type Edge,
   type Node,
   type NodeChange,
   type NodeMouseHandler,
+  type NodeProps,
+  type NodeTypes,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
@@ -34,6 +38,29 @@ export interface StoryNodeData extends Record<string, unknown> {
 }
 
 export type StoryNode = Node<StoryNodeData>;
+
+/**
+ * Custom node renderer, replacing React Flow's built-in "default" node.
+ *
+ * The label sits in its own element rather than as a direct text child of
+ * the sized node wrapper: `-webkit-line-clamp` needs to compute its own
+ * intrinsic height from line-height and the clamp count, and that
+ * calculation breaks (extra, unclamped lines leak past the clip box) when
+ * the SAME element also carries an explicit inline height — which the node
+ * wrapper always does, from NODE_WIDTH/NODE_HEIGHT below. Verified against
+ * a standalone repro before landing this structure.
+ */
+function StoryFlowNode({ data }: NodeProps<StoryNode>) {
+  return (
+    <>
+      <Handle type="target" position={Position.Top} />
+      <span className="story-node__label">{data.label}</span>
+      <Handle type="source" position={Position.Bottom} />
+    </>
+  );
+}
+
+const nodeTypes: NodeTypes = { storyNode: StoryFlowNode };
 
 /** Worst severity affecting each page, for node styling. */
 export function severityByPage(problems: Problem[]): Map<string, "error" | "warning"> {
@@ -60,6 +87,7 @@ export function toFlowNodes(
   return positioned.map(
     (n): StoryNode => ({
       id: n.id,
+      type: "storyNode",
       position: n.position,
       data: { label: n.name || n.id },
       style: { width: NODE_WIDTH, height: NODE_HEIGHT },
@@ -92,23 +120,76 @@ export function toFlowEdges(edges: GraphEdge[]): Edge[] {
     }));
 }
 
+/**
+ * Which of the graph view's mutually-exclusive panels to show.
+ *
+ * Deliberately keyed off `graph` and `loadError` only, never off the
+ * `nodes` React state array: `nodes` is populated by a follow-up effect (it
+ * has to be state, not derived, so drags can mutate it) and lags one render
+ * behind `graph` arriving. Driving the empty/graph decision from `nodes`
+ * would paint the "no pages" message for that one tick even when the story
+ * has pages. `graph.nodes` reflects the fetch result immediately, so this
+ * function is pure and synchronous with no such gap.
+ *
+ * Validation failures never surface here: `getStoryGraph` failing makes the
+ * whole map unusable, so it blocks everything behind an error panel with
+ * retry. `validateStory` failing only means severity badges are missing —
+ * the map itself is still useful, so that failure is swallowed (logged,
+ * not surfaced) and simply leaves `problems` empty.
+ */
+export type GraphViewMode = "loading" | "error" | "empty" | "graph";
+
+export function resolveGraphViewMode(state: {
+  graph: StoryGraph | null;
+  loadError: boolean;
+}): GraphViewMode {
+  if (state.loadError) return "error";
+  if (!state.graph) return "loading";
+  if (state.graph.nodes.length === 0) return "empty";
+  return "graph";
+}
+
 export function StoryGraphView({ onClose }: StoryGraphViewProps) {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const [graph, setGraph] = useState<StoryGraph | null>(null);
   const [problems, setProblems] = useState<Problem[]>([]);
   const [nodes, setNodes] = useState<StoryNode[]>([]);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    void Promise.all([api.getStoryGraph(), api.validateStory()])
-      .then(([g, report]) => {
-        setGraph(g);
-        setProblems(report.problems);
+    let cancelled = false;
+    setLoadError(false);
+
+    api
+      .getStoryGraph()
+      .then((g) => {
+        if (!cancelled) setGraph(g);
       })
       .catch((error: unknown) => {
         console.error("Failed to load story map:", error);
+        if (!cancelled) setLoadError(true);
       });
-  }, []);
+
+    // Validation is an overlay on top of the graph (severity badges), not a
+    // prerequisite for it — a failure here should not strand the author on
+    // the loading screen when the map itself loaded fine.
+    api
+      .validateStory()
+      .then((report) => {
+        if (!cancelled) setProblems(report.problems);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to validate story:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
   const laidOut = useMemo(() => (graph ? layoutGraph(graph) : null), [graph]);
 
@@ -116,6 +197,8 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     if (!laidOut) return;
     setNodes(toFlowNodes(laidOut.nodes, severityByPage(problems)));
   }, [laidOut, problems]);
+
+  const viewMode = resolveGraphViewMode({ graph, loadError });
 
   const edges: Edge[] = useMemo(() => toFlowEdges(laidOut?.edges ?? []), [laidOut]);
 
@@ -143,14 +226,25 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
         </button>
       </div>
       <div className="flex-1">
-        {!laidOut ? (
+        {viewMode === "loading" ? (
           <p className="p-6 text-sm text-gray-500">{t.graph.loading}</p>
-        ) : nodes.length === 0 ? (
+        ) : viewMode === "error" ? (
+          <div className="p-6 text-sm text-gray-500">
+            <p>{t.graph.loadError}</p>
+            <button
+              onClick={retry}
+              className="mt-2 px-3 py-1 text-sm bg-gray-200 rounded hover:bg-gray-300"
+            >
+              {t.graph.retry}
+            </button>
+          </div>
+        ) : viewMode === "empty" ? (
           <p className="p-6 text-sm text-gray-500 italic">{t.graph.empty}</p>
         ) : (
           <ReactFlow
             nodes={nodes}
             edges={edges}
+            nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onNodeClick={openPage}
             fitView

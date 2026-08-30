@@ -220,3 +220,7 @@ they are not silently lost now that the run's scratch workspace is gone.
   where saved-position nodes ended up, so a new page can land on top of a
   manually-placed one; accepted until the graph-view "Auto-arrange" control
   ships, which will clear saved positions and re-run layout.
+- Neither full-screen overlay — `StoryGraphView` (the story map) nor
+  `PlaytestView` — closes on Escape. Surfaced during the graph-view Task 4
+  review; add the handler to both together so the two overlays stay
+  consistent, rather than fixing one and leaving the other behind.

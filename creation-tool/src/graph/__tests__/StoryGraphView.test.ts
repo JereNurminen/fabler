@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import type { GraphEdge, Problem } from "@fabler/types";
+import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import type { PositionedNode } from "../layout";
 import { NODE_WIDTH, NODE_HEIGHT } from "../layout";
-import { severityByPage, toFlowNodes, toFlowEdges } from "../StoryGraphView";
+import { severityByPage, toFlowNodes, toFlowEdges, resolveGraphViewMode } from "../StoryGraphView";
 
 const problem = (over: Partial<Problem> = {}): Problem => ({
   severity: "error",
@@ -104,5 +104,41 @@ describe("toFlowEdges", () => {
       { id: "x:c1", source: "x", target: "y", label: "", is_dangling: false },
     ]);
     expect(edge.label).toBeUndefined();
+  });
+});
+
+describe("resolveGraphViewMode", () => {
+  const graphWithPages: StoryGraph = {
+    nodes: [{ id: "a", name: "A", is_start: true, position: null }],
+    edges: [],
+  };
+  const emptyGraph: StoryGraph = { nodes: [], edges: [] };
+
+  it("shows loading before the graph fetch has resolved", () => {
+    expect(resolveGraphViewMode({ graph: null, loadError: false })).toBe("loading");
+  });
+
+  it("shows the error panel when the graph fetch failed", () => {
+    expect(resolveGraphViewMode({ graph: null, loadError: true })).toBe("error");
+  });
+
+  it("prioritizes the error panel even if a graph value is somehow also present", () => {
+    expect(resolveGraphViewMode({ graph: graphWithPages, loadError: true })).toBe("error");
+  });
+
+  it("shows empty only when the fetched graph genuinely has no pages", () => {
+    expect(resolveGraphViewMode({ graph: emptyGraph, loadError: false })).toBe("empty");
+  });
+
+  // Regression test for a real bug: nodes are mirrored into local React
+  // state (`nodes`) via a follow-up effect, one render tick after `graph`
+  // itself arrives, because drags need to mutate that state. Deciding
+  // "empty" from that lagging state array (instead of from `graph` itself)
+  // painted "this story has no pages yet" for one tick on every story that
+  // has pages. This function takes no `nodes` array at all, precisely so
+  // that lag can't leak into the decision — this test pins that a populated
+  // graph reads as "graph" immediately, with nothing else required.
+  it("shows the graph as soon as the fetched graph has pages, with no dependency on any other state", () => {
+    expect(resolveGraphViewMode({ graph: graphWithPages, loadError: false })).toBe("graph");
   });
 });

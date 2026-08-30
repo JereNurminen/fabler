@@ -174,6 +174,8 @@ export const translations = {
     title: "Story map",
     close: "Close map",
     loading: "Loading story map…",
+    loadError: "Couldn't load the story map.",
+    retry: "Retry",
     empty: "This story has no pages yet",
     danglingTarget: "leads nowhere",
   },
