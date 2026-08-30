@@ -1,4 +1,3 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
 import type { AssetResolver } from "@fabler/player/engine/types";
 
 export class TauriAssetResolver implements AssetResolver {
@@ -9,6 +8,8 @@ export class TauriAssetResolver implements AssetResolver {
   }
 
   getAssetUrl(assetPath: string): string {
-    return convertFileSrc(`${this.storyPath}/assets/${assetPath}`);
+    const fullPath = `${this.storyPath}/assets/${assetPath}`;
+    // Construct asset URL directly — convertFileSrc double-encodes the path
+    return `asset://localhost${fullPath}`;
   }
 }

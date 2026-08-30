@@ -15,17 +15,23 @@ import { MarkdownEditor } from "./MarkdownEditor";
 import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
+import api from "../api";
 
 export default ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [choices, setChoices] = useState<Choice[]>([]);
+  const [assetsDir, setAssetsDir] = useState<string | null>(null);
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
   const savePage = useSetAtom(savePageAtom);
   const { flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    api.getProjectAssetsDir().then(setAssetsDir).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (page) {
@@ -35,6 +41,11 @@ export default ({ pageId }: { pageId: string }) => {
       setChoices(page.choices);
     }
   }, [page]);
+
+  const resolveImageUrl = useCallback((filename: string) => {
+    if (!assetsDir) return filename;
+    return `asset://localhost${assetsDir}/${filename}`;
+  }, [assetsDir]);
 
   const handleSave = useCallback(async () => {
     if (!page) return;
@@ -236,6 +247,7 @@ export default ({ pageId }: { pageId: string }) => {
           value={body}
           onChange={setBody}
           onBlur={handleSave}
+          resolveImageUrl={resolveImageUrl}
         />
       </div>
 

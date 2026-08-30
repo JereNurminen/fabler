@@ -5,14 +5,27 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  resolveImageUrl?: (filename: string) => string;
 }
 
-export function MarkdownEditor({ value, onChange, onBlur }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onChange, onBlur, resolveImageUrl }: MarkdownEditorProps) {
   const [showPreview, setShowPreview] = useState(true);
 
   const renderedHtml = useMemo(() => {
-    return marked.parse(value, { async: false }) as string;
-  }, [value]);
+    let html = marked.parse(value, { async: false }) as string;
+    if (resolveImageUrl) {
+      html = html.replace(
+        /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/g,
+        (match, before, src, after) => {
+          if (!src.includes("://") && !src.startsWith("/")) {
+            return `<img ${before}src="${resolveImageUrl(src)}"${after}>`;
+          }
+          return match;
+        }
+      );
+    }
+    return html;
+  }, [value, resolveImageUrl]);
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
