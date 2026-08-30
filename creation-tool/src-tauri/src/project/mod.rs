@@ -767,4 +767,56 @@ mod tests {
         let reopened = Project::open(story_path.to_str().unwrap()).unwrap();
         assert_eq!(reopened.story().id, id, "backfilled id must be persisted");
     }
+
+    /// Open the checked-in feature-coverage fixture.
+    ///
+    /// Read-only by construction: `Project::open` writes only when it has to
+    /// backfill a missing story id, and lantern-loop already has `"1a2b3"`;
+    /// `pages/` exists; and `trash/` is created lazily by the first trash,
+    /// never on open. If this test ever starts dirtying the working tree,
+    /// one of those three things has changed.
+    fn open_lantern_loop() -> Project {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../test-fixtures/lantern-loop/story.json");
+        Project::open(path.to_str().unwrap()).unwrap()
+    }
+
+    #[test]
+    fn lantern_loop_has_thirteen_live_pages_and_one_in_the_trash() {
+        let project = open_lantern_loop();
+        assert_eq!(project.list_pages().unwrap().len(), 13);
+
+        let trashed = project.list_trashed_pages().unwrap();
+        assert_eq!(trashed.len(), 1);
+        assert_eq!(trashed[0].id, "9a0b1");
+        assert_eq!(trashed[0].name, "Flooded Cistern");
+    }
+
+    #[test]
+    fn lantern_loops_trashed_page_raises_no_problems() {
+        // The trashed page carries a flag operation and a choice condition on
+        // flag ids the story does not define. Live, each would be an Error.
+        // Trashed, the report must stay completely clean.
+        let project = open_lantern_loop();
+        let report = project.validate().unwrap();
+        assert!(
+            report.problems.is_empty(),
+            "fixture must validate clean, got {:?}",
+            report.problems
+        );
+    }
+
+    #[test]
+    fn lantern_loops_trashed_page_is_absent_from_the_story_map() {
+        let project = open_lantern_loop();
+        let graph = project.story_graph().unwrap();
+
+        assert_eq!(graph.nodes.len(), 13);
+        assert!(graph.nodes.iter().all(|n| n.id != "9a0b1"));
+        assert_eq!(graph.edges.len(), 23);
+        assert!(
+            graph.edges.iter().all(|e| e.source != "9a0b1"),
+            "a trashed page must not contribute edges"
+        );
+    }
 }

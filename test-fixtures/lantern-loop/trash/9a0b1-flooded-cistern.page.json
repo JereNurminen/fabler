@@ -1,0 +1,33 @@
+{
+  "id": "9a0b1",
+  "name": "Flooded Cistern",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "Black water laps at a ledge that should not be here. Something\nunder the surface turns over, slowly, and is still again.\n\nThis page is in the trash. Nothing leads here, it leads to the Crypt,\nand the two flags it touches do not exist — none of which the editor\nshould ever complain about while it sits in this directory."
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c9a01",
+      "text": "Wade toward the crypt",
+      "target": "e5f60",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f99a9",
+          "required_value": true
+        }
+      ]
+    }
+  ],
+  "flag_operations": [
+    {
+      "flag_id": "f88b8",
+      "operation": "set_true"
+    }
+  ],
+  "last_modified": "2026-08-27T09:15:00.000Z"
+}

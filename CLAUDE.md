@@ -60,6 +60,8 @@ my-story/
 ├── pages/
 │   ├── a3f2b-entrance.page.json
 │   └── b7c1d-dark-tunnel.page.json
+├── trash/                    # Soft-deleted pages, same filename scheme
+│   └── c9e4a-flooded-cistern.page.json
 └── assets/
     └── hero.png
 ```
@@ -73,6 +75,14 @@ my-story/
 - Page filenames: `{id}-{slugified-name}.page.json` (id is authoritative, name portion is cosmetic)
 - Page bodies use a `Document` type containing a `Markdown` block with raw markdown source
 - `.fabler` bundle = zip of `manifest.json` (all pages inline) + `assets/`
+- Deleting a page **moves** its file from `pages/` to `trash/`; restoring moves
+  it back. Validation, the story graph, and bundle export all read `pages/` via
+  `Project::read_all_pages()`, so a trashed page is excluded from all three
+  structurally — there is no filter to write and none to forget. `trash/` is
+  created lazily on the first delete.
+- `Page.last_modified` is an RFC3339 UTC timestamp stamped by
+  `pages::write_page` on every write, including the moves into and out of
+  `trash/`. `build_manifest` strips it, like `editor`.
 
 ### Data Model (`shared/src/`)
 
@@ -146,8 +156,10 @@ Two shapes live here, and they are not interchangeable:
   (`story.json` + `pages/` + `assets/`), openable in the creation tool.
   `lantern-loop/` is the feature-coverage story: 13 pages, 7 flags, 3 endings,
   a linear spine with one self-loop and one loop-back, and at least one use of
-  every flag operation, condition form, and markdown feature. Its `README.md`
-  maps each feature to the page that exercises it.
+  every flag operation, condition form, and markdown feature, plus a
+  fourteenth page under `trash/` that proves soft-deleted pages are excluded
+  from validation, the story graph, and export. Its `README.md` maps each
+  feature to the page that exercises it.
 
 Note when authoring fixture pages by hand: the page editor stores a body as a
 **single** `markdown` block — `PageCard.tsx` reads `body.content[0]` and writes

@@ -5,6 +5,8 @@ feature at once. The prose is filler; the graph is the point.
 
 13 pages, 7 flags, 23 choices, 3 endings — a mostly linear spine with **two**
 loop-backs, so the editor has something to draw without turning into a hub.
+A fourteenth page sits in `trash/`, soft-deleted and excluded from all of the
+above.
 
 ## Map
 
@@ -52,6 +54,17 @@ back to the Guard Post once you have been seen, so the second lap is short.
    back to is not the one you left: the shortcut passage and the fatal dark
    route are both open now, and neither was before.
 
+### The trashed page
+
+`trash/9a0b1-flooded-cistern.page.json` is soft-deleted: it lives in `trash/`,
+not `pages/`, and exists to prove the trash is inert. Nothing points at it, it
+points at the Crypt, and it references two flag ids the story does not define.
+
+None of that may produce a validation problem, an edge in the story map, or a
+page in an exported bundle. If any of those start happening, the trash has
+stopped isolating deleted pages. It is asserted by the `lantern_loop_*` tests
+in `creation-tool/src-tauri/src/project/mod.rs`.
+
 ## What each feature is exercised by
 
 | Feature | Where |
@@ -72,6 +85,7 @@ back to the Guard Post once you have been seen, so the second lap is short.
 | Image assets | `gate.png`, `lantern.png`, `crown.png` under `assets/`, referenced from markdown |
 | Markdown rendering | headings, bold, italic, links, ordered/unordered/nested/task lists, blockquote, nested blockquote, table, code span, fenced code, strikethrough, horizontal rule |
 | Graph positions | every page carries `editor.position` for the story map |
+| Soft-deleted page | `trash/9a0b1-flooded-cistern.page.json` — inert: no problems, no graph edge, not exported |
 
 ## Reaching each ending
 
