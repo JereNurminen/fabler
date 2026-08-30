@@ -9,7 +9,8 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "../../i18n";
-import { useValidation } from "../../atoms/useStoryAtoms";
+import { useStoryAtoms, useValidation } from "../../atoms/useStoryAtoms";
+import { useEditorChrome } from "./EditorChromeContext";
 import { FlagsDialog } from "../FlagsDialog";
 import { SectionModal } from "./SectionModal";
 import { StorySettingsSection } from "./StorySettingsSection";
@@ -19,16 +20,6 @@ import { AssetsSection } from "./AssetsSection";
 import { ProblemsSection } from "./ProblemsSection";
 import clsx from "clsx";
 
-interface BottomBarProps {
-  storyTitle: string;
-  pages: Array<{ id: string; name: string }>;
-  startPage: string | null;
-  onPlaytest?: () => void;
-  onTogglePreview?: () => void;
-  showPreview?: boolean;
-  hasPageSelected?: boolean;
-}
-
 type ActiveModal =
   | "pages"
   | "flags"
@@ -37,19 +28,16 @@ type ActiveModal =
   | "problems"
   | null;
 
-export const BottomBar = ({
-  storyTitle,
-  pages,
-  startPage,
-  onPlaytest,
-  onTogglePreview,
-  showPreview,
-  hasPageSelected,
-}: BottomBarProps) => {
+export const BottomBar = () => {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [showFlagsDialog, setShowFlagsDialog] = useState(false);
   const { t } = useTranslation();
+  const { story, pages } = useStoryAtoms();
   const { problems } = useValidation();
+  const { onPlaytest, onTogglePreview, showPreview, hasPageSelected } =
+    useEditorChrome();
+  const storyTitle = story?.title ?? "";
+  const startPage = story?.start_page ?? null;
 
   const handleToggleModal = (modal: ActiveModal) => {
     setActiveModal((prev) => (prev === modal ? null : modal));

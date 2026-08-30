@@ -8,6 +8,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useStoryAtoms, useValidation } from "../../atoms/useStoryAtoms";
+import { useEditorChrome } from "./EditorChromeContext";
 import { useTranslation } from "../../i18n";
 import { FlagsDialog } from "../FlagsDialog";
 import { StorySettingsSection } from "./StorySettingsSection";
@@ -17,29 +18,15 @@ import { AssetsSection } from "./AssetsSection";
 import { ProblemsSection } from "./ProblemsSection";
 import clsx from "clsx";
 
-interface SidebarProps {
-  storyTitle: string;
-  pages: Array<{ id: string; name: string }>;
-  startPage: string | null;
-  onPlaytest?: () => void;
-  onTogglePreview?: () => void;
-  showPreview?: boolean;
-  hasPageSelected?: boolean;
-}
-
-export const Sidebar = ({
-  storyTitle,
-  pages,
-  startPage,
-  onPlaytest,
-  onTogglePreview,
-  showPreview,
-  hasPageSelected,
-}: SidebarProps) => {
+export const Sidebar = () => {
   const [showFlags, setShowFlags] = useState(false);
-  const { flags } = useStoryAtoms();
+  const { story, pages, flags } = useStoryAtoms();
   const { problems } = useValidation();
+  const { onPlaytest, onTogglePreview, showPreview, hasPageSelected } =
+    useEditorChrome();
   const { t } = useTranslation();
+  const storyTitle = story?.title ?? "";
+  const startPage = story?.start_page ?? null;
 
   return (
     <div className="layout-sidebar flex-col w-80 h-screen bg-white border-r border-gray-200 sidebar">

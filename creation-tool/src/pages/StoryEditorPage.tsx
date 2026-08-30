@@ -5,6 +5,7 @@ import { pageAtomFamily } from "../atoms/storyAtoms";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
 import { MainLayout } from "../components/layout/MainLayout";
+import { EditorChromeProvider } from "../components/layout/EditorChromeContext";
 import { PlaytestView } from "../player/PlaytestView";
 import { PreviewView } from "../player/PreviewView";
 
@@ -23,7 +24,7 @@ function PreviewPanel({ pageId }: { pageId: string }) {
 }
 
 const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
-  const { story, pages } = useStoryAtoms();
+  const { story } = useStoryAtoms();
   const [playtestOpen, setPlaytestOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -31,34 +32,37 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
 
   return (
     <>
-      <MainLayout
-        storyTitle={story.title}
-        pages={pages}
-        startPage={story.start_page}
-        onPlaytest={() => setPlaytestOpen(true)}
-        onTogglePreview={() => setShowPreview((p) => !p)}
-        showPreview={showPreview}
-        hasPageSelected={!!pageIdParam}
+      <EditorChromeProvider
+        value={{
+          onPlaytest: () => setPlaytestOpen(true),
+          onTogglePreview: () => setShowPreview((p) => !p),
+          showPreview,
+          hasPageSelected: !!pageIdParam,
+        }}
       >
-        {pageIdParam ? (
-          <Suspense fallback={<LoadingSpinner />}>
-            <div className={showPreview ? "flex h-full" : "h-full"}>
-              <div className={showPreview ? "flex-1 overflow-auto" : "h-full"}>
-                <PageCard pageId={pageIdParam} />
+        <MainLayout>
+          {pageIdParam ? (
+            <Suspense fallback={<LoadingSpinner />}>
+              <div className={showPreview ? "flex h-full" : "h-full"}>
+                <div
+                  className={showPreview ? "flex-1 overflow-auto" : "h-full"}
+                >
+                  <PageCard pageId={pageIdParam} />
+                </div>
+                {showPreview && (
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PreviewPanel pageId={pageIdParam} />
+                  </Suspense>
+                )}
               </div>
-              {showPreview && (
-                <Suspense fallback={<LoadingSpinner />}>
-                  <PreviewPanel pageId={pageIdParam} />
-                </Suspense>
-              )}
+            </Suspense>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Select a page to edit</p>
             </div>
-          </Suspense>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">Select a page to edit</p>
-          </div>
-        )}
-      </MainLayout>
+          )}
+        </MainLayout>
+      </EditorChromeProvider>
       {playtestOpen && (
         <Suspense fallback={<LoadingSpinner />}>
           <PlaytestView onClose={() => setPlaytestOpen(false)} />
