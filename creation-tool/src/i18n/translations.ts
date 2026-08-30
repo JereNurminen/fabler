@@ -84,6 +84,7 @@ export const translations = {
     noFlags: "No flags defined yet.",
     noConditions: "No conditions set.",
     noOperations: "No operations set.",
+    noFlagRules: "None yet",
   },
 
   // Conditions & operations

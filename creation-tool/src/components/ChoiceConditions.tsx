@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Button } from "./ui/Button";
-import { SelectWithCreate } from "./ui/SelectWithCreate";
+import { FlagRuleList } from "./FlagRuleList";
 import { useTranslation } from "../i18n";
 import type { Flag, Condition } from "../types";
 
@@ -12,109 +10,34 @@ type ChoiceConditionsProps = {
   onCreateFlag?: (name: string) => Promise<{ id: string } | null>;
 };
 
-export const ChoiceConditions = ({ conditions, availableFlags, onAdd, onRemove, onCreateFlag }: ChoiceConditionsProps) => {
+/**
+ * Adapter: stored as `{flag_id, required_value: boolean}`, edited as
+ * `{flag_id, value: "true" | "false"}`.
+ */
+export const ChoiceConditions = ({
+  conditions,
+  availableFlags,
+  onAdd,
+  onRemove,
+  onCreateFlag,
+}: ChoiceConditionsProps) => {
   const { t } = useTranslation();
-  const [selectedFlagId, setSelectedFlagId] = useState<string>("");
-  const [requiredValue, setRequiredValue] = useState<boolean>(true);
-
-  const handleAdd = () => {
-    if (!selectedFlagId) return;
-    onAdd(selectedFlagId, requiredValue);
-    setSelectedFlagId("");
-  };
-
-  const usedFlagIds = new Set(conditions.map((cond) => cond.flag_id));
-  const availableForAdd = availableFlags.filter((flag) => !usedFlagIds.has(flag.id));
-
   return (
-    <div className="flex flex-col gap-2">
-      {conditions.length === 0 ? (
-        <div className="py-3 text-center text-gray-500 text-xs italic">
-          {t.emptyStates.noConditions}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {conditions.map((cond) => {
-            const flag = availableFlags.find((f) => f.id === cond.flag_id);
-            return (
-              <div
-                key={cond.flag_id}
-                className="flex items-center justify-between px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded text-xs"
-              >
-                <span className="text-gray-900">
-                  <strong>{flag?.name || t.dynamic.flagFallback(cond.flag_id)}</strong>
-                  {` ${t.conditions.mustBe} `}
-                  <span
-                    className={`font-mono text-white px-1.5 py-0.5 rounded text-xs font-medium ${
-                      cond.required_value ? "bg-success" : "bg-danger"
-                    }`}
-                  >
-                    {cond.required_value ? t.badges.true : t.badges.false}
-                  </span>
-                </span>
-                <button
-                  onClick={() => onRemove(cond.flag_id)}
-                  aria-label={`Remove ${flag?.name ?? "condition"}`}
-                  className="text-danger text-xl w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end mt-1">
-        {onCreateFlag ? (
-          <div className="flex-1">
-            <SelectWithCreate
-              label=""
-              value={selectedFlagId}
-              options={availableForAdd.map((f) => ({ id: f.id, label: f.name }))}
-              onChange={setSelectedFlagId}
-              onCreate={onCreateFlag}
-              createLabel={t.buttons.addFlag}
-              createPlaceholder={t.placeholders.flagName}
-              createPromptLabel={t.placeholders.flagName}
-              placeholder={`${t.labels.flag}...`}
-            />
-          </div>
-        ) : (
-          <select
-            aria-label={t.labels.flag}
-            className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            value={selectedFlagId}
-            onChange={(e) => setSelectedFlagId(e.target.value)}
-          >
-            <option value="">{t.labels.flag}...</option>
-            {availableForAdd.map((flag) => (
-              <option key={flag.id} value={flag.id}>
-                {flag.name}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <select
-          aria-label={t.labels.requiredValue}
-          className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-          value={requiredValue ? "true" : "false"}
-          onChange={(e) => setRequiredValue(e.target.value === "true")}
-        >
-          <option value="true">{t.conditions.mustBeTrue}</option>
-          <option value="false">{t.conditions.mustBeFalse}</option>
-        </select>
-
-        <Button
-          onClick={handleAdd}
-          disabled={!selectedFlagId}
-          size="sm"
-          className="whitespace-nowrap"
-        >
-          {t.buttons.addCondition}
-        </Button>
-      </div>
-    </div>
+    <FlagRuleList
+      rules={conditions.map((c) => ({
+        flag_id: c.flag_id,
+        value: c.required_value ? ("true" as const) : ("false" as const),
+      }))}
+      availableFlags={availableFlags}
+      valueOptions={[
+        { value: "true" as const, label: t.conditions.mustBeTrue },
+        { value: "false" as const, label: t.conditions.mustBeFalse },
+      ]}
+      onAdd={(flagId, value) => onAdd(flagId, value === "true")}
+      onRemove={onRemove}
+      onCreateFlag={onCreateFlag}
+      addLabel={t.buttons.addCondition}
+      valueLabel={t.labels.requiredValue}
+    />
   );
 };
