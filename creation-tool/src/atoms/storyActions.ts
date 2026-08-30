@@ -1,7 +1,12 @@
 import { atom } from "jotai";
 import api from "../api";
 import type { Story, Page } from "@fabler/types";
-import { projectOpenAtom, refreshAtom, pageAtomFamily } from "./storyAtoms";
+import {
+  projectOpenAtom,
+  refreshAtom,
+  pageAtomFamily,
+  trashedPageAtomFamily,
+} from "./storyAtoms";
 
 export const openProjectAtom = atom(null, async (_get, set, path: string) => {
   const story = await api.openProject(path);
@@ -40,6 +45,51 @@ export const createPageAtom = atom(null, async (_get, set, name: string) => {
   const page = await api.createPage(name);
   set(refreshAtom, (c) => c + 1);
   return page;
+});
+
+/**
+ * Trash, restore, and purge all invalidate BOTH page families.
+ *
+ * A page moves between them and can round-trip: trash it, restore it, trash
+ * it again. Dropping only the source family leaves the destination holding a
+ * copy from the page's last visit, which the next read would serve as if it
+ * were current.
+ *
+ * The `refreshAtom` bump is the half that reaches the screen — see
+ * `invalidateAllCachedPagesAtom` below for why removal alone changes nothing
+ * for an already-mounted component. It also recomputes `pageListAtom`,
+ * `trashedPageListAtom` and `validationAtom` together, which is what keeps
+ * the sidebar count, the trash list and the Problems list in agreement after
+ * one action instead of drifting apart.
+ */
+export const trashPageAtom = atom(null, async (_get, set, id: string) => {
+  await api.trashPage(id);
+  pageAtomFamily.remove(id);
+  trashedPageAtomFamily.remove(id);
+  set(refreshAtom, (c) => c + 1);
+});
+
+export const restorePageAtom = atom(null, async (_get, set, id: string) => {
+  await api.restorePage(id);
+  pageAtomFamily.remove(id);
+  trashedPageAtomFamily.remove(id);
+  set(refreshAtom, (c) => c + 1);
+});
+
+export const deleteTrashedPageAtom = atom(null, async (_get, set, id: string) => {
+  await api.deleteTrashedPage(id);
+  trashedPageAtomFamily.remove(id);
+  set(refreshAtom, (c) => c + 1);
+});
+
+export const emptyTrashAtom = atom(null, async (_get, set) => {
+  await api.emptyTrash();
+  // Params are copied before removing, since `remove()` mutates the family's
+  // backing Map mid-iteration.
+  for (const id of [...trashedPageAtomFamily.getParams()]) {
+    trashedPageAtomFamily.remove(id);
+  }
+  set(refreshAtom, (c) => c + 1);
 });
 
 /**

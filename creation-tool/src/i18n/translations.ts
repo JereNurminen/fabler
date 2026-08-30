@@ -28,6 +28,11 @@ export const translations = {
     openProject: "Open Project",
     newProject: "New Project",
     storyMap: "Story map",
+    deletePage: "Delete page",
+    moveToTrash: "Move to trash",
+    restore: "Restore",
+    deletePermanently: "Delete permanently",
+    emptyTrash: "Empty trash",
   },
 
   // Labels
@@ -69,6 +74,7 @@ export const translations = {
     pages: "Pages",
     assets: "Assets",
     menu: "Menu",
+    trash: "Trash",
   },
 
   // Status messages
@@ -159,6 +165,8 @@ export const translations = {
         `The start page does not exist (${startPage}).`,
       unreachable_page: () =>
         "No choice leads to this page, so a reader can never see it.",
+      choice_targets_trashed_page: (choiceText: string, targetName: string) =>
+        `Choice "${choiceText}" leads to "${targetName}", which is in the trash.`,
     },
   },
 
@@ -181,6 +189,36 @@ export const translations = {
     autoArrange: "Auto-arrange",
   },
 
+  // Trash / soft-delete
+  trash: {
+    confirmTitle: "Delete this page?",
+    confirmIntro: (pageName: string) =>
+      `"${pageName}" will be moved to the trash. You can restore it later.`,
+    startPageWarning:
+      "This is your story's start page. Your story will have no entry point until you set a new one.",
+    strandedIntro: (count: number) =>
+      count === 1
+        ? "1 choice on another page leads here and will break:"
+        : `${count} choices on other pages lead here and will break:`,
+    strandedItem: (pageName: string, choiceText: string) =>
+      `${pageName} — "${choiceText}"`,
+    empty: "The trash is empty.",
+    bannerTitle: "This page is in the trash",
+    bannerBody: "It cannot be edited, it is not exported, and its problems are ignored.",
+    purgeTitle: "Delete permanently?",
+    purgeIntro: (pageName: string) =>
+      `"${pageName}" will be gone for good. This cannot be undone.`,
+    purgeDowngradeWarning: (count: number) =>
+      count === 1
+        ? "1 choice still points at this page. Deleting it permanently means that choice can only be fixed by retargeting it, not by restoring the page."
+        : `${count} choices still point at this page. Deleting it permanently means those choices can only be fixed by retargeting them, not by restoring the page.`,
+    emptyTrashTitle: "Empty the trash?",
+    emptyTrashIntro: (count: number) =>
+      count === 1
+        ? "1 page will be deleted for good. This cannot be undone."
+        : `${count} pages will be deleted for good. This cannot be undone.`,
+  },
+
   // Dynamic strings (with interpolation)
   dynamic: {
     storyListItem: (_id: string, title: string) => `${title}`,
@@ -189,6 +227,7 @@ export const translations = {
     errorMessage: (error: string) => `Error: ${error}`,
     flagFallback: (id: string) => `Flag ${id}`,
     moreFlags: (count: number) => `+${count} more...`,
+    pageInTrash: (name: string) => `${name} (in trash)`,
   },
 } as const;
 

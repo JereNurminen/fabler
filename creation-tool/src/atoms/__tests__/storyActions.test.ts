@@ -1,7 +1,23 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { createStore } from "jotai";
-import { pageAtomFamily, refreshAtom } from "../storyAtoms";
-import { invalidateAllCachedPagesAtom } from "../storyActions";
+import { pageAtomFamily, refreshAtom, trashedPageAtomFamily } from "../storyAtoms";
+import {
+  invalidateAllCachedPagesAtom,
+  trashPageAtom,
+  restorePageAtom,
+  deleteTrashedPageAtom,
+  emptyTrashAtom,
+} from "../storyActions";
+import api from "../../api";
+
+vi.mock("../../api", () => ({
+  default: {
+    trashPage: vi.fn().mockResolvedValue(undefined),
+    restorePage: vi.fn().mockResolvedValue(undefined),
+    deleteTrashedPage: vi.fn().mockResolvedValue(undefined),
+    emptyTrash: vi.fn().mockResolvedValue(undefined),
+  },
+}));
 
 describe("invalidateAllCachedPagesAtom", () => {
   afterEach(() => {
@@ -65,5 +81,66 @@ describe("invalidateAllCachedPagesAtom refresh signal", () => {
     store.set(invalidateAllCachedPagesAtom);
 
     expect(store.get(refreshAtom)).toBe(1);
+  });
+});
+
+describe("trash write atoms", () => {
+  afterEach(() => {
+    for (const id of [...pageAtomFamily.getParams()]) pageAtomFamily.remove(id);
+    for (const id of [...trashedPageAtomFamily.getParams()]) trashedPageAtomFamily.remove(id);
+    vi.clearAllMocks();
+  });
+
+  it("trashing a page invalidates both page families and refreshes", async () => {
+    const store = createStore();
+    pageAtomFamily("a1b2c");
+    trashedPageAtomFamily("a1b2c");
+
+    await store.set(trashPageAtom, "a1b2c");
+
+    expect(api.trashPage).toHaveBeenCalledWith("a1b2c");
+    // A page moves BETWEEN the two families and can round-trip, so both the
+    // live entry and any stale trashed entry must go — invalidating only the
+    // source family leaves the other holding a copy from the last visit.
+    expect(pageAtomFamily.getParams()).not.toContain("a1b2c");
+    expect(trashedPageAtomFamily.getParams()).not.toContain("a1b2c");
+    expect(store.get(refreshAtom)).toBeGreaterThan(0);
+  });
+
+  it("restoring a page invalidates both page families and refreshes", async () => {
+    const store = createStore();
+    pageAtomFamily("a1b2c");
+    trashedPageAtomFamily("a1b2c");
+
+    await store.set(restorePageAtom, "a1b2c");
+
+    expect(api.restorePage).toHaveBeenCalledWith("a1b2c");
+    expect(pageAtomFamily.getParams()).not.toContain("a1b2c");
+    expect(trashedPageAtomFamily.getParams()).not.toContain("a1b2c");
+    expect(store.get(refreshAtom)).toBeGreaterThan(0);
+  });
+
+  it("permanently deleting a trashed page invalidates and refreshes", async () => {
+    const store = createStore();
+    trashedPageAtomFamily("a1b2c");
+
+    await store.set(deleteTrashedPageAtom, "a1b2c");
+
+    expect(api.deleteTrashedPage).toHaveBeenCalledWith("a1b2c");
+    expect(trashedPageAtomFamily.getParams()).not.toContain("a1b2c");
+    expect(store.get(refreshAtom)).toBeGreaterThan(0);
+  });
+
+  it("emptying the trash clears every cached trashed page", async () => {
+    const store = createStore();
+    // Instantiate two family entries so the flush has something to remove.
+    trashedPageAtomFamily("a1b2c");
+    trashedPageAtomFamily("d4e5f");
+
+    await store.set(emptyTrashAtom);
+
+    expect(api.emptyTrash).toHaveBeenCalled();
+    expect([...trashedPageAtomFamily.getParams()]).toHaveLength(0);
+    expect(store.get(refreshAtom)).toBeGreaterThan(0);
   });
 });

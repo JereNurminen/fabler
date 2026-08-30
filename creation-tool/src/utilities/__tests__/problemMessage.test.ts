@@ -4,6 +4,13 @@ import type { ProblemDetail } from "@fabler/types";
 
 const ALL_CODES: ProblemDetail[] = [
   { code: "dangling_choice_target", choice_id: "c1", choice_text: "Go deeper", target: "gone9" },
+  {
+    code: "choice_targets_trashed_page",
+    choice_id: "c1",
+    choice_text: "Go north",
+    target: "b7c1d",
+    target_name: "Dark Tunnel",
+  },
   { code: "dangling_page_flag_operation", flag_id: "gonef" },
   { code: "dangling_choice_flag_operation", choice_id: "c1", choice_text: "Open", flag_id: "gonef" },
   { code: "dangling_choice_condition", choice_id: "c1", choice_text: "Open", flag_id: "gonef" },
@@ -20,6 +27,7 @@ const ALL_CODES: ProblemDetail[] = [
 // substring check, which cannot tell which slot a value landed in.
 const EXPECTED_MESSAGES: Record<ProblemDetail["code"], string> = {
   dangling_choice_target: 'Choice "Go deeper" leads to a page that no longer exists (gone9).',
+  choice_targets_trashed_page: 'Choice "Go north" leads to "Dark Tunnel", which is in the trash.',
   dangling_page_flag_operation: "This page sets a flag that no longer exists (gonef).",
   dangling_choice_flag_operation: 'Choice "Open" sets a flag that no longer exists (gonef).',
   dangling_choice_condition: 'Choice "Open" is shown based on a flag that no longer exists (gonef).',
@@ -44,5 +52,18 @@ describe("problemMessage", () => {
         EXPECTED_MESSAGES[detail.code],
       );
     }
+  });
+
+  it("names the trashed page, so the author knows a restore would fix it", () => {
+    const message = problemMessage({
+      code: "choice_targets_trashed_page",
+      choice_id: "c1a2b",
+      choice_text: "Go north",
+      target: "b7c1d",
+      target_name: "Dark Tunnel",
+    });
+    expect(message).toContain("Go north");
+    expect(message).toContain("Dark Tunnel");
+    expect(message).toContain("trash");
   });
 });

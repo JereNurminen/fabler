@@ -11,6 +11,8 @@ export function problemMessage(detail: ProblemDetail): string {
   switch (detail.code) {
     case "dangling_choice_target":
       return m.dangling_choice_target(detail.choice_text, detail.target);
+    case "choice_targets_trashed_page":
+      return m.choice_targets_trashed_page(detail.choice_text, detail.target_name);
     case "dangling_page_flag_operation":
       return m.dangling_page_flag_operation(detail.flag_id);
     case "dangling_choice_flag_operation":
