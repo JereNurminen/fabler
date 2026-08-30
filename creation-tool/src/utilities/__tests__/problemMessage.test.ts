@@ -12,17 +12,20 @@ const ALL_CODES: ProblemDetail[] = [
   { code: "unreachable_page" },
 ];
 
-// Expected substrings per code. Distinguishes each variant's own fields so a
-// builder wired to the wrong same-shaped field (e.g. choice_text where flag_id
-// belongs) fails, rather than merely producing "some non-empty string".
-const EXPECTED_SUBSTRINGS: Record<ProblemDetail["code"], string[]> = {
-  dangling_choice_target: ["Go deeper", "gone9"],
-  dangling_page_flag_operation: ["gonef"],
-  dangling_choice_flag_operation: ["Open", "gonef"],
-  dangling_choice_condition: ["Open", "gonef"],
-  start_page_unset: [],
-  start_page_missing: ["nope9"],
-  unreachable_page: [],
+// Full expected sentences, written out literally (NOT built by calling
+// translations.problems.messages.* — that would just compare the
+// implementation against itself). Exact equality is position-sensitive, so
+// it catches swapped fields (e.g. choice_text and flag_id landing in each
+// other's slot), reworded templates, and missing interpolations, unlike a
+// substring check, which cannot tell which slot a value landed in.
+const EXPECTED_MESSAGES: Record<ProblemDetail["code"], string> = {
+  dangling_choice_target: 'Choice "Go deeper" leads to a page that no longer exists (gone9).',
+  dangling_page_flag_operation: "This page sets a flag that no longer exists (gonef).",
+  dangling_choice_flag_operation: 'Choice "Open" sets a flag that no longer exists (gonef).',
+  dangling_choice_condition: 'Choice "Open" is shown based on a flag that no longer exists (gonef).',
+  start_page_unset: "This story has no start page set.",
+  start_page_missing: "The start page does not exist (nope9).",
+  unreachable_page: "No choice leads to this page, so a reader can never see it.",
 };
 
 describe("problemMessage", () => {
@@ -35,14 +38,11 @@ describe("problemMessage", () => {
     }
   });
 
-  it("names the specific values carried by each problem variant", () => {
-    // For the two variants that carry both choice_text and flag_id, this
-    // catches a swap between those two fields, not just a missing one.
+  it("produces the exact expected sentence for every problem code", () => {
     for (const detail of ALL_CODES) {
-      const message = problemMessage(detail);
-      for (const expected of EXPECTED_SUBSTRINGS[detail.code]) {
-        expect(message, `expected "${expected}" in message for ${detail.code}`).toContain(expected);
-      }
+      expect(problemMessage(detail), `mismatch for ${detail.code}`).toBe(
+        EXPECTED_MESSAGES[detail.code],
+      );
     }
   });
 });
