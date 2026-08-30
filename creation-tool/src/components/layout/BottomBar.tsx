@@ -6,6 +6,7 @@ import {
   PhotoIcon,
   PlayIcon,
   EyeIcon,
+  MapIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "../../i18n";
@@ -34,7 +35,7 @@ export const BottomBar = () => {
   const { t } = useTranslation();
   const { story, pages } = useStoryAtoms();
   const { problems } = useValidation();
-  const { onPlaytest, onTogglePreview, showPreview, hasPageSelected } =
+  const { onPlaytest, onTogglePreview, onOpenGraph, showPreview, hasPageSelected } =
     useEditorChrome();
   const storyTitle = story?.title ?? "";
   const startPage = story?.start_page ?? null;
@@ -137,6 +138,15 @@ export const BottomBar = () => {
         >
           <PlayIcon className="w-6 h-6" />
           <span className="text-xs mt-0.5">{t.buttons.playtest}</span>
+        </button>
+
+        <button
+          onClick={onOpenGraph}
+          className={iconButtonClass}
+          aria-label={t.buttons.storyMap}
+        >
+          <MapIcon className="w-6 h-6" />
+          <span className="text-xs mt-0.5">{t.buttons.storyMap}</span>
         </button>
 
         {hasPageSelected && (

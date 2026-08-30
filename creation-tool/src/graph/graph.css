@@ -1,0 +1,21 @@
+/*
+ * Width/height are NOT set here: they must match NODE_WIDTH/NODE_HEIGHT from
+ * ../graph/layout.ts (what dagre reserves for each node), so they are applied
+ * as an inline style driven by those constants rather than restated as a
+ * literal that could silently drift from the layout engine's numbers.
+ * box-sizing: border-box keeps padding+border inside that inline size.
+ */
+.story-node {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 12px;
+  overflow: hidden;
+}
+.story-node--start { border-color: #4f46e5; border-width: 2px; }
+.story-node--error { border-color: #dc2626; background: #fef2f2; }
+.story-node--warning { opacity: 0.55; border-style: dashed; }

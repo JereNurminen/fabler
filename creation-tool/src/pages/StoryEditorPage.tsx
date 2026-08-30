@@ -8,6 +8,7 @@ import { MainLayout } from "../components/layout/MainLayout";
 import { EditorChromeProvider } from "../components/layout/EditorChromeContext";
 import { PlaytestView } from "../player/PlaytestView";
 import { PreviewView } from "../player/PreviewView";
+import { StoryGraphView } from "../graph/StoryGraphView";
 
 interface StoryEditorPageProps {
   pageIdParam?: string;
@@ -27,6 +28,7 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
   const { story } = useStoryAtoms();
   const [playtestOpen, setPlaytestOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [graphOpen, setGraphOpen] = useState(false);
 
   if (!story) return <LoadingSpinner />;
 
@@ -36,6 +38,7 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
         value={{
           onPlaytest: () => setPlaytestOpen(true),
           onTogglePreview: () => setShowPreview((p) => !p),
+          onOpenGraph: () => setGraphOpen(true),
           showPreview,
           hasPageSelected: !!pageIdParam,
         }}
@@ -68,6 +71,7 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
           <PlaytestView onClose={() => setPlaytestOpen(false)} />
         </Suspense>
       )}
+      {graphOpen && <StoryGraphView onClose={() => setGraphOpen(false)} />}
     </>
   );
 };

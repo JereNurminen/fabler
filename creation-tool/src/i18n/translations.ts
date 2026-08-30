@@ -27,6 +27,7 @@ export const translations = {
     closePreview: "Close Preview",
     openProject: "Open Project",
     newProject: "New Project",
+    storyMap: "Story map",
   },
 
   // Labels
@@ -166,6 +167,15 @@ export const translations = {
     saving: "Saving…",
     saved: "Saved",
     failed: "Couldn't save",
+  },
+
+  // Story map
+  graph: {
+    title: "Story map",
+    close: "Close map",
+    loading: "Loading story map…",
+    empty: "This story has no pages yet",
+    danglingTarget: "leads nowhere",
   },
 
   // Dynamic strings (with interpolation)

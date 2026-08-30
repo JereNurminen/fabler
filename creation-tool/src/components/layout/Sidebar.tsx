@@ -22,7 +22,7 @@ export const Sidebar = () => {
   const [showFlags, setShowFlags] = useState(false);
   const { story, pages, flags } = useStoryAtoms();
   const { problems } = useValidation();
-  const { onPlaytest, onTogglePreview, showPreview, hasPageSelected } =
+  const { onPlaytest, onTogglePreview, onOpenGraph, showPreview, hasPageSelected } =
     useEditorChrome();
   const { t } = useTranslation();
   const storyTitle = story?.title ?? "";
@@ -41,6 +41,12 @@ export const Sidebar = () => {
             className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
           >
             {t.buttons.playtest}
+          </button>
+          <button
+            onClick={onOpenGraph}
+            className="flex-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            {t.buttons.storyMap}
           </button>
           {hasPageSelected && (
             <button

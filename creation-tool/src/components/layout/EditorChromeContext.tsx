@@ -9,6 +9,7 @@ import { createContext, useContext, type ReactNode } from "react";
 export interface EditorChrome {
   onPlaytest: () => void;
   onTogglePreview: () => void;
+  onOpenGraph: () => void;
   showPreview: boolean;
   hasPageSelected: boolean;
 }
