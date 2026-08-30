@@ -20,7 +20,11 @@ function App() {
     // Skip Tauri event listeners when running outside Tauri (e.g. in e2e tests)
     if (!window.__TAURI_INTERNALS__) return;
 
-    const unlistenExport = listen("export-story", () => void exportStory());
+    const unlistenExport = listen("export-story", () =>
+      void exportStory().catch((error: unknown) => {
+        console.error("Failed to export story:", error);
+      }),
+    );
 
     // TODO: Import story handler needs redesign for project-based workflow
     const unlistenImport = listen("import-story", () => {});

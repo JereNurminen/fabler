@@ -1,9 +1,9 @@
-use rand::Rng;
+use rand::RngExt;
 
 /// Generate a 5-character lowercase hex ID.
 pub fn generate_id() -> String {
-    let mut rng = rand::thread_rng();
-    let value: u32 = rng.gen_range(0..0x100000);
+    let mut rng = rand::rng();
+    let value: u32 = rng.random_range(0..0x100000);
     format!("{value:05x}")
 }
 

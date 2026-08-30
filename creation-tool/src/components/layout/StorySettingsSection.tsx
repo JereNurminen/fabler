@@ -38,7 +38,11 @@ export const StorySettingsSection = ({
           </option>
         ))}
       </Select>
-      <Button size="sm" onClick={() => void exportStory()} className="w-full">
+      <Button size="sm" onClick={() =>
+          void exportStory().catch((error: unknown) => {
+            console.error("Failed to export story:", error);
+          })
+        } className="w-full">
         {t.buttons.exportBundle}
       </Button>
       {blockedProblems && (
