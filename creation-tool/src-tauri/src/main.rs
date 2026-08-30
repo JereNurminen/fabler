@@ -5,11 +5,22 @@ mod commands;
 mod error;
 mod project;
 
+#[cfg(feature = "test-server")]
+mod test_server;
+
 use commands::ProjectState;
 use std::sync::Mutex;
 use tauri::Manager;
 
 fn main() {
+    #[cfg(feature = "test-server")]
+    {
+        // In test mode, run only the HTTP test server (no Tauri window)
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(test_server::start_test_server());
+        return;
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())

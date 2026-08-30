@@ -46,7 +46,9 @@ function makePage(overrides?: Partial<Page>): Page {
   return {
     id: "1",
     name: "Start",
-    body: "You are at the start.",
+    body: {
+      content: [{ type: "markdown" as const, source: "You are at the start." }],
+    },
     choices: [],
     flag_operations: [],
     ...overrides,
@@ -86,7 +88,9 @@ describe("convertPageToManifestPage", () => {
 
     expect(result.id).toBe("1");
     expect(result.name).toBe("Start");
-    expect(result.body).toBe("You are at the start.");
+    expect(result.body).toEqual({
+      content: [{ type: "markdown", source: "You are at the start." }],
+    });
     expect(result.assets).toEqual([]);
 
     // flag_operations on page
@@ -128,11 +132,15 @@ describe("convertToManifest", () => {
     const flag1 = makeFlag({ id: "3", name: "visited_cave", default_value: false });
     const flag2 = makeFlag({ id: "7", name: "has_sword", default_value: true });
 
-    const page1 = makePage({ id: "1", name: "Start", body: "Start page." });
+    const page1 = makePage({
+      id: "1",
+      name: "Start",
+      body: { content: [{ type: "markdown" as const, source: "Start page." }] },
+    });
     const page2 = makePage({
       id: "2",
       name: "Cave",
-      body: "Dark cave.",
+      body: { content: [{ type: "markdown" as const, source: "Dark cave." }] },
       flag_operations: [makeFlagOperation({ flag_id: "3", operation: "set_true" })],
     });
 
@@ -162,7 +170,11 @@ describe("convertToManifest", () => {
   });
 
   it("handles empty flags and a single page", () => {
-    const page = makePage({ id: "5", name: "Only Page", body: "The end." });
+    const page = makePage({
+      id: "5",
+      name: "Only Page",
+      body: { content: [{ type: "markdown" as const, source: "The end." }] },
+    });
     const story = makeStory({
       format_version: 1,
       title: "Short Story",

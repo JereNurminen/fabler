@@ -2,7 +2,9 @@ import { atom } from "jotai";
 import { atomFamily } from "jotai-family";
 import api from "../api";
 
-export const projectOpenAtom = atom(false);
+// In HTTP test mode, the project is always open on the server
+const isTestMode = import.meta.env.VITE_USE_HTTP_API === "true";
+export const projectOpenAtom = atom(isTestMode);
 export const refreshAtom = atom(0);
 
 export const storyAtom = atom(async (get) => {

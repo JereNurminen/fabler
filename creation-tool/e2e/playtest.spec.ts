@@ -1,58 +1,85 @@
 import { test, expect } from "@playwright/test";
-import { importStoryViaApi, navigateToStory } from "./helpers";
+import {
+  resetProject,
+  createPageViaApi,
+  savePageViaApi,
+  listPagesViaApi,
+  navigateToEditor,
+  getPageViaApi,
+} from "./helpers";
+
+test.beforeEach(async ({ request }) => {
+  await resetProject(request);
+});
 
 test.describe("Playtest", () => {
-  let storyId: number;
+  test("opens playtest and shows start page content", async ({ page, request }) => {
+    // Set up a page with some content
+    const pages = await listPagesViaApi(request);
+    const startPage = await getPageViaApi(request, pages[0].id);
+    startPage.body = {
+      content: [{ type: "markdown", source: "You are in a dark room." }],
+    };
+    await savePageViaApi(request, startPage);
 
-  test.beforeEach(async ({ request }) => {
-    storyId = await importStoryViaApi(request);
-  });
-
-  test("opens playtest from sidebar and shows start page", async ({ page }) => {
-    await navigateToStory(page, storyId);
+    await navigateToEditor(page);
 
     // Click playtest button
     await page.getByRole("button", { name: /playtest/i }).click();
 
-    // Verify playtest mode header is visible
-    await expect(page.getByText("Playtest Mode")).toBeVisible();
+    // Verify playtest mode header
+    await expect(page.getByText("Playtest Mode")).toBeVisible({ timeout: 10000 });
 
-    // Verify the story content is rendered (the start page)
-    // The player renders page names as h1
-    await expect(page.locator("article h1")).toBeVisible({ timeout: 10000 });
+    // Verify page content is shown
+    await expect(page.locator("article")).toContainText("dark room", { timeout: 10000 });
   });
 
-  test("can navigate through story in playtest", async ({ page }) => {
-    await navigateToStory(page, storyId);
+  test("can navigate through choices in playtest", async ({ page, request }) => {
+    // Create two pages with a choice linking them
+    const pages = await listPagesViaApi(request);
+    const secondPage = await createPageViaApi(request, "Second Room");
+
+    // Update first page with a choice
+    const startPage = await getPageViaApi(request, pages[0].id);
+    startPage.body = {
+      content: [{ type: "markdown", source: "You see a door." }],
+    };
+    startPage.choices = [
+      {
+        id: "c1111",
+        text: "Open the door",
+        target: secondPage.id,
+        flag_operations: [],
+        conditions: [],
+      },
+    ];
+    await savePageViaApi(request, startPage);
+
+    // Update second page
+    const sp = await getPageViaApi(request, secondPage.id);
+    sp.body = {
+      content: [{ type: "markdown", source: "You entered the second room." }],
+    };
+    await savePageViaApi(request, sp);
+
+    await navigateToEditor(page);
     await page.getByRole("button", { name: /playtest/i }).click();
+    await expect(page.getByText("Playtest Mode")).toBeVisible({ timeout: 10000 });
 
-    // Wait for player to load
-    await expect(page.locator("article")).toBeVisible({ timeout: 10000 });
+    // Click the choice
+    await page.getByRole("button", { name: "Open the door" }).click();
 
-    // Should see choices as buttons in the nav
-    const choices = page.locator("nav[aria-label='Story choices'] button");
-    await expect(choices.first()).toBeVisible({ timeout: 5000 });
-
-    // Click a choice and verify navigation
-    await choices.first().click();
-
-    // Should now be on a different page (article content changed)
-    await expect(page.locator("article")).toBeVisible();
+    // Verify navigation to second page
+    await expect(page.locator("article")).toContainText("second room", { timeout: 10000 });
   });
 
   test("closes playtest and returns to editor", async ({ page }) => {
-    await navigateToStory(page, storyId);
+    await navigateToEditor(page);
     await page.getByRole("button", { name: /playtest/i }).click();
-
-    // Verify playtest is open
     await expect(page.getByText("Playtest Mode")).toBeVisible({ timeout: 10000 });
 
-    // Close it
+    // Close
     await page.getByRole("button", { name: /close playtest/i }).click();
-
-    // Verify editor is visible again (sidebar with story title)
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      "The Dark Cave",
-    );
+    await expect(page.getByText("Playtest Mode")).not.toBeVisible();
   });
 });
