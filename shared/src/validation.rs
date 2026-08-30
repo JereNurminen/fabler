@@ -164,6 +164,7 @@ const RULES: &[Rule] = &[
     dangling_choice_targets,
     dangling_flag_references,
     start_page_valid,
+    unreachable_pages,
 ];
 
 pub fn validate(story: &Story, pages: &[Page]) -> Report {
@@ -260,6 +261,44 @@ fn start_page_valid(ctx: &StoryContext) -> Vec<Problem> {
         )];
     }
     Vec::new()
+}
+
+/// WARNING: no path of choices from the start page reaches this page.
+///
+/// Every choice counts as traversable regardless of its conditions. Modelling
+/// flag reachability is a much harder problem and would fire on legitimate
+/// designs, so a choice gated behind an unsatisfiable condition still makes
+/// its target reachable.
+fn unreachable_pages(ctx: &StoryContext) -> Vec<Problem> {
+    let start = ctx.story.start_page.as_str();
+    // `start_page_valid` already reports this; walking from a bad start would
+    // flag every page in the story and bury that error.
+    if start.is_empty() || !ctx.has_page(start) {
+        return Vec::new();
+    }
+
+    let mut reached: HashSet<&str> = HashSet::new();
+    let mut queue = vec![start];
+    while let Some(id) = queue.pop() {
+        if !reached.insert(id) {
+            continue; // already visited — this is what makes cycles terminate
+        }
+        if let Some(page) = ctx.page(id) {
+            for choice in &page.choices {
+                // A target that does not resolve is already reported by
+                // `dangling_choice_targets`; skip it rather than panicking.
+                if let Some(target) = ctx.page(&choice.target) {
+                    queue.push(target.id.as_str());
+                }
+            }
+        }
+    }
+
+    ctx.pages
+        .iter()
+        .filter(|page| !reached.contains(page.id.as_str()))
+        .map(|page| Problem::on_page(Severity::Warning, page, ProblemDetail::UnreachablePage))
+        .collect()
 }
 
 #[cfg(test)]
@@ -405,5 +444,48 @@ mod tests {
             .problems
             .iter()
             .any(|p| p.detail == ProblemDetail::StartPageUnset));
+    }
+
+    #[test]
+    fn reports_a_page_no_choice_leads_to_as_a_warning() {
+        let pages = vec![
+            page("aaa11", "Start", vec![choice("c1", "Go", "bbb22")]),
+            page("bbb22", "Middle", vec![]),
+            page("ccc33", "Attic", vec![]),
+        ];
+        let report = validate(&story("aaa11", vec![]), &pages);
+
+        assert_eq!(report.problems.len(), 1);
+        let problem = &report.problems[0];
+        assert_eq!(problem.severity, Severity::Warning);
+        assert_eq!(problem.page_id.as_deref(), Some("ccc33"));
+        assert_eq!(problem.detail, ProblemDetail::UnreachablePage);
+
+        // Warnings must never block export.
+        assert!(!report.has_errors());
+    }
+
+    #[test]
+    fn follows_choices_transitively_and_tolerates_cycles() {
+        let pages = vec![
+            page("aaa11", "Start", vec![choice("c1", "Go", "bbb22")]),
+            page("bbb22", "Middle", vec![choice("c2", "Back", "aaa11")]),
+        ];
+        let report = validate(&story("aaa11", vec![]), &pages);
+        assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+    }
+
+    #[test]
+    fn stays_silent_when_the_start_page_is_invalid() {
+        // Otherwise a bad start page would report every page as unreachable and
+        // bury the one error that actually matters.
+        let pages = vec![
+            page("aaa11", "Start", vec![]),
+            page("bbb22", "Other", vec![]),
+        ];
+        let report = validate(&story("nope9", vec![]), &pages);
+
+        let codes: Vec<&str> = report.problems.iter().map(|p| p.detail.code()).collect();
+        assert_eq!(codes, vec!["start_page_missing"]);
     }
 }
