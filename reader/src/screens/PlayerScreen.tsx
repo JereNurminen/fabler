@@ -16,7 +16,7 @@ interface PlayerScreenProps {
 export function PlayerScreen({ story, onBack }: PlayerScreenProps) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const storageRef = useRef(new TauriStorageAdapter());
-  const assetsRef = useRef(new TauriAssetResolver(story.id));
+  const assetsRef = useRef(new TauriAssetResolver(story.path));
   const playerRef = useRef<StoryPlayerHandle>(null);
 
   useEffect(() => {

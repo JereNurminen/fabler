@@ -17,6 +17,12 @@
     ],
     "security": {
       "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": ["**"]
+        }
+      },
       "capabilities": [
         {
           "identifier": "core",
@@ -25,7 +31,8 @@
             "dialog:default",
             "fs:allow-write-text-file",
             "fs:allow-write-file",
-            "fs:allow-read-text-file"
+            "fs:allow-read-text-file",
+            "fs:allow-read-file"
           ],
           "windows": ["main"]
         }

@@ -17,6 +17,12 @@
     ],
     "security": {
       "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": ["$APPDATA/**"]
+        }
+      },
       "capabilities": [
         {
           "identifier": "reader-core",
