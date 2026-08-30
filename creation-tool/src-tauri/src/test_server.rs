@@ -131,6 +131,11 @@ async fn invoke_handler(
                 .map(|r| json!(r))
                 .map_err(|e| e.to_string()),
 
+            "get_story_graph" => project
+                .story_graph()
+                .map(|g| json!(g))
+                .map_err(|e| e.to_string()),
+
             // Export in test mode writes to a fixed temp path so e2e can
             // assert on blocked vs successful export. Safe because
             // playwright.config.ts pins `workers: 1, fullyParallel: false`.

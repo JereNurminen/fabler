@@ -172,6 +172,13 @@ impl Project {
         Ok(shared::validation::validate(&story, &pages))
     }
 
+    /// Build the page/choice graph for the story map.
+    pub fn story_graph(&self) -> AppResult<shared::graph::StoryGraph> {
+        let story = self.story();
+        let pages = self.read_all_pages()?;
+        Ok(shared::graph::build_graph(&story, &pages))
+    }
+
     pub fn copy_asset(&self, source_path: &str) -> AppResult<String> {
         let source = std::path::PathBuf::from(source_path);
         let filename = source

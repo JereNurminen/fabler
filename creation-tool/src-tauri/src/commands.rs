@@ -89,6 +89,11 @@ pub fn validate_story(state: State<ProjectState>) -> Result<shared::validation::
 }
 
 #[tauri::command]
+pub fn get_story_graph(state: State<ProjectState>) -> Result<shared::graph::StoryGraph, String> {
+    with_project(&state, |p| p.story_graph())
+}
+
+#[tauri::command]
 pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<String, String> {
     with_project(&state, |p| p.copy_asset(&source_path))
 }
