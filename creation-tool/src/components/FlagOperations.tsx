@@ -33,6 +33,7 @@ export const FlagOperations = ({
       onCreateFlag={onCreateFlag}
       addLabel={t.buttons.addOperation}
       valueLabel={t.labels.operation}
+      connector={" → "}
     />
   );
 };

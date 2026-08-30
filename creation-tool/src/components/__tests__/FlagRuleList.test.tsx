@@ -30,6 +30,7 @@ describe("FlagRuleList", () => {
         onRemove={vi.fn()}
         addLabel="Add"
         valueLabel="Value"
+        connector=" → "
       />,
     );
     expect(screen.getByTestId("flag-rules-empty")).toBeTruthy();
@@ -45,6 +46,7 @@ describe("FlagRuleList", () => {
         onRemove={vi.fn()}
         addLabel="Add"
         valueLabel="Value"
+        connector=" → "
       />,
     );
     const row = screen.getByTestId("flag-rule-f1");
@@ -63,6 +65,7 @@ describe("FlagRuleList", () => {
         onRemove={vi.fn()}
         addLabel="Add"
         valueLabel="Value"
+        connector=" → "
       />,
     );
     const select = screen.getByTestId("flag-rule-add-flag") as HTMLSelectElement;
@@ -82,6 +85,7 @@ describe("FlagRuleList", () => {
         onRemove={vi.fn()}
         addLabel="Add"
         valueLabel="Value"
+        connector=" → "
       />,
     );
     fireEvent.change(screen.getByTestId("flag-rule-add-flag"), {
@@ -105,6 +109,7 @@ describe("FlagRuleList", () => {
         onRemove={onRemove}
         addLabel="Add"
         valueLabel="Value"
+        connector=" → "
       />,
     );
     fireEvent.click(screen.getByTestId("flag-rule-remove-f1"));

@@ -30,14 +30,25 @@ export const ChoiceConditions = ({
       }))}
       availableFlags={availableFlags}
       valueOptions={[
-        { value: "true" as const, label: t.conditions.mustBeTrue },
-        { value: "false" as const, label: t.conditions.mustBeFalse },
+        {
+          value: "true" as const,
+          label: t.conditions.mustBeTrue,
+          badgeLabel: t.badges.true,
+          tone: "positive",
+        },
+        {
+          value: "false" as const,
+          label: t.conditions.mustBeFalse,
+          badgeLabel: t.badges.false,
+          tone: "negative",
+        },
       ]}
       onAdd={(flagId, value) => onAdd(flagId, value === "true")}
       onRemove={onRemove}
       onCreateFlag={onCreateFlag}
       addLabel={t.buttons.addCondition}
       valueLabel={t.labels.requiredValue}
+      connector={` ${t.conditions.mustBe} `}
     />
   );
 };

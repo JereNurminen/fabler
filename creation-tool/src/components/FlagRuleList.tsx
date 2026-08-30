@@ -9,23 +9,43 @@ export interface FlagRule<V extends string> {
   value: V;
 }
 
+export interface FlagRuleValueOption<V extends string> {
+  value: V;
+  /** Shown in the add-dropdown. */
+  label: string;
+  /** Shown in the rule row's chip. Defaults to `label` when absent. */
+  badgeLabel?: string;
+  /** Visual treatment of the rule row's chip. Defaults to "neutral". */
+  tone?: "neutral" | "positive" | "negative";
+}
+
 interface FlagRuleListProps<V extends string> {
   rules: Array<FlagRule<V>>;
   availableFlags: Flag[];
   /** The value set this list edits — three for operations, two for conditions. */
-  valueOptions: Array<{ value: V; label: string }>;
+  valueOptions: Array<FlagRuleValueOption<V>>;
   onAdd: (flagId: string, value: V) => void;
   onRemove: (flagId: string) => void;
   onCreateFlag?: (name: string) => Promise<{ id: string } | null>;
   addLabel: string;
   valueLabel: string;
+  /** Text rendered between the flag name and its value chip. */
+  connector: string;
 }
+
+const toneClasses: Record<NonNullable<FlagRuleValueOption<string>["tone"]>, string> = {
+  neutral: "font-mono bg-gray-200 text-gray-900 px-1.5 py-0.5 rounded text-xs",
+  positive: "font-mono bg-success text-white px-1.5 py-0.5 rounded text-xs font-medium",
+  negative: "font-mono bg-danger text-white px-1.5 py-0.5 rounded text-xs font-medium",
+};
 
 /**
  * "Pick a flag, pick a value" — shared by the page/choice flag-operation
  * editors and the choice-condition editor. The two callers differ only in
- * their stored shape and their value set, so the value set is passed as data
- * rather than the component branching on which caller it is serving.
+ * their stored shape and their value set (including how that value is
+ * presented — connector text, chip wording, chip color), so all of that is
+ * passed in as data rather than the component branching on which caller it
+ * is serving.
  */
 export function FlagRuleList<V extends string>({
   rules,
@@ -36,6 +56,7 @@ export function FlagRuleList<V extends string>({
   onCreateFlag,
   addLabel,
   valueLabel,
+  connector,
 }: FlagRuleListProps<V>) {
   const { t } = useTranslation();
   const [selectedFlagId, setSelectedFlagId] = useState("");
@@ -66,8 +87,9 @@ export function FlagRuleList<V extends string>({
         <div className="flex flex-col gap-1.5">
           {rules.map((rule) => {
             const flag = availableFlags.find((f) => f.id === rule.flag_id);
-            const valueLabelText =
-              valueOptions.find((o) => o.value === rule.value)?.label ?? rule.value;
+            const option = valueOptions.find((o) => o.value === rule.value);
+            const badgeText = option?.badgeLabel ?? option?.label ?? rule.value;
+            const tone = option?.tone ?? "neutral";
             return (
               <div
                 key={rule.flag_id}
@@ -76,10 +98,8 @@ export function FlagRuleList<V extends string>({
               >
                 <span className="text-gray-900">
                   <strong>{flag?.name ?? t.dynamic.flagFallback(rule.flag_id)}</strong>
-                  {" → "}
-                  <span className="font-mono bg-gray-200 px-1.5 py-0.5 rounded text-xs">
-                    {valueLabelText}
-                  </span>
+                  {connector}
+                  <span className={toneClasses[tone]}>{badgeText}</span>
                 </span>
                 <button
                   onClick={() => onRemove(rule.flag_id)}
