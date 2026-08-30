@@ -54,6 +54,12 @@ pub struct Choice {
 #[ts(export, export_to = "../../types/src/")]
 pub struct FlagOperation {
     pub flag_id: String,
+    /// Genuinely a `String` in Rust today, not a real enum — the `#[ts(type
+    /// = ...)]` override below asserts the literal union the TypeScript side
+    /// has always relied on. Making this a proper enum is a data-model
+    /// change for another day; until then, this override is what keeps the
+    /// generated type honest with the contract consumers already assume.
+    #[ts(type = "\"set_true\" | \"set_false\" | \"toggle\"")]
     pub operation: String,
 }
 

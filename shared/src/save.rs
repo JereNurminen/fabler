@@ -25,6 +25,10 @@ pub struct SavedState {
     #[serde(rename = "gameState")]
     pub game_state: GameState,
     pub name: String,
+    /// `u64` in Rust, but serde_json serialises it as a plain JSON number —
+    /// the override reflects what actually crosses the wire, not ts-rs's
+    /// default `bigint` mapping for 64-bit integers.
+    #[ts(type = "number")]
     pub timestamp: u64,
 }
 
@@ -34,6 +38,10 @@ pub struct SlotInfo {
     #[serde(rename = "slotId")]
     pub slot_id: String,
     pub name: String,
+    /// `u64` in Rust, but serde_json serialises it as a plain JSON number —
+    /// the override reflects what actually crosses the wire, not ts-rs's
+    /// default `bigint` mapping for 64-bit integers.
+    #[ts(type = "number")]
     pub timestamp: u64,
 }
 
