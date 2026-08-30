@@ -5,11 +5,12 @@ kind and carry a rough size. Numbers in brackets are the finding ids from that
 review, kept so discussion threads stay traceable.
 
 Done since the review: build/lint/CI restoration [1][2], stable story ids [3],
-player dead-end fix [4], and story-structure validation (detection half of
-[5]) — see `docs/superpowers/specs/2026-08-26-story-validation-design.md`.
+player dead-end fix [4], story-structure validation (detection half of [5]),
+mechanical hygiene, and the component cleanup — [9], [10] and [12] are done,
+see `docs/superpowers/specs/2026-08-26-component-cleanup-design.md`.
 
-Lint baseline is now **35** eslint warnings, not 36: consolidating the export
-flow removed one `no-misused-promises` site.
+**eslint is now 0 warnings**, with `no-floating-promises` and
+`no-misused-promises` enforced as errors (`ignoreVoid: false`).
 
 ## Correctness
 
@@ -85,6 +86,46 @@ flow removed one `no-misused-promises` site.
       `StoryEditorPage`, `PreviewView`); `StartPage` hedges with
       `t.buttons.x || "literal"` for keys that exist. The reader and the
       player package have no i18n layer at all.
+
+## Deferred from the component cleanup
+
+- [ ] **Two residuals from the final fix wave** — *small, do together*
+      1. `SelectWithCreate.test.tsx` is a FALSE PROOF: it was added to guard
+         the "page creation fails silently" fix, but it hand-writes its own
+         conformant `onCreate` and never exercises `PageCard`'s
+         `onCreatePage`. Reverting the fix leaves all 34 tests green. The fix
+         itself is correct and verified; only its guard is decorative. A test
+         that implies coverage it does not provide is worse than none.
+      2. Five empty `.catch(() => {})` in `SelectWithCreate.tsx` (×2) and
+         `StartPage.tsx` (×3), added to satisfy `ignoreVoid: false`. Justified
+         as "these never reject", but nothing enforces that: a future edit
+         moving a call outside the inner try turns them into exactly the
+         silent-failure bug this phase removed. Use
+         `.catch((e: unknown) => console.error(...))` instead — same rule
+         satisfied, honest if the assumption breaks.
+
+- [ ] **Stale-closure race can silently drop an edit** — *medium*
+      `usePageMutations` builds each write from the `page` snapshot it
+      captured, and `pageAtomFamily` only refreshes after the write completes.
+      The trigger is not exotic: **type in a choice's text field, then click a
+      condition button** — the blur-commit and the rule-commit both read the
+      same `page`, so the second whole-page write drops the first edit. Predates
+      the refactor (verified byte-identical) and its root cause is atom-refresh
+      timing, so it belongs with the refetch-cascade work [11].
+
+- [ ] **The save-status indicator is unreachable during modal writes** — *small*
+      HeadlessUI portals `Dialog` and inerts the rest of `body`, so
+      `<SaveStatus />`'s `role="alert"` is never announced and the badge sits
+      dimmed behind the backdrop. Affects every `FlagsDialog` write and
+      portrait-mode asset writes — a whole class of writes whose failures are
+      degraded rather than visible.
+
+- [ ] **`vitest.config.ts` has an invisible type error** — *trivial*
+      `plugins: [react()]` mismatches because vitest bundles its own copy of
+      vite. No project gate sees it: `tsconfig.json` includes only
+      `["src", "e2e"]`, so package-root config files are typechecked by
+      nothing. `react() as PluginOption` fixes it; do not delete the plugin
+      blind.
 
 ## Deferred from the validation build
 
