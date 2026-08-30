@@ -2,8 +2,8 @@ import dagre from "@dagrejs/dagre";
 import type { GraphEdge, StoryGraph } from "@fabler/types";
 
 /** Node dimensions dagre reserves; must match the rendered node's CSS. */
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 52;
+export const NODE_WIDTH = 180;
+export const NODE_HEIGHT = 52;
 
 export interface PositionedNode {
   id: string;
@@ -18,6 +18,14 @@ export interface PositionedNode {
  * Layered top-to-bottom rather than force-directed: a story flows from its
  * start page, so depth reads as narrative distance. Dagre breaks cycles
  * itself, which matters because story graphs loop.
+ *
+ * Known limitation: dagre lays out ALL nodes in one pass, and saved
+ * positions are substituted in only afterwards, so dagre's placement for a
+ * new, unsaved node knows nothing about where manually-placed nodes ended
+ * up. A newly added page can therefore land on top of one an author has
+ * moved. Accepted for now; the planned remedy is an "Auto-arrange" control
+ * that clears saved positions and re-runs layout from scratch, rather than
+ * a collision-avoidance algorithm here.
  */
 export function layoutGraph(graph: StoryGraph): {
   nodes: PositionedNode[];

@@ -216,3 +216,7 @@ they are not silently lost now that the run's scratch workspace is gone.
   `generate_unique_id()` that page IDs use. Two choices on one page could in
   principle collide, which would make the graph view drop an edge. Surfaced by
   the graph-view Task 2 review; pre-existing, never observed.
+- `layoutGraph` (graph-view Task 3) lays out unsaved nodes without knowing
+  where saved-position nodes ended up, so a new page can land on top of a
+  manually-placed one; accepted until the graph-view "Auto-arrange" control
+  ships, which will clear saved positions and re-run layout.
