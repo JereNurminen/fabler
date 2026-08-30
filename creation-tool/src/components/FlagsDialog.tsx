@@ -6,7 +6,7 @@ import { useTranslation, translations } from "../i18n";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { generateId } from "../utilities/id";
 import { useTrackedAction } from "../hooks/useTrackedAction";
-import type { Flag } from "../types";
+import type { Flag, Story } from "../types";
 
 type FlagsDialogProps = {
   onClose: () => void;
@@ -22,63 +22,91 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
     Record<string, { name: string; defaultValue: boolean }>
   >({});
 
-  const handleCreateFlag = useTrackedAction(async () => {
+  // Each tracked action below wraps only the write itself. Guards and
+  // validation run in the plain function that calls it, so an early return
+  // (nothing open, nothing changed, an empty name) never reaches
+  // useTrackedAction and never reports a "saved" that didn't happen.
+
+  const createFlag = useTrackedAction(
+    async (s: Story, name: string, defaultValue: boolean) => {
+      await saveStory({
+        ...s,
+        flags: [
+          ...s.flags,
+          { id: generateId(), name, default_value: defaultValue },
+        ],
+      });
+      setNewFlagName("");
+      setNewFlagDefaultValue(false);
+    },
+  );
+
+  const handleCreateFlag = () => {
     if (!story) return;
-    if (newFlagName.trim() === "") {
+    const trimmed = newFlagName.trim();
+    if (trimmed === "") {
       alert(t.alerts.flagNameEmpty);
       return;
     }
+    createFlag(story, trimmed, newFlagDefaultValue);
+  };
 
-    await saveStory({
-      ...story,
-      flags: [
-        ...story.flags,
-        { id: generateId(), name: newFlagName.trim(), default_value: newFlagDefaultValue },
-      ],
-    });
-    setNewFlagName("");
-    setNewFlagDefaultValue(false);
-  });
+  const updateFlag = useTrackedAction(
+    async (
+      s: Story,
+      flag: Flag,
+      edited: { name: string; defaultValue: boolean },
+    ) => {
+      await saveStory({
+        ...s,
+        flags: s.flags.map((f) =>
+          f.id === flag.id
+            ? { ...f, name: edited.name, default_value: edited.defaultValue }
+            : f
+        ),
+      });
+      setEditingFlags((prev) => {
+        const next = { ...prev };
+        delete next[flag.id];
+        return next;
+      });
+    },
+  );
 
-  const handleUpdateFlag = useTrackedAction(async (flag: Flag) => {
+  const handleUpdateFlag = (flag: Flag) => {
     if (!story) return;
     const edited = editingFlags[flag.id];
     if (!edited) return;
+    updateFlag(story, flag, edited);
+  };
 
+  const deleteFlag = useTrackedAction(async (s: Story, id: string) => {
     await saveStory({
-      ...story,
-      flags: story.flags.map((f) =>
-        f.id === flag.id
-          ? { ...f, name: edited.name, default_value: edited.defaultValue }
-          : f
-      ),
-    });
-    setEditingFlags((prev) => {
-      const next = { ...prev };
-      delete next[flag.id];
-      return next;
+      ...s,
+      flags: s.flags.filter((f) => f.id !== id),
     });
   });
 
-  const handleDeleteFlag = useTrackedAction(async (id: string) => {
+  const handleDeleteFlag = (id: string) => {
     if (!story) return;
-    await saveStory({
-      ...story,
-      flags: story.flags.filter((f) => f.id !== id),
-    });
-  });
+    deleteFlag(story, id);
+  };
 
-  const handleToggleDefaultValue = useTrackedAction(
-    async (flagId: string, checked: boolean) => {
-      if (!story) return;
+  const toggleDefaultValue = useTrackedAction(
+    async (s: Story, flagId: string, checked: boolean) => {
       await saveStory({
-        ...story,
-        flags: story.flags.map((f) =>
+        ...s,
+        flags: s.flags.map((f) =>
           f.id === flagId ? { ...f, default_value: checked } : f
         ),
       });
     },
   );
+
+  const handleToggleDefaultValue = (flagId: string, checked: boolean) => {
+    if (!story) return;
+    toggleDefaultValue(story, flagId, checked);
+  };
 
   const handleFlagChange = (
     flagId: string,

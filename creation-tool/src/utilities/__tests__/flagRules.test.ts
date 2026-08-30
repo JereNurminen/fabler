@@ -19,8 +19,11 @@ describe("upsertFlagRule", () => {
       { flag_id: "b", value: "2" },
     ];
     const result = upsertFlagRule(list, { flag_id: "a", value: "99" });
-    expect(result).toHaveLength(2);
-    expect(result.filter((r) => r.flag_id === "a")).toEqual([
+    // Filter-then-append moves the updated rule to the end. Asserting the
+    // full array (not just value + uniqueness) locks that position in — a
+    // hybrid implementation that substituted in place would otherwise pass.
+    expect(result).toEqual([
+      { flag_id: "b", value: "2" },
       { flag_id: "a", value: "99" },
     ]);
   });

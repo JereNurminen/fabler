@@ -56,7 +56,10 @@ export const StartPage = () => {
         )}
         <div className="space-y-3">
           <button
-            onClick={() => { void handleOpen(); }}
+            // handleOpen/handleCreate catch their own errors (into `error`
+            // state) and never reject; `.catch` is defensive uniformity for
+            // no-floating-promises.
+            onClick={() => { void handleOpen().catch(() => {}); }}
             className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
           >
             {t.buttons.openProject || "Open Project"}
@@ -76,12 +79,12 @@ export const StartPage = () => {
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder={t.placeholders.storyTitle || "Story title"}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                onKeyDown={(e) => { if (e.key === "Enter") { void handleCreate(); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") { void handleCreate().catch(() => {}); } }}
                 autoFocus
               />
               <div className="flex gap-2">
                 <button
-                  onClick={() => { void handleCreate(); }}
+                  onClick={() => { void handleCreate().catch(() => {}); }}
                   className="flex-1 py-2 px-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
                 >
                   {t.buttons.create || "Create"}

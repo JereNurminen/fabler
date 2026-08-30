@@ -38,6 +38,12 @@ export function SelectWithCreate({
         onChange(created.id);
       }
     } catch (err) {
+      // `onCreate` is expected to report its own failure (e.g. into the
+      // save-status atom) and resolve to `null` rather than reject — this
+      // component has no way to know what "failed" means for whatever
+      // entity the caller is creating. This catch is a last-resort net for
+      // a caller that does not honour that contract; it only logs, so keep
+      // every `onCreate` implementation self-reporting.
       console.error("Failed to create:", err);
     }
     setCreating(false);
@@ -58,7 +64,9 @@ export function SelectWithCreate({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") { void handleCreate(); }
+              // handleCreate catches its own errors and never rejects; the
+              // `.catch` is defensive uniformity for no-floating-promises.
+              if (e.key === "Enter") { void handleCreate().catch(() => {}); }
               if (e.key === "Escape") { setCreating(false); setNewName(""); }
             }}
             className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
@@ -66,7 +74,7 @@ export function SelectWithCreate({
             autoFocus
           />
           <button
-            onClick={() => { void handleCreate(); }}
+            onClick={() => { void handleCreate().catch(() => {}); }}
             className="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
             {t.buttons.create}

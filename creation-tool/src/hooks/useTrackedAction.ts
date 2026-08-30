@@ -25,7 +25,10 @@ export function useTrackedAction<A extends unknown[]>(
 
   return useCallback(
     (...args: A) => {
-      setStatus({ state: "saving" });
+      // Functional form so a starting write does not clobber an existing
+      // `failed` — the spec says a failure persists until the next write
+      // *succeeds*, not until the next write merely *starts*.
+      setStatus((prev) => (prev.state === "failed" ? prev : { state: "saving" }));
       // `void` marks the promise intentionally ignored. That is correct here
       // rather than a dodge: rejection IS handled, by the second argument.
       void fnRef.current(...args).then(

@@ -46,6 +46,41 @@ describe("useTrackedAction", () => {
     expect(returned).toBeUndefined();
   });
 
+  it("does not reset a failed status to saving when a new action starts", async () => {
+    // FIX 2 regression guard: the spec says a failure persists until the
+    // next write *succeeds*. Setting `saving` unconditionally at the start
+    // of every write made it persist only until the next write *started*,
+    // erasing a visible failure the instant the author tried again.
+    let resolveSecond!: () => void;
+    const first: () => Promise<void> = () =>
+      Promise.reject(new Error("disk full"));
+    const second: () => Promise<void> = () =>
+      new Promise<void>((resolve) => {
+        resolveSecond = resolve;
+      });
+
+    const { result, rerender } = renderHook(
+      (fn: () => Promise<unknown>) => ({
+        run: useTrackedAction(fn),
+        status: useAtomValue(saveStatusAtom),
+      }),
+      { wrapper: Provider, initialProps: first },
+    );
+
+    act(() => result.current.run());
+    await waitFor(() => expect(result.current.status.state).toBe("failed"));
+
+    rerender(second);
+    act(() => result.current.run());
+
+    // The second action is still in flight (its promise hasn't resolved),
+    // so if `saving` clobbered `failed` the status would read "saving" here.
+    expect(result.current.status.state).toBe("failed");
+
+    act(() => resolveSecond());
+    await waitFor(() => expect(result.current.status.state).toBe("saved"));
+  });
+
   it("passes its arguments through to the action", async () => {
     const seen: unknown[] = [];
     const { result } = setup(((...args: unknown[]) => {

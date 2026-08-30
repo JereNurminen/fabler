@@ -166,8 +166,19 @@ const PageCard = ({ pageId }: { pageId: string }) => {
                 onCommit={(patch) => updateChoice(choice.id, patch)}
                 onDelete={() => removeChoice(choice.id)}
                 onCreatePage={async (pageName) => {
-                  const created = await createPage(pageName);
-                  return created ? { id: created.id } : null;
+                  // createPage rejects on failure (unlike handleCreateFlag's
+                  // saveStory, which is caught above). Report our own
+                  // failure and resolve to null, matching SelectWithCreate's
+                  // contract: report your own failure, resolve, never reject.
+                  try {
+                    const created = await createPage(pageName);
+                    return created ? { id: created.id } : null;
+                  } catch (error: unknown) {
+                    const cause =
+                      error instanceof Error ? error.message : String(error);
+                    setSaveStatus({ state: "failed", message: cause });
+                    return null;
+                  }
                 }}
                 onCreateFlag={handleCreateFlag}
               />

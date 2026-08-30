@@ -23,6 +23,7 @@ const PAGE: Page = {
   body: { content: [{ type: "markdown", source: "hi" }] },
   choices: [
     { id: "c1", text: "Go", target: "p2", flag_operations: [], conditions: [] },
+    { id: "c2", text: "Stay", target: "p3", flag_operations: [], conditions: [] },
   ],
   flag_operations: [],
 };
@@ -43,7 +44,7 @@ describe("usePageMutations", () => {
     const saved = savePage.mock.calls[0][0] as Page;
     expect(saved.name).toBe("Renamed");
     // Unpatched fields must survive — the backend takes a whole Page.
-    expect(saved.choices).toHaveLength(1);
+    expect(saved.choices).toHaveLength(2);
     expect(saved.id).toBe("p1");
   });
 
@@ -58,6 +59,9 @@ describe("usePageMutations", () => {
     const saved = savePage.mock.calls[0][0] as Page;
     expect(saved.choices[0].text).toBe("Changed");
     expect(saved.choices[0].target).toBe("p2");
+    // The fixture has a second choice so a patch that ignored `choiceId`
+    // and touched every choice would be caught here.
+    expect(saved.choices[1]).toEqual(PAGE.choices[1]);
   });
 
   it("removes a choice by id", async () => {
@@ -68,7 +72,9 @@ describe("usePageMutations", () => {
     act(() => result.current.removeChoice("c1"));
 
     await waitFor(() => expect(savePage).toHaveBeenCalledTimes(1));
-    expect((savePage.mock.calls[0][0] as Page).choices).toHaveLength(0);
+    const saved = savePage.mock.calls[0][0] as Page;
+    expect(saved.choices).toHaveLength(1);
+    expect(saved.choices[0].id).toBe("c2");
   });
 
   it("does nothing when there is no page", () => {

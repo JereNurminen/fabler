@@ -27,14 +27,25 @@ export function AssetsSection({ className }: AssetsSectionProps) {
     });
   }, [refreshAssets]);
 
-  const handleUpload = useTrackedAction(async () => {
-    const filePath = await openDialog({
-      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg"] }],
-    });
-    if (!filePath) return;
+  // Tracked action wraps only the write, so a cancelled dialog never reports
+  // "saved" for a save that never happened.
+  const uploadAsset = useTrackedAction(async (filePath: string) => {
     await api.copyAsset(filePath);
     await refreshAssets();
   });
+
+  const handleUpload = () => {
+    void openDialog({
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg"] }],
+    })
+      .then((filePath) => {
+        if (!filePath) return;
+        uploadAsset(filePath);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to open file dialog:", error);
+      });
+  };
 
   const handleCopyEmbed = (filename: string) => {
     // Clipboard write, not a project write: does not touch the save-status
