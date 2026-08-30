@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "id": "1a2b3",
+  "title": "The Lantern Loop",
+  "start_page": "a1b2c",
+  "flags": [
+    {
+      "id": "f10a1",
+      "name": "Carrying the lantern",
+      "default_value": false
+    },
+    {
+      "id": "f20b2",
+      "name": "Torch is lit",
+      "default_value": true
+    },
+    {
+      "id": "f30c3",
+      "name": "Read the ledger",
+      "default_value": false
+    },
+    {
+      "id": "f40d4",
+      "name": "Visited the crypt",
+      "default_value": false
+    },
+    {
+      "id": "f50e5",
+      "name": "Cursed",
+      "default_value": false
+    },
+    {
+      "id": "f60f6",
+      "name": "Carrying the crown",
+      "default_value": false
+    },
+    {
+      "id": "f70a7",
+      "name": "Seen by the sentry",
+      "default_value": false
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "293a4",
+  "name": "Courtyard",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Courtyard\n\nOpen sky, wet grass, and a wall low enough to climb if you have nothing in your\nhands worth dropping.\n\n> You could just leave. People do. Not often.\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1021",
+      "text": "Climb the wall and drop into the fields",
+      "target": "3a4b5",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f50e5",
+          "required_value": false
+        }
+      ]
+    },
+    {
+      "id": "c1022",
+      "text": "Climb the wall with the crown cold against your ribs",
+      "target": "4b5c6",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f50e5",
+          "required_value": true
+        },
+        {
+          "flag_id": "f60f6",
+          "required_value": true
+        }
+      ]
+    },
+    {
+      "id": "c1023",
+      "text": "Walk out through the front gate, empty-handed",
+      "target": "3a4b5",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f60f6",
+          "required_value": false
+        }
+      ]
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 720.0,
+      "y": 520.0
+    }
+  }
+}

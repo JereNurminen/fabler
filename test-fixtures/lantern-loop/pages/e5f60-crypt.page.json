@@ -1,0 +1,45 @@
+{
+  "id": "e5f60",
+  "name": "Crypt",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Crypt\n\nOne sarcophagus, lid askew, and a word cut deep into the niche above it.\n\n| Line | Reads |\n| ---- | ----- |\n| 1    | ashes keep their own accounts |\n| 2    | say this at the black door |\n\n```\nmarrowlight\n```\n\nTouching the lid feels like putting your hand into cold water that pushes back.\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1012",
+      "text": "Lay your hand on the sarcophagus",
+      "target": "e5f60",
+      "flag_operations": [
+        {
+          "flag_id": "f50e5",
+          "operation": "toggle"
+        }
+      ],
+      "conditions": []
+    },
+    {
+      "id": "c1013",
+      "text": "Climb out to the iron door",
+      "target": "07182",
+      "flag_operations": [],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [
+    {
+      "flag_id": "f40d4",
+      "operation": "set_true"
+    }
+  ],
+  "editor": {
+    "position": {
+      "x": 360.0,
+      "y": 440.0
+    }
+  }
+}

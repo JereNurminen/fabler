@@ -1,0 +1,45 @@
+{
+  "id": "d4e5f",
+  "name": "Dark Stair",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Dark Stair\n\nThirty-one steps. You count them twice and get two different numbers.\n\n> The light stops about four feet out, like it has been told to.\n>\n> > Below that, the dark is doing the listening.\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1010",
+      "text": "Descend into the crypt",
+      "target": "e5f60",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f10a1",
+          "required_value": true
+        }
+      ]
+    },
+    {
+      "id": "c1011",
+      "text": "Grope your way down in the dark",
+      "target": "5c6d7",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f10a1",
+          "required_value": false
+        }
+      ]
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 360.0,
+      "y": 660.0
+    }
+  }
+}

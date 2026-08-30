@@ -132,6 +132,29 @@ my-story/
 - `src/components/PlayerBar.tsx`: Responsive nav bar (bottom on portrait, side on landscape)
 - `src/adapters/TauriStorageAdapter.ts`, `TauriAssetResolver.ts`
 
+### Test Fixtures (`test-fixtures/`)
+
+Two shapes live here, and they are not interchangeable:
+
+- **Bundle manifests** (`minimal.json`, `branching.json`, `flags.json`,
+  `broken-target.json`, `rich-blocks.json`) — single-file `Manifest`s for
+  driving the player engine and reader directly. `broken-target.json` has a
+  choice pointing at a missing page, for the `navigate()` missing-target path;
+  `rich-blocks.json` covers the `Document` block types the page editor cannot
+  author (see below).
+- **Project directories** (`lantern-loop/`) — a full story on disk
+  (`story.json` + `pages/` + `assets/`), openable in the creation tool.
+  `lantern-loop/` is the feature-coverage story: 13 pages, 7 flags, 3 endings,
+  a linear spine with one self-loop and one loop-back, and at least one use of
+  every flag operation, condition form, and markdown feature. Its `README.md`
+  maps each feature to the page that exercises it.
+
+Note when authoring fixture pages by hand: the page editor stores a body as a
+**single** `markdown` block — `PageCard.tsx` reads `body.content[0]` and writes
+one block back. A project page using `paragraph`, `blockquote`, `image` or
+`horizontal_rule` blocks is silently overwritten the first time it is edited,
+so those block types belong in a bundle manifest, not in a project directory.
+
 ## Development Workflows
 
 ### Adding a New Tauri Command

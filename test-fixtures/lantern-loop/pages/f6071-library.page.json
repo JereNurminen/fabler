@@ -1,0 +1,40 @@
+{
+  "id": "f6071",
+  "name": "Library",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Library\n\nThe steward's ledger lies open on a lectern, still ~~legible~~ mostly legible.\n\n- Provisions\n  - salt, six barrels\n  - lamp oil, *plenty*\n- Passwords\n  - changed monthly\n  - **never** written down \u2014 except here, in ink, with a note that the word\n    itself is cut into the crypt wall\n\nSee also: [the keep's public record](https://example.com/keep).\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1008",
+      "text": "Read the steward's ledger",
+      "target": "d4e5f",
+      "flag_operations": [
+        {
+          "flag_id": "f30c3",
+          "operation": "set_true"
+        }
+      ],
+      "conditions": []
+    },
+    {
+      "id": "c1009",
+      "text": "Leave the ledger shut and take the stair",
+      "target": "d4e5f",
+      "flag_operations": [],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 0.0,
+      "y": 660.0
+    }
+  }
+}

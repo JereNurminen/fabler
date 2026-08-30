@@ -1,0 +1,20 @@
+{
+  "id": "4b5c6",
+  "name": "Ending - The Cursed Crown",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "# The Cursed Crown\n\nThe gold is warm. It was warm before you touched it.\n\nYou put it on, because by then that is not really a decision anymore.\n\n---\n\n*An ending. You brought it up out of the crypt with you.*\n"
+      }
+    ]
+  },
+  "choices": [],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 658.8740740740741,
+      "y": 786.1283950617284
+    }
+  }
+}

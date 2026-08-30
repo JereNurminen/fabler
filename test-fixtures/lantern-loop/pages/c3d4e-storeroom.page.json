@@ -1,0 +1,45 @@
+{
+  "id": "c3d4e",
+  "name": "Storeroom",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Storeroom\n\nShelves, barrels, and one brass lantern with oil still in it. It lights on the\n`first` strike, which never happens.\n\n![A lantern, lit](lantern.png)\n\n1. Lift the lantern\n2. Strike the wick\n3. Do not look behind you\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1006",
+      "text": "Take the lantern and press on",
+      "target": "f6071",
+      "flag_operations": [],
+      "conditions": []
+    },
+    {
+      "id": "c1007",
+      "text": "Put the lantern back on the shelf",
+      "target": "f6071",
+      "flag_operations": [
+        {
+          "flag_id": "f10a1",
+          "operation": "set_false"
+        }
+      ],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [
+    {
+      "flag_id": "f10a1",
+      "operation": "set_true"
+    }
+  ],
+  "editor": {
+    "position": {
+      "x": 0.0,
+      "y": 440.0
+    }
+  }
+}

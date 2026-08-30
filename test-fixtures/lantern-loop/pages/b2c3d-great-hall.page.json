@@ -1,0 +1,52 @@
+{
+  "id": "b2c3d",
+  "name": "Great Hall",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "## The Great Hall\n\nCracked flagstones, swept recently, which is worse than if nobody had. One\ncorridor leads off toward the back of the keep. Everything else is wall.\n\n- Oil and dust, that way\n- Cold stone, every other way\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1003",
+      "text": "Take the corridor toward the storeroom",
+      "target": "c3d4e",
+      "flag_operations": [],
+      "conditions": []
+    },
+    {
+      "id": "c1004",
+      "text": "Feel your way along the black wall",
+      "target": "5c6d7",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f20b2",
+          "required_value": false
+        }
+      ]
+    },
+    {
+      "id": "c1005",
+      "text": "Slip back down the servants' passage to the guard post",
+      "target": "18293",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f70a7",
+          "required_value": true
+        }
+      ]
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 0.0,
+      "y": 220.0
+    }
+  }
+}

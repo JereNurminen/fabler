@@ -1,0 +1,40 @@
+{
+  "id": "a1b2c",
+  "name": "Entrance",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "# The Lantern Loop\n\nThe keep leans out of the fog like a bad tooth. The gate is **open**, which is\neither luck or bait.\n\n![The outer gate](gate.png)\n\nYou are carrying a lit torch. It will not last the night, and *you* know it.\n\n---\n\n> Every door in this place opens twice. Once for you, once for whatever\n> follows you in.\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1001",
+      "text": "Push the gate open and step inside",
+      "target": "b2c3d",
+      "flag_operations": [],
+      "conditions": []
+    },
+    {
+      "id": "c1002",
+      "text": "Pinch out your torch first, then creep in",
+      "target": "b2c3d",
+      "flag_operations": [
+        {
+          "flag_id": "f20b2",
+          "operation": "set_false"
+        }
+      ],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  }
+}

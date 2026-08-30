@@ -1,0 +1,20 @@
+{
+  "id": "5c6d7",
+  "name": "Ending - Swallowed by the Dark",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "# Swallowed by the Dark\n\nWithout light you make it eleven steps. Something takes the twelfth for you.\n\n---\n\n*An ending. The torch was the whole plan.*\n"
+      }
+    ]
+  },
+  "choices": [],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 360.0,
+      "y": 880.0
+    }
+  }
+}

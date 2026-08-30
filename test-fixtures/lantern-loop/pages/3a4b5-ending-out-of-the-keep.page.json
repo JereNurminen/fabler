@@ -1,0 +1,20 @@
+{
+  "id": "3a4b5",
+  "name": "Ending - Out of the Keep",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "# Out of the Keep\n\nYou come down in wet grass and keep walking until the fog gives up on you.\n\n---\n\n*An ending. Not the only one.*\n"
+      }
+    ]
+  },
+  "choices": [],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 1046.632098765432,
+      "y": 720.3111111111111
+    }
+  }
+}

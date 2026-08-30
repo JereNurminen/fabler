@@ -1,0 +1,44 @@
+{
+  "id": "07182",
+  "name": "Iron Door",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### The Iron Door\n\nNo handle, no keyhole. A slot at mouth height, worn smooth by breath.\n\n*It is waiting to be told something, and you either have it or you don't.*\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1014",
+      "text": "Speak the word cut into the crypt wall",
+      "target": "6d7e8",
+      "flag_operations": [],
+      "conditions": [
+        {
+          "flag_id": "f30c3",
+          "required_value": true
+        },
+        {
+          "flag_id": "f40d4",
+          "required_value": true
+        }
+      ]
+    },
+    {
+      "id": "c1015",
+      "text": "Leave the door alone and take the side passage",
+      "target": "18293",
+      "flag_operations": [],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 360.0,
+      "y": 220.0
+    }
+  }
+}

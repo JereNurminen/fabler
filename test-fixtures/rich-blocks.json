@@ -1,0 +1,166 @@
+{
+  "format_version": 1,
+  "story": {
+    "id": "2b3c4",
+    "title": "Block Types",
+    "start_page": "aa001"
+  },
+  "flags": [
+    {
+      "id": "fa001",
+      "name": "Read the whole page",
+      "default_value": false
+    }
+  ],
+  "pages": [
+    {
+      "id": "aa001",
+      "name": "Every Block",
+      "body": {
+        "content": [
+          {
+            "type": "markdown",
+            "source": "# Every Block\n\nA `markdown` block, first, because that is what the editor writes.\n\n- lists\n- **bold**, *italic*, [links](https://example.com)"
+          },
+          {
+            "type": "horizontal_rule"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "text": "A paragraph block with ",
+                "marks": []
+              },
+              {
+                "text": "bold",
+                "marks": [
+                  "bold"
+                ]
+              },
+              {
+                "text": ", ",
+                "marks": []
+              },
+              {
+                "text": "italic",
+                "marks": [
+                  "italic"
+                ]
+              },
+              {
+                "text": ", ",
+                "marks": []
+              },
+              {
+                "text": "both at once",
+                "marks": [
+                  "bold",
+                  "italic"
+                ]
+              },
+              {
+                "text": ", and plain text.",
+                "marks": []
+              }
+            ]
+          },
+          {
+            "type": "image",
+            "src": "lantern.png",
+            "alt": "A lantern, lit"
+          },
+          {
+            "type": "blockquote",
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "text": "A blockquote wrapping a paragraph.",
+                    "marks": []
+                  }
+                ]
+              },
+              {
+                "type": "blockquote",
+                "content": [
+                  {
+                    "type": "paragraph",
+                    "content": [
+                      {
+                        "text": "And a blockquote inside that one.",
+                        "marks": [
+                          "italic"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "markdown",
+                "source": "Blockquotes hold *any* block, including markdown."
+              }
+            ]
+          },
+          {
+            "type": "horizontal_rule"
+          },
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "text": "Last paragraph before the choices.",
+                "marks": []
+              }
+            ]
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "ca001",
+          "text": "I have seen every block",
+          "target": "bb002",
+          "flag_operations": [
+            {
+              "flag_id": "fa001",
+              "operation": "set_true"
+            }
+          ],
+          "conditions": []
+        }
+      ],
+      "flag_operations": []
+    },
+    {
+      "id": "bb002",
+      "name": "Ending - Done",
+      "body": {
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "text": "Done.",
+                "marks": [
+                  "bold"
+                ]
+              }
+            ]
+          },
+          {
+            "type": "horizontal_rule"
+          },
+          {
+            "type": "markdown",
+            "source": "*An ending with no choices.*"
+          }
+        ]
+      },
+      "choices": [],
+      "flag_operations": []
+    }
+  ]
+}

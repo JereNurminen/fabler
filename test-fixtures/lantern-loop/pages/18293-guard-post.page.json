@@ -1,0 +1,56 @@
+{
+  "id": "18293",
+  "name": "Guard Post",
+  "body": {
+    "content": [
+      {
+        "type": "markdown",
+        "source": "### Guard Post\n\nA stool, a cold brazier, and a sentry who has not turned around yet. Past him,\nthe courtyard. Behind you, the whole keep you just walked through.\n\n- [x] Someone sat here\n- [ ] Someone left\n"
+      }
+    ]
+  },
+  "choices": [
+    {
+      "id": "c1018",
+      "text": "Shutter your torch and slip past him",
+      "target": "293a4",
+      "flag_operations": [
+        {
+          "flag_id": "f20b2",
+          "operation": "toggle"
+        }
+      ],
+      "conditions": []
+    },
+    {
+      "id": "c1020",
+      "text": "Wait for him to turn his back",
+      "target": "293a4",
+      "flag_operations": [],
+      "conditions": []
+    },
+    {
+      "id": "c1019",
+      "text": "Bluff him, and lose your nerve halfway through",
+      "target": "b2c3d",
+      "flag_operations": [
+        {
+          "flag_id": "f70a7",
+          "operation": "set_true"
+        },
+        {
+          "flag_id": "f20b2",
+          "operation": "toggle"
+        }
+      ],
+      "conditions": []
+    }
+  ],
+  "flag_operations": [],
+  "editor": {
+    "position": {
+      "x": 759.7501252785407,
+      "y": 397.1669729030997
+    }
+  }
+}
