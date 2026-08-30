@@ -47,6 +47,12 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      # The types-freshness check below runs the index generator, so this job
+      # needs node as well as cargo.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       # Tauri 2 links against the system webkit stack.
       - name: Install Tauri system dependencies
         run: |
@@ -66,6 +72,11 @@ jobs:
 
       - name: Test
         run: cargo test --workspace
+
+      - name: Types are up to date
+        run: |
+          node types/generate-index.mjs
+          git diff --exit-code types/
 
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
