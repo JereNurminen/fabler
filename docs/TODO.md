@@ -212,3 +212,7 @@ they are not silently lost now that the run's scratch workspace is gone.
 - [ ] **Add frontend component tests** — *medium*
       4 unit tests, all on `convertToManifest`. The atoms layer, `PageCard`
       save logic, and the flag/condition editors are covered only by e2e.
+- Choice IDs are minted with `generateId()`, not the deduplicating
+  `generate_unique_id()` that page IDs use. Two choices on one page could in
+  principle collide, which would make the graph view drop an edge. Surfaced by
+  the graph-view Task 2 review; pre-existing, never observed.
