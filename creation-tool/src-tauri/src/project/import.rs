@@ -24,6 +24,7 @@ pub fn import_bundle_to_project(bundle_data: &[u8], dir: &str) -> AppResult<()> 
     // Write story.json
     let story_data = Story {
         format_version: manifest.format_version,
+        id: manifest.story.id,
         title: manifest.story.title,
         start_page: manifest.story.start_page,
         flags: manifest.flags,

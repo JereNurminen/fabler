@@ -1,5 +1,7 @@
 export interface Story {
   format_version: number;
+  /** Stable identity, carried into exported bundles. */
+  id: string;
   title: string;
   start_page: string;
   flags: Flag[];

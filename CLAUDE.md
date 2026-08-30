@@ -51,7 +51,7 @@ cargo build -p creation-tool --features test-server  # Build test HTTP server
 Stories are directories with JSON files:
 ```
 my-story/
-├── my-story.story.json       # Story metadata + flags
+├── story.json                # Story metadata + flags
 ├── pages/
 │   ├── a3f2b-entrance.page.json
 │   └── b7c1d-dark-tunnel.page.json
@@ -60,6 +60,11 @@ my-story/
 ```
 
 - All IDs are 5-character lowercase hex strings
+- `Story.id` is the story's stable identity. It is minted by `Project::create`,
+  carried into exported bundles by `build_manifest`, and is what the reader keys
+  installs and save slots by — so two stories must never share one. It is
+  `#[serde(default)]`: story.json files written before ids existed load with an
+  empty id, which `Project::open` backfills and persists.
 - Page filenames: `{id}-{slugified-name}.page.json` (id is authoritative, name portion is cosmetic)
 - Page bodies use a `Document` type containing a `Markdown` block with raw markdown source
 - `.fabler` bundle = zip of `manifest.json` (all pages inline) + `assets/`

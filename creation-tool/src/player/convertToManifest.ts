@@ -8,7 +8,7 @@ export function convertToManifest(
   return {
     format_version: story.format_version,
     story: {
-      id: "preview",
+      id: story.id,
       title: story.title,
       start_page: story.start_page,
     },

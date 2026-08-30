@@ -28,7 +28,14 @@ impl Project {
             .ok_or_else(|| AppError::Custom("Invalid story.json path".into()))?
             .to_path_buf();
 
-        let story = story::read_story(path)?;
+        let mut story = story::read_story(path)?;
+
+        // Stories written before ids existed deserialize with an empty id.
+        // Assign one and persist it, so exports have a stable identity.
+        if story.id.is_empty() {
+            story.id = generate_id();
+            story::write_story(path, &story)?;
+        }
 
         // Ensure pages directory exists
         let pages_dir = dir.join("pages");
@@ -63,6 +70,7 @@ impl Project {
 
         let story = Story {
             format_version: 1,
+            id: generate_id(),
             title: title.into(),
             start_page: page_id,
             flags: vec![],
@@ -83,7 +91,15 @@ impl Project {
     }
 
     /// Save the story (updates cache and writes to disk).
-    pub fn save_story(&self, story: Story) -> AppResult<()> {
+    pub fn save_story(&self, mut story: Story) -> AppResult<()> {
+        // `Story::id` is `#[serde(default)]`, so a client that round-trips the
+        // story without it would blank the id rather than fail. The next open
+        // would then mint a different one, orphaning any copy already installed
+        // in a reader. Keep the id we already hold.
+        if story.id.is_empty() {
+            story.id = self.story_cache.lock().unwrap().id.clone();
+        }
+
         let story_path = self.dir.join("story.json");
         story::write_story(&story_path, &story)?;
         *self.story_cache.lock().unwrap() = story;
@@ -231,5 +247,58 @@ impl Project {
             std::fs::remove_file(path)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn create_assigns_a_story_id() {
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Title").unwrap();
+        assert!(!project.story().id.is_empty());
+    }
+
+    #[test]
+    fn save_story_does_not_blank_an_existing_id() {
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Title").unwrap();
+        let original_id = project.story().id;
+
+        // Simulate a client that dropped the id on the way back.
+        let mut story = project.story();
+        story.id = String::new();
+        story.title = "Renamed".into();
+        project.save_story(story).unwrap();
+
+        assert_eq!(project.story().id, original_id);
+        assert_eq!(project.story().title, "Renamed");
+    }
+
+    #[test]
+    fn open_backfills_a_missing_story_id_and_persists_it() {
+        // story.json files written before ids existed have no "id" key at all.
+        // Opening one must mint an id and save it, so the next export is stable.
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("legacy");
+        std::fs::create_dir_all(&dir).unwrap();
+        let story_path = dir.join("story.json");
+        std::fs::write(
+            &story_path,
+            r#"{"format_version":1,"title":"Legacy","start_page":"a1b2c","flags":[]}"#,
+        )
+        .unwrap();
+
+        let project = Project::open(story_path.to_str().unwrap()).unwrap();
+        let id = project.story().id;
+        assert!(!id.is_empty(), "opening a legacy story must assign an id");
+        assert_eq!(project.story().title, "Legacy");
+
+        // The id is written back, so it survives a reopen.
+        let reopened = Project::open(story_path.to_str().unwrap()).unwrap();
+        assert_eq!(reopened.story().id, id, "backfilled id must be persisted");
     }
 }

@@ -27,7 +27,7 @@ pub fn build_manifest(story: &crate::models::Story, pages: Vec<Page>) -> Manifes
     Manifest {
         format_version: story.format_version,
         story: ManifestStory {
-            id: "export".into(),
+            id: story.id.clone(),
             title: story.title.clone(),
             start_page: story.start_page.clone(),
         },
@@ -127,6 +127,7 @@ mod tests {
     fn sample_story() -> crate::models::Story {
         crate::models::Story {
             format_version: 1,
+            id: "s1a2b".into(),
             title: "Test Story".into(),
             start_page: "p1".into(),
             flags: vec![Flag {
@@ -176,6 +177,22 @@ mod tests {
         assert_eq!(manifest.flags.len(), 1);
         assert_eq!(manifest.pages.len(), 2);
         assert_eq!(manifest.pages[0].choices[0].target, "p2");
+    }
+
+    #[test]
+    fn build_manifest_preserves_story_id() {
+        // Regression: build_manifest used to hardcode id "export", so every
+        // exported bundle claimed the same identity and readers keyed by that
+        // id would overwrite one story with the next.
+        let mut story = sample_story();
+        story.id = "abc12".into();
+        let manifest = build_manifest(&story, sample_pages());
+        assert_eq!(manifest.story.id, "abc12");
+
+        let mut other = sample_story();
+        other.id = "def34".into();
+        let other_manifest = build_manifest(&other, sample_pages());
+        assert_ne!(manifest.story.id, other_manifest.story.id);
     }
 
     #[test]

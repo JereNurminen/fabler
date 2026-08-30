@@ -5,6 +5,11 @@ use crate::content::Document;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Story {
     pub format_version: u32,
+    /// Stable identity for this story, preserved into exported bundles so a
+    /// reader can tell two stories apart. Defaults to empty for story.json
+    /// files written before ids existed; `Project::open` backfills those.
+    #[serde(default)]
+    pub id: String,
     pub title: String,
     pub start_page: String,
     #[serde(default)]
@@ -75,6 +80,7 @@ mod tests {
     fn story_round_trip_json() {
         let story = Story {
             format_version: 1,
+            id: "s1a2b".into(),
             title: "Test".into(),
             start_page: "a1b2c".into(),
             flags: vec![Flag {

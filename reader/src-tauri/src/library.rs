@@ -196,6 +196,56 @@ mod tests {
     }
 
     #[test]
+    fn two_exported_stories_install_side_by_side() {
+        // Regression: bundles are keyed by manifest.story.id on install. When
+        // build_manifest hardcoded that id, installing a second story silently
+        // deleted the first. Build the bundles through the real export path
+        // rather than a hand-written manifest so the wiring is covered.
+        use shared::bundle::build_manifest;
+        use shared::models::Story;
+
+        let tmp = tempfile::TempDir::new().unwrap();
+        let lib = Library::new(tmp.path()).unwrap();
+
+        let mut made = |id: &str, title: &str| {
+            let story = Story {
+                format_version: 1,
+                id: id.to_string(),
+                title: title.to_string(),
+                start_page: "page-1".to_string(),
+                flags: vec![],
+            };
+            let pages = vec![Page {
+                id: "page-1".to_string(),
+                name: "Start".to_string(),
+                body: shared::content::Document::from_plain_text("Begin."),
+                choices: vec![],
+                flag_operations: vec![],
+            }];
+            let contents = BundleContents {
+                manifest: build_manifest(&story, pages),
+                assets: HashMap::new(),
+            };
+            pack_bundle(&contents).expect("pack_bundle")
+        };
+
+        let first = made("aaa11", "First Story");
+        let second = made("bbb22", "Second Story");
+
+        lib.install_bundle(&first).unwrap();
+        lib.install_bundle(&second).unwrap();
+
+        let stories = lib.list_stories().unwrap();
+        assert_eq!(stories.len(), 2, "installing a second story must not evict the first");
+        assert_eq!(stories[0].title, "First Story");
+        assert_eq!(stories[1].title, "Second Story");
+
+        // Each keeps its own manifest, so save slots stay separate too.
+        assert_eq!(lib.get_manifest("aaa11").unwrap().story.title, "First Story");
+        assert_eq!(lib.get_manifest("bbb22").unwrap().story.title, "Second Story");
+    }
+
+    #[test]
     fn install_with_assets() {
         let tmp = tempfile::TempDir::new().unwrap();
         let lib = Library::new(tmp.path()).unwrap();

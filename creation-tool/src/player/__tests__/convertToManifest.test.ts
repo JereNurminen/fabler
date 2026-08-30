@@ -58,6 +58,7 @@ function makePage(overrides?: Partial<Page>): Page {
 function makeStory(overrides?: Partial<Story>): Story {
   return {
     format_version: 1,
+    id: "s1a2b",
     title: "My Story",
     start_page: "1",
     flags: [],
@@ -155,7 +156,7 @@ describe("convertToManifest", () => {
 
     expect(manifest.format_version).toBe(1);
 
-    expect(manifest.story.id).toBe("preview");
+    expect(manifest.story.id).toBe("s1a2b");
     expect(manifest.story.title).toBe("My Story");
     expect(manifest.story.start_page).toBe("1");
 
