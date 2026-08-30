@@ -297,49 +297,20 @@ export default ({ pageId }: { pageId: string }) => {
                   />
 
                   <div>
-                    <Select
-                      label={t.labels.leadsTo}
-                      id={`choice-target-${choice.id}`}
-                      value={choice.target}
-                      onChange={async (e) => {
-                        const value = e.target.value;
-                        if (value === "__create_new__") {
-                          const title = prompt(t.placeholders.newPageTitle || "Page title:");
-                          if (!title) {
-                            // Reset the select to previous value
-                            e.target.value = choice.target;
-                            return;
-                          }
-                          try {
-                            const newPage = await createPage(title);
-                            if (newPage) {
-                              setChoices(
-                                choices.map((c) =>
-                                  c.id === choice.id ? { ...c, target: newPage.id } : c
-                                )
-                              );
-                              handleChoiceTargetChange(choice.id, newPage.id);
-                            }
-                          } catch (err) {
-                            console.error("Failed to create page:", err);
-                          }
-                          return;
-                        }
+                    <ChoiceTargetSelect
+                      choice={choice}
+                      pages={pages}
+                      onTargetChange={(newTarget) => {
                         setChoices(
                           choices.map((c) =>
-                            c.id === choice.id ? { ...c, target: value } : c
+                            c.id === choice.id ? { ...c, target: newTarget } : c
                           )
                         );
-                        handleChoiceTargetChange(choice.id, value);
+                        handleChoiceTargetChange(choice.id, newTarget);
                       }}
-                    >
-                      {pages.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {t.dynamic.pageDisplay(p.name, p.id)}
-                        </option>
-                      ))}
-                      <option value="__create_new__">+ {t.buttons.createPage}</option>
-                    </Select>
+                      onCreatePage={createPage}
+                      t={t}
+                    />
                     <button
                       onClick={() => setLocation(getLinkToPage(choice.target))}
                       className={clsx(
@@ -410,3 +381,89 @@ export default ({ pageId }: { pageId: string }) => {
     </div>
   );
 };
+
+function ChoiceTargetSelect({
+  choice,
+  pages,
+  onTargetChange,
+  onCreatePage,
+  t,
+}: {
+  choice: Choice;
+  pages: { id: string; name: string }[];
+  onTargetChange: (target: string) => void;
+  onCreatePage: (name: string) => Promise<any>;
+  t: any;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return;
+    try {
+      const newPage = await onCreatePage(newName.trim());
+      if (newPage) {
+        onTargetChange(newPage.id);
+      }
+    } catch (err) {
+      console.error("Failed to create page:", err);
+    }
+    setCreating(false);
+    setNewName("");
+  };
+
+  if (creating) {
+    return (
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          {t.placeholders.newPageTitle}
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
+            placeholder={t.placeholders.storyTitle}
+            autoFocus
+          />
+          <button
+            onClick={handleCreate}
+            className="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            {t.buttons.create}
+          </button>
+          <button
+            onClick={() => { setCreating(false); setNewName(""); }}
+            className="px-2 py-1 text-sm text-gray-600 hover:text-gray-800"
+          >
+            {t.buttons.cancel}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Select
+      label={t.labels.leadsTo}
+      id={`choice-target-${choice.id}`}
+      value={choice.target}
+      onChange={(e) => {
+        if (e.target.value === "__create_new__") {
+          setCreating(true);
+          return;
+        }
+        onTargetChange(e.target.value);
+      }}
+    >
+      {pages.map((p) => (
+        <option key={p.id} value={p.id}>
+          {t.dynamic.pageDisplay(p.name, p.id)}
+        </option>
+      ))}
+      <option value="__create_new__">+ {t.buttons.createPage}</option>
+    </Select>
+  );
+}
