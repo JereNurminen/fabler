@@ -32,7 +32,9 @@ export function PlaytestView({ onClose }: PlaytestViewProps) {
         getAssetUrl: (filename: string) => convertFileSrc(`${assetsDir}/${filename}`),
       });
     }
-    loadStory();
+    void loadStory().catch((error: unknown) => {
+      console.error("Failed to load story for playtest:", error);
+    });
   }, []);
 
   if (!manifest) {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import api from "../../api";
 import { Button } from "../ui/Button";
+import { useTrackedAction } from "../../hooks/useTrackedAction";
 
 interface AssetsSectionProps {
   className?: string;
@@ -19,27 +20,34 @@ export function AssetsSection({ className }: AssetsSectionProps) {
     }
   }, []);
 
+  // Load, not a write: must not report into the save-status indicator.
   useEffect(() => {
-    refreshAssets();
+    void refreshAssets().catch((error: unknown) => {
+      console.error("Failed to load assets:", error);
+    });
   }, [refreshAssets]);
 
-  const handleUpload = async () => {
+  const handleUpload = useTrackedAction(async () => {
     const filePath = await openDialog({
       filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp", "svg"] }],
     });
     if (!filePath) return;
     await api.copyAsset(filePath);
-    refreshAssets();
-  };
+    await refreshAssets();
+  });
 
   const handleCopyEmbed = (filename: string) => {
-    navigator.clipboard.writeText(`![${filename}](${filename})`);
+    // Clipboard write, not a project write: does not touch the save-status
+    // indicator.
+    void navigator.clipboard.writeText(`![${filename}](${filename})`).catch((error: unknown) => {
+      console.error("Failed to copy embed:", error);
+    });
   };
 
-  const handleDelete = async (filename: string) => {
+  const handleDelete = useTrackedAction(async (filename: string) => {
     await api.deleteAsset(filename);
-    refreshAssets();
-  };
+    await refreshAssets();
+  });
 
   return (
     <div className={className}>

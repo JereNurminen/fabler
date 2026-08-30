@@ -58,7 +58,7 @@ export function SelectWithCreate({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
+              if (e.key === "Enter") { void handleCreate(); }
               if (e.key === "Escape") { setCreating(false); setNewName(""); }
             }}
             className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
@@ -66,7 +66,7 @@ export function SelectWithCreate({
             autoFocus
           />
           <button
-            onClick={handleCreate}
+            onClick={() => { void handleCreate(); }}
             className="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
             {t.buttons.create}

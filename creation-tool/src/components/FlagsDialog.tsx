@@ -5,6 +5,7 @@ import { Button } from "./ui/Button";
 import { useTranslation, translations } from "../i18n";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { generateId } from "../utilities/id";
+import { useTrackedAction } from "../hooks/useTrackedAction";
 import type { Flag } from "../types";
 
 type FlagsDialogProps = {
@@ -21,63 +22,63 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
     Record<string, { name: string; defaultValue: boolean }>
   >({});
 
-  const handleCreateFlag = async () => {
+  const handleCreateFlag = useTrackedAction(async () => {
     if (!story) return;
     if (newFlagName.trim() === "") {
       alert(t.alerts.flagNameEmpty);
       return;
     }
 
-    try {
-      await saveStory({
-        ...story,
-        flags: [
-          ...story.flags,
-          { id: generateId(), name: newFlagName.trim(), default_value: newFlagDefaultValue },
-        ],
-      });
-      setNewFlagName("");
-      setNewFlagDefaultValue(false);
-    } catch (error) {
-      console.error("Failed to create flag:", error);
-    }
-  };
+    await saveStory({
+      ...story,
+      flags: [
+        ...story.flags,
+        { id: generateId(), name: newFlagName.trim(), default_value: newFlagDefaultValue },
+      ],
+    });
+    setNewFlagName("");
+    setNewFlagDefaultValue(false);
+  });
 
-  const handleUpdateFlag = async (flag: Flag) => {
+  const handleUpdateFlag = useTrackedAction(async (flag: Flag) => {
     if (!story) return;
     const edited = editingFlags[flag.id];
     if (!edited) return;
 
-    try {
+    await saveStory({
+      ...story,
+      flags: story.flags.map((f) =>
+        f.id === flag.id
+          ? { ...f, name: edited.name, default_value: edited.defaultValue }
+          : f
+      ),
+    });
+    setEditingFlags((prev) => {
+      const next = { ...prev };
+      delete next[flag.id];
+      return next;
+    });
+  });
+
+  const handleDeleteFlag = useTrackedAction(async (id: string) => {
+    if (!story) return;
+    await saveStory({
+      ...story,
+      flags: story.flags.filter((f) => f.id !== id),
+    });
+  });
+
+  const handleToggleDefaultValue = useTrackedAction(
+    async (flagId: string, checked: boolean) => {
+      if (!story) return;
       await saveStory({
         ...story,
         flags: story.flags.map((f) =>
-          f.id === flag.id
-            ? { ...f, name: edited.name, default_value: edited.defaultValue }
-            : f
+          f.id === flagId ? { ...f, default_value: checked } : f
         ),
       });
-      setEditingFlags((prev) => {
-        const next = { ...prev };
-        delete next[flag.id];
-        return next;
-      });
-    } catch (error) {
-      console.error("Failed to update flag:", error);
-    }
-  };
-
-  const handleDeleteFlag = async (id: string) => {
-    if (!story) return;
-    try {
-      await saveStory({
-        ...story,
-        flags: story.flags.filter((f) => f.id !== id),
-      });
-    } catch (error) {
-      console.error("Failed to delete flag:", error);
-    }
-  };
+    },
+  );
 
   const handleFlagChange = (
     flagId: string,
@@ -142,16 +143,8 @@ const FlagsDialogContent = ({ onClose }: FlagsDialogProps) => {
                             "defaultValue",
                             e.target.checked,
                           );
-                          if (!story) return;
                           // Auto-save on checkbox change
-                          saveStory({
-                            ...story,
-                            flags: story.flags.map((f) =>
-                              f.id === flag.id
-                                ? { ...f, default_value: e.target.checked }
-                                : f
-                            ),
-                          });
+                          handleToggleDefaultValue(flag.id, e.target.checked);
                         }}
                         className="cursor-pointer"
                       />

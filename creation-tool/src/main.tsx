@@ -23,12 +23,17 @@ function App() {
     const unlistenExport = listen("export-story", () => void exportStory());
 
     // TODO: Import story handler needs redesign for project-based workflow
-    const unlistenImport = listen("import-story", async () => {});
+    const unlistenImport = listen("import-story", () => {});
 
-    // Cleanup listeners when component unmounts
+    // Cleanup listeners when component unmounts. Neither promise reports
+    // save status: this is teardown, not a project write.
     return () => {
-      unlistenExport.then((unlistenFn) => unlistenFn());
-      unlistenImport.then((unlistenFn) => unlistenFn());
+      void unlistenExport.then((unlistenFn) => unlistenFn()).catch((error: unknown) => {
+        console.error("Failed to remove export-story listener:", error);
+      });
+      void unlistenImport.then((unlistenFn) => unlistenFn()).catch((error: unknown) => {
+        console.error("Failed to remove import-story listener:", error);
+      });
     };
   }, [setLocation, exportStory]);
 

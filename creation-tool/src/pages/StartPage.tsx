@@ -56,7 +56,7 @@ export const StartPage = () => {
         )}
         <div className="space-y-3">
           <button
-            onClick={handleOpen}
+            onClick={() => { void handleOpen(); }}
             className="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
           >
             {t.buttons.openProject || "Open Project"}
@@ -76,12 +76,12 @@ export const StartPage = () => {
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder={t.placeholders.storyTitle || "Story title"}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { void handleCreate(); } }}
                 autoFocus
               />
               <div className="flex gap-2">
                 <button
-                  onClick={handleCreate}
+                  onClick={() => { void handleCreate(); }}
                   className="flex-1 py-2 px-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
                 >
                   {t.buttons.create || "Create"}

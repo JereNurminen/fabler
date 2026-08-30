@@ -51,11 +51,8 @@ export default [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      // TODO: these flag ~36 real sites (async onClick handlers and unawaited
-      // saves) whose rejections are currently swallowed. Warn until those are
-      // refactored, then promote back to "error".
-      "@typescript-eslint/no-floating-promises": "warn",
-      "@typescript-eslint/no-misused-promises": "warn",
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
     },
   },
 ];

@@ -3,6 +3,7 @@ import { Button } from "../ui/Button";
 import { useTranslation } from "../../i18n";
 import { useExportStory } from "../../hooks/useExportStory";
 import { ExportBlockedDialog } from "../ExportBlockedDialog";
+import { useTrackedAction } from "../../hooks/useTrackedAction";
 import api from "../../api";
 
 interface StorySettingsSectionProps {
@@ -19,14 +20,10 @@ export const StorySettingsSection = ({
   const { t } = useTranslation();
   const { exportStory, blockedProblems, dismissBlocked } = useExportStory(storyTitle);
 
-  const handleStartPageChange = async (newStartPage: string) => {
-    try {
-      const currentStory = await api.getStory();
-      await api.saveStory({ ...currentStory, start_page: newStartPage });
-    } catch (error) {
-      console.error("Failed to update start page:", error);
-    }
-  };
+  const handleStartPageChange = useTrackedAction(async (newStartPage: string) => {
+    const currentStory = await api.getStory();
+    await api.saveStory({ ...currentStory, start_page: newStartPage });
+  });
 
   return (
     <div className="px-4 py-3 space-y-3">
@@ -41,7 +38,7 @@ export const StorySettingsSection = ({
           </option>
         ))}
       </Select>
-      <Button size="sm" onClick={exportStory} className="w-full">
+      <Button size="sm" onClick={() => void exportStory()} className="w-full">
         {t.buttons.exportBundle}
       </Button>
       {blockedProblems && (
