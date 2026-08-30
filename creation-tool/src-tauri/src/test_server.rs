@@ -1,9 +1,7 @@
 use axum::{
-    extract::Path,
     extract::State as AxumState,
-    http::StatusCode,
     response::Json,
-    routing::{delete, get, post},
+    routing::post,
     Router,
 };
 use serde_json::{json, Value};
@@ -32,19 +30,7 @@ pub async fn start_test_server() {
     });
 
     let app = Router::new()
-        // Project
-        .route("/api/story", get(get_story))
-        .route("/api/story", post(save_story))
-        // Pages
-        .route("/api/pages", get(list_pages))
-        .route("/api/pages", post(create_page))
-        .route("/api/pages/:id", get(get_page))
-        .route("/api/pages/:id", post(save_page))
-        .route("/api/pages/:id", delete(delete_page))
-        // Assets
-        .route("/api/assets", get(list_assets))
-        // Test setup helpers
-        .route("/api/test/reset", post(reset_project))
+        .route("/api/invoke", post(invoke_handler))
         .layer(CorsLayer::very_permissive())
         .with_state(state);
 
@@ -56,104 +42,102 @@ pub async fn start_test_server() {
     axum::serve(listener, app).await.unwrap();
 }
 
-fn with_project<T: serde::Serialize>(
-    state: &AppState,
-    f: impl FnOnce(&Project) -> Result<T, String>,
-) -> Result<Json<Value>, StatusCode> {
-    let lock = state.project.lock().unwrap();
-    let project = lock.as_ref().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    match f(project) {
-        Ok(data) => Ok(Json(json!(data))),
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
-}
-
-async fn get_story(AxumState(state): AxumState<Arc<AppState>>) -> Result<Json<Value>, StatusCode> {
-    with_project(&state, |p| Ok(p.story()))
-}
-
-async fn save_story(
-    AxumState(state): AxumState<Arc<AppState>>,
-    Json(story): Json<Story>,
-) -> Result<Json<Value>, StatusCode> {
-    let lock = state.project.lock().unwrap();
-    let project = lock.as_ref().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    project
-        .save_story(story)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(json!(null)))
-}
-
-async fn list_pages(AxumState(state): AxumState<Arc<AppState>>) -> Result<Json<Value>, StatusCode> {
-    with_project(&state, |p| p.list_pages().map_err(|e| e.to_string()))
-}
-
-async fn create_page(
+async fn invoke_handler(
     AxumState(state): AxumState<Arc<AppState>>,
     Json(body): Json<Value>,
-) -> Result<Json<Value>, StatusCode> {
-    let name = body
+) -> Result<Json<Value>, axum::http::StatusCode> {
+    let cmd = body["cmd"]
         .as_str()
-        .or_else(|| body.get("name").and_then(|n| n.as_str()))
-        .unwrap_or("New Page");
-    with_project(&state, |p| p.create_page(name).map_err(|e| e.to_string()))
-}
+        .ok_or(axum::http::StatusCode::BAD_REQUEST)?;
+    let args = &body["args"];
 
-async fn get_page(
-    AxumState(state): AxumState<Arc<AppState>>,
-    Path(id): Path<String>,
-) -> Result<Json<Value>, StatusCode> {
-    eprintln!("GET /api/pages/{}", id);
-    let result = with_project(&state, |p| p.read_page(&id).map_err(|e| e.to_string()));
-    if result.is_err() {
-        eprintln!("  -> ERROR");
+    let mut lock = state.project.lock().unwrap();
+
+    // Commands that don't need a project
+    if cmd == "test_reset" {
+        let temp_dir = std::env::temp_dir().join("fabler-test-project");
+        if temp_dir.exists() {
+            let _ = std::fs::remove_dir_all(&temp_dir);
+        }
+        let project = Project::create(temp_dir.to_str().unwrap(), "Test Story")
+            .map_err(|e| { eprintln!("reset error: {e}"); axum::http::StatusCode::INTERNAL_SERVER_ERROR })?;
+        *lock = Some(project);
+        return Ok(Json(json!(null)));
     }
-    result
-}
 
-async fn save_page(
-    AxumState(state): AxumState<Arc<AppState>>,
-    Path(_id): Path<String>,
-    Json(page): Json<Page>,
-) -> Result<Json<Value>, StatusCode> {
-    let lock = state.project.lock().unwrap();
-    let project = lock.as_ref().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    project
-        .save_page(&page)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(json!(null)))
-}
+    let project = lock
+        .as_ref()
+        .ok_or(axum::http::StatusCode::INTERNAL_SERVER_ERROR)?;
 
-async fn delete_page(
-    AxumState(state): AxumState<Arc<AppState>>,
-    Path(id): Path<String>,
-) -> Result<Json<Value>, StatusCode> {
-    let lock = state.project.lock().unwrap();
-    let project = lock.as_ref().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    project
-        .delete_page(&id)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    Ok(Json(json!(null)))
-}
+    let result: Result<Value, String> = (|| -> Result<Value, String> {
+        match cmd {
+            "get_story" => Ok(json!(project.story())),
 
-async fn list_assets(
-    AxumState(state): AxumState<Arc<AppState>>,
-) -> Result<Json<Value>, StatusCode> {
-    with_project(&state, |p| p.list_assets().map_err(|e| e.to_string()))
-}
+            "save_story" => {
+                let story: Story = serde_json::from_value(args["story"].clone())
+                    .map_err(|e| e.to_string())?;
+                project.save_story(story).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
 
-async fn reset_project(
-    AxumState(state): AxumState<Arc<AppState>>,
-) -> Result<Json<Value>, StatusCode> {
-    let temp_dir = std::env::temp_dir().join("fabler-test-project");
-    if temp_dir.exists() {
-        let _ = std::fs::remove_dir_all(&temp_dir);
+            "list_pages" => project
+                .list_pages()
+                .map(|p| json!(p))
+                .map_err(|e| e.to_string()),
+
+            "create_page" => {
+                let name = args["name"].as_str().unwrap_or("New Page");
+                project
+                    .create_page(name)
+                    .map(|p| json!(p))
+                    .map_err(|e| e.to_string())
+            }
+
+            "get_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project
+                    .read_page(id)
+                    .map(|p| json!(p))
+                    .map_err(|e| e.to_string())
+            }
+
+            "save_page" => {
+                let page: Page = serde_json::from_value(args["page"].clone())
+                    .map_err(|e| e.to_string())?;
+                project.save_page(&page).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "delete_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project.delete_page(id).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "list_assets" => project
+                .list_assets()
+                .map(|a| json!(a))
+                .map_err(|e| e.to_string()),
+
+            "delete_asset" => {
+                let filename = args["filename"].as_str().ok_or("missing filename".to_string())?;
+                project.delete_asset(filename).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "get_project_assets_dir" => {
+                Ok(json!(project.get_assets_dir().to_string_lossy()))
+            }
+
+            _ => Err(format!("unknown command: {cmd}")),
+        }
+    })();
+
+    match result {
+        Ok(data) => Ok(Json(data)),
+        Err(e) => {
+            eprintln!("Error in {cmd}: {e}");
+            Err(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
     }
-    let project = Project::create(temp_dir.to_str().unwrap(), "Test Story")
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    *state.project.lock().unwrap() = Some(project);
-    Ok(Json(json!(null)))
 }

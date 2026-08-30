@@ -2,58 +2,45 @@ import type { Story, Page, PageListItem } from "./types";
 
 const useHttpApi = import.meta.env.VITE_USE_HTTP_API === "true";
 
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const text = await response.text();
-  return text ? JSON.parse(text) : null;
-}
-
 function buildHttpApi() {
   const API_BASE =
     import.meta.env.VITE_API_URL || "http://127.0.0.1:3001/api";
+
+  async function call<T>(cmd: string, args: Record<string, any> = {}): Promise<T> {
+    const response = await fetch(`${API_BASE}/invoke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cmd, args }),
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
+  }
+
   return {
-    openProject: async (_path: string) =>
-      fetchJson<Story>(`${API_BASE}/story`),
+    openProject: (_path: string) => call<Story>("get_story"),
     createProject: async (_path: string, _title: string) => {
-      await fetchJson(`${API_BASE}/test/reset`, { method: "POST" });
-      return fetchJson<Story>(`${API_BASE}/story`);
+      await call("test_reset");
+      return call<Story>("get_story");
     },
     closeProject: async () => {},
-    getStory: () => fetchJson<Story>(`${API_BASE}/story`),
-    saveStory: (story: Story) =>
-      fetchJson<void>(`${API_BASE}/story`, {
-        method: "POST",
-        body: JSON.stringify(story),
-      }),
-    listPages: () => fetchJson<PageListItem[]>(`${API_BASE}/pages`),
-    getPage: (id: string) => fetchJson<Page>(`${API_BASE}/pages/${id}`),
-    savePage: (page: Page) =>
-      fetchJson<void>(`${API_BASE}/pages/${page.id}`, {
-        method: "POST",
-        body: JSON.stringify(page),
-      }),
-    createPage: (name: string) =>
-      fetchJson<Page>(`${API_BASE}/pages`, {
-        method: "POST",
-        body: JSON.stringify({ name }),
-      }),
-    deletePage: (id: string) =>
-      fetchJson<void>(`${API_BASE}/pages/${id}`, { method: "DELETE" }),
+    getStory: () => call<Story>("get_story"),
+    saveStory: (story: Story) => call<void>("save_story", { story }),
+    listPages: () => call<PageListItem[]>("list_pages"),
+    getPage: (id: string) => call<Page>("get_page", { id }),
+    savePage: (page: Page) => call<void>("save_page", { page }),
+    createPage: (name: string) => call<Page>("create_page", { name }),
+    deletePage: (id: string) => call<void>("delete_page", { id }),
     exportBundle: async (_outputPath: string) => {},
     copyAsset: async (_sourcePath: string) => "test-asset.png" as string,
-    getProjectAssetsDir: async () => "/tmp/fabler-test-project/assets",
-    listAssets: () => fetchJson<string[]>(`${API_BASE}/assets`),
-    deleteAsset: async (_filename: string) => {},
+    getProjectAssetsDir: () => call<string>("get_project_assets_dir"),
+    listAssets: () => call<string[]>("list_assets"),
+    deleteAsset: (filename: string) => call<void>("delete_asset", { filename }),
     readAssetBase64: async (_filename: string) => "" as string,
   };
 }
 
 function buildTauriApi() {
-  // Import invoke lazily to avoid errors when not in Tauri context
   const invoke = async <T>(
     cmd: string,
     args?: Record<string, unknown>,
