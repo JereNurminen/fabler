@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { BottomBar } from "./BottomBar";
+import { SaveStatus } from "../SaveStatus";
 
 interface MainLayoutProps {
   storyTitle: string;
@@ -51,6 +52,8 @@ export const MainLayout = ({
       <main className="layout-main flex-1 overflow-auto">
         {children}
       </main>
+
+      <SaveStatus />
     </div>
   );
 };
