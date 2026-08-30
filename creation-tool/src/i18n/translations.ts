@@ -129,6 +129,37 @@ export const translations = {
     prefix: "Error: ",
   },
 
+  // Story validation
+  problems: {
+    title: "Problems",
+    none: "No problems found",
+    storyLevel: "Story",
+    goToPage: "Go to page →",
+    exportBlockedTitle: "Can't export yet",
+    exportBlockedIntro: "Fix these before exporting:",
+    close: "Close",
+    severity: {
+      error: "Error",
+      warning: "Warning",
+      info: "Info",
+    },
+    messages: {
+      dangling_choice_target: (choiceText: string, target: string) =>
+        `Choice "${choiceText}" leads to a page that no longer exists (${target}).`,
+      dangling_page_flag_operation: (flagId: string) =>
+        `This page sets a flag that no longer exists (${flagId}).`,
+      dangling_choice_flag_operation: (choiceText: string, flagId: string) =>
+        `Choice "${choiceText}" sets a flag that no longer exists (${flagId}).`,
+      dangling_choice_condition: (choiceText: string, flagId: string) =>
+        `Choice "${choiceText}" is shown based on a flag that no longer exists (${flagId}).`,
+      start_page_unset: () => "This story has no start page set.",
+      start_page_missing: (startPage: string) =>
+        `The start page does not exist (${startPage}).`,
+      unreachable_page: () =>
+        "No choice leads to this page, so a reader can never see it.",
+    },
+  },
+
   // Dynamic strings (with interpolation)
   dynamic: {
     storyListItem: (_id: string, title: string) => `${title}`,
