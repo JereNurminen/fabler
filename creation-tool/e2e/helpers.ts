@@ -55,10 +55,6 @@ export async function navigateToPage(page: Page, pageId: string) {
   await page.goto(`/editor/page/${pageId}`, { waitUntil: "networkidle" });
 }
 
-export async function validateStoryViaApi(request: APIRequestContext) {
-  return invoke<{ problems: Array<Record<string, unknown>> }>(request, "validate_story");
-}
-
 /** Returns true when the backend allowed the export. */
 export async function exportBundleViaApi(request: APIRequestContext): Promise<boolean> {
   const response = await request.post(`${API_BASE}/invoke`, {

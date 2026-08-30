@@ -8,6 +8,8 @@ import {
   listPagesViaApi,
   navigateToEditor,
   exportBundleViaApi,
+  getStory,
+  saveStoryViaApi,
 } from "./helpers";
 
 test.beforeEach(async ({ request }) => {
@@ -59,6 +61,27 @@ test.describe("Story problems", () => {
 
     await expect(page).toHaveURL(new RegExp(`/editor/page/${start.id}$`));
     await expect(page.locator("#page-title-input")).toHaveValue("Start");
+  });
+
+  test("a story-level problem is attributed to the story and has no navigation link", async ({
+    page,
+    request,
+  }) => {
+    const story = await getStory(request);
+    story.start_page = "gone9";
+    await saveStoryViaApi(request, story);
+    await navigateToEditor(page);
+
+    await page.getByRole("button", { name: /problems/i }).click();
+    const problem = page.getByTestId("problem-start_page_missing");
+    await expect(problem).toBeVisible();
+    await expect(problem).toContainText("Story");
+
+    // Story-level problems have no page to navigate to — the "go to page"
+    // link must be absent from this entry specifically. Other problems on
+    // the page (e.g. the unreachable-page warnings this fixture also
+    // produces) legitimately have one, so this must be scoped to `problem`.
+    await expect(problem.getByRole("button", { name: /go to page/i })).toHaveCount(0);
   });
 
   test("export is blocked and the dialog names the problem", async ({ page, request }) => {
