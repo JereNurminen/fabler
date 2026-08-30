@@ -1,13 +1,16 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Document {
     #[serde(default)]
     pub content: Vec<Block>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
+#[ts(export, export_to = "../../types/src/")]
 pub enum Block {
     Paragraph {
         #[serde(default)]
@@ -26,15 +29,17 @@ pub enum Block {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Inline {
     pub text: String,
     #[serde(default)]
     pub marks: Vec<Mark>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "../../types/src/")]
 pub enum Mark {
     Bold,
     Italic,

@@ -2,12 +2,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use shared::bundle::{unpack_bundle, Manifest};
 
 use crate::error::{ReaderError, ReaderResult};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../../types/src/")]
 pub struct InstalledStory {
     pub id: String,
     pub title: String,

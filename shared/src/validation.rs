@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::models::{Page, Story};
 
@@ -8,8 +9,9 @@ use crate::models::{Page, Story};
 ///
 /// Declaration order is the display order — `derive(Ord)` sorts `Error`
 /// first. `Info` is plumbed end to end but no current rule emits it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "../../types/src/")]
 pub enum Severity {
     Error,
     Warning,
@@ -19,8 +21,9 @@ pub enum Severity {
 /// What is wrong, as a machine-readable code plus the fields the UI needs to
 /// build a sentence. Deliberately carries no prose: all user-facing wording
 /// lives in the frontend's translations file.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(tag = "code", rename_all = "snake_case")]
+#[ts(export, export_to = "../../types/src/")]
 pub enum ProblemDetail {
     DanglingChoiceTarget {
         choice_id: String,
@@ -62,7 +65,8 @@ impl ProblemDetail {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Problem {
     pub severity: Severity,
     /// Page this problem belongs to. `None` for story-level problems.
@@ -101,7 +105,8 @@ impl Problem {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Report {
     pub problems: Vec<Problem>,
 }

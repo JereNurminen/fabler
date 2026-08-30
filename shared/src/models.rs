@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::content::Document;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Story {
     pub format_version: u32,
     /// Stable identity for this story, preserved into exported bundles so a
@@ -16,14 +18,16 @@ pub struct Story {
     pub flags: Vec<Flag>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Flag {
     pub id: String,
     pub name: String,
     pub default_value: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Page {
     pub id: String,
     pub name: String,
@@ -34,7 +38,8 @@ pub struct Page {
     pub flag_operations: Vec<FlagOperation>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Choice {
     pub id: String,
     pub text: String,
@@ -45,19 +50,22 @@ pub struct Choice {
     pub conditions: Vec<Condition>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct FlagOperation {
     pub flag_id: String,
     pub operation: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Condition {
     pub flag_id: String,
     pub required_value: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct PageListItem {
     pub id: String,
     pub name: String,

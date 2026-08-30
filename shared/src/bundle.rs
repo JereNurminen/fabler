@@ -2,11 +2,13 @@ use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::models::{Flag, Page};
 
 /// The bundle manifest — a self-contained story with all pages inline.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct Manifest {
     pub format_version: u32,
     pub story: ManifestStory,
@@ -15,7 +17,8 @@ pub struct Manifest {
     pub pages: Vec<Page>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct ManifestStory {
     pub id: String,
     pub title: String,

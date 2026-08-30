@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Player-facing save format, shared by the player engine and the reader's
 /// on-disk save slots.
@@ -10,14 +11,16 @@ use serde::{Deserialize, Serialize};
 /// always used camelCase here, and the renames are what let the generated
 /// bindings match it exactly. Normalising the wire format is tracked
 /// separately in docs/TODO.md.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct GameState {
     #[serde(rename = "currentPageId")]
     pub current_page_id: String,
     pub flags: HashMap<String, bool>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct SavedState {
     #[serde(rename = "gameState")]
     pub game_state: GameState,
@@ -25,7 +28,8 @@ pub struct SavedState {
     pub timestamp: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "../../types/src/")]
 pub struct SlotInfo {
     #[serde(rename = "slotId")]
     pub slot_id: String,

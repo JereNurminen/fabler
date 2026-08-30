@@ -3,7 +3,8 @@
   "workspaces": [
     "player",
     "creation-tool",
-    "reader"
+    "reader",
+    "types"
   ],
   "scripts": {
     "typecheck": "yarn workspaces run typecheck",
@@ -12,6 +13,8 @@
     "test:rust": "cargo test --workspace",
     "test:e2e": "yarn --cwd creation-tool test:e2e && yarn --cwd player test:e2e",
     "build": "yarn --cwd creation-tool build && yarn --cwd reader build",
-    "verify": "yarn typecheck && yarn lint && yarn test:unit && yarn test:rust && yarn build"
+    "verify": "yarn typecheck && yarn lint && yarn test:unit && yarn test:rust && yarn build",
+    "codegen": "cargo test --workspace export_bindings && node types/generate-index.mjs",
+    "codegen:check": "yarn codegen && git diff --exit-code types/"
   }
 }
