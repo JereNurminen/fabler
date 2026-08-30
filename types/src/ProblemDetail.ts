@@ -5,4 +5,9 @@
  * build a sentence. Deliberately carries no prose: all user-facing wording
  * lives in the frontend's translations file.
  */
-export type ProblemDetail = { "code": "dangling_choice_target", choice_id: string, choice_text: string, target: string, } | { "code": "dangling_page_flag_operation", flag_id: string, } | { "code": "dangling_choice_flag_operation", choice_id: string, choice_text: string, flag_id: string, } | { "code": "dangling_choice_condition", choice_id: string, choice_text: string, flag_id: string, } | { "code": "start_page_unset" } | { "code": "start_page_missing", start_page: string, } | { "code": "unreachable_page" };
+export type ProblemDetail = { "code": "dangling_choice_target", choice_id: string, choice_text: string, target: string, } | { "code": "choice_targets_trashed_page", choice_id: string, choice_text: string, target: string, 
+/**
+ * The trashed page's name, resolved here because the frontend
+ * cannot look up a trashed id from `pageListAtom`.
+ */
+target_name: string, } | { "code": "dangling_page_flag_operation", flag_id: string, } | { "code": "dangling_choice_flag_operation", choice_id: string, choice_text: string, flag_id: string, } | { "code": "dangling_choice_condition", choice_id: string, choice_text: string, flag_id: string, } | { "code": "start_page_unset" } | { "code": "start_page_missing", start_page: string, } | { "code": "unreachable_page" };

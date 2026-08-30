@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::models::{Page, Story};
+use crate::models::{Page, PageListItem, Story};
 
 /// How serious a problem is. Only `Error` blocks export.
 ///
@@ -30,6 +30,14 @@ pub enum ProblemDetail {
         choice_text: String,
         target: String,
     },
+    ChoiceTargetsTrashedPage {
+        choice_id: String,
+        choice_text: String,
+        target: String,
+        /// The trashed page's name, resolved here because the frontend
+        /// cannot look up a trashed id from `pageListAtom`.
+        target_name: String,
+    },
     DanglingPageFlagOperation {
         flag_id: String,
     },
@@ -55,6 +63,7 @@ impl ProblemDetail {
     pub fn code(&self) -> &'static str {
         match self {
             ProblemDetail::DanglingChoiceTarget { .. } => "dangling_choice_target",
+            ProblemDetail::ChoiceTargetsTrashedPage { .. } => "choice_targets_trashed_page",
             ProblemDetail::DanglingPageFlagOperation { .. } => "dangling_page_flag_operation",
             ProblemDetail::DanglingChoiceFlagOperation { .. } => "dangling_choice_flag_operation",
             ProblemDetail::DanglingChoiceCondition { .. } => "dangling_choice_condition",
@@ -135,16 +144,25 @@ pub struct StoryContext<'a> {
     page_ids: HashSet<&'a str>,
     flag_ids: HashSet<&'a str>,
     pages_by_id: HashMap<&'a str, &'a Page>,
+    /// id → name for pages in `trash/`. They are deliberately absent from
+    /// `pages`, so every rule ignores them; this map exists only so a choice
+    /// pointing INTO the trash can be reported differently from one pointing
+    /// at nothing.
+    trashed_by_id: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> StoryContext<'a> {
-    pub fn new(story: &'a Story, pages: &'a [Page]) -> Self {
+    pub fn new(story: &'a Story, pages: &'a [Page], trashed: &'a [PageListItem]) -> Self {
         StoryContext {
             story,
             pages,
             page_ids: pages.iter().map(|p| p.id.as_str()).collect(),
             flag_ids: story.flags.iter().map(|f| f.id.as_str()).collect(),
             pages_by_id: pages.iter().map(|p| (p.id.as_str(), p)).collect(),
+            trashed_by_id: trashed
+                .iter()
+                .map(|p| (p.id.as_str(), p.name.as_str()))
+                .collect(),
         }
     }
 
@@ -159,6 +177,11 @@ impl<'a> StoryContext<'a> {
     pub fn page(&self, id: &str) -> Option<&'a Page> {
         self.pages_by_id.get(id).copied()
     }
+
+    /// The trashed page's name, if this id names one.
+    pub fn trashed_name(&self, id: &str) -> Option<&'a str> {
+        self.trashed_by_id.get(id).copied()
+    }
 }
 
 /// A validation rule. Add one by writing a function with this signature and
@@ -172,29 +195,39 @@ const RULES: &[Rule] = &[
     unreachable_pages,
 ];
 
-pub fn validate(story: &Story, pages: &[Page]) -> Report {
-    let ctx = StoryContext::new(story, pages);
+pub fn validate(story: &Story, pages: &[Page], trashed: &[PageListItem]) -> Report {
+    let ctx = StoryContext::new(story, pages, trashed);
     let mut problems: Vec<Problem> = RULES.iter().flat_map(|rule| rule(&ctx)).collect();
     problems.sort_by(Problem::display_order);
     Report { problems }
 }
 
-/// ERROR: a choice points at a page id that is not in the story.
+/// ERROR: a choice points at a page id that is not live.
+///
+/// Two outcomes, mutually exclusive for a given choice, so this is a branch
+/// rather than a second rule: the target is in the trash (fixable by
+/// restoring) or it names nothing at all (fixable only by retargeting).
 fn dangling_choice_targets(ctx: &StoryContext) -> Vec<Problem> {
     let mut problems = Vec::new();
     for page in ctx.pages {
         for choice in &page.choices {
-            if !ctx.has_page(&choice.target) {
-                problems.push(Problem::on_page(
-                    Severity::Error,
-                    page,
-                    ProblemDetail::DanglingChoiceTarget {
-                        choice_id: choice.id.clone(),
-                        choice_text: choice.text.clone(),
-                        target: choice.target.clone(),
-                    },
-                ));
+            if ctx.has_page(&choice.target) {
+                continue;
             }
+            let detail = match ctx.trashed_name(&choice.target) {
+                Some(target_name) => ProblemDetail::ChoiceTargetsTrashedPage {
+                    choice_id: choice.id.clone(),
+                    choice_text: choice.text.clone(),
+                    target: choice.target.clone(),
+                    target_name: target_name.to_string(),
+                },
+                None => ProblemDetail::DanglingChoiceTarget {
+                    choice_id: choice.id.clone(),
+                    choice_text: choice.text.clone(),
+                    target: choice.target.clone(),
+                },
+            };
+            problems.push(Problem::on_page(Severity::Error, page, detail));
         }
     }
     problems
@@ -347,13 +380,104 @@ mod tests {
         }
     }
 
+    fn trashed_item(id: &str, name: &str) -> PageListItem {
+        PageListItem {
+            id: id.into(),
+            name: name.into(),
+            last_modified: Some("2026-08-27T00:00:00.000Z".into()),
+        }
+    }
+
+    #[test]
+    fn choice_into_the_trash_is_reported_as_trashed_not_missing() {
+        let pages = vec![page(
+            "aaa11",
+            "Entrance",
+            vec![choice("c1a2b", "Go north", "bbb22")],
+        )];
+        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
+
+        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
+
+        let details: Vec<&ProblemDetail> = report.problems.iter().map(|p| &p.detail).collect();
+        assert_eq!(details.len(), 1, "got {details:?}");
+        match details[0] {
+            ProblemDetail::ChoiceTargetsTrashedPage {
+                choice_text,
+                target,
+                target_name,
+                ..
+            } => {
+                assert_eq!(choice_text, "Go north");
+                assert_eq!(target, "bbb22");
+                assert_eq!(target_name, "Dark Tunnel");
+            }
+            other => panic!("Expected ChoiceTargetsTrashedPage, got {other:?}"),
+        }
+        assert!(report.has_errors(), "still blocks export");
+    }
+
+    #[test]
+    fn choice_to_a_page_that_never_existed_is_still_reported_as_missing() {
+        let pages = vec![page(
+            "aaa11",
+            "Entrance",
+            vec![choice("c1a2b", "Go north", "zzzzz")],
+        )];
+        // A non-empty trash that does not contain the target must not change
+        // the verdict.
+        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
+
+        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
+
+        assert!(matches!(
+            report.problems[0].detail,
+            ProblemDetail::DanglingChoiceTarget { .. }
+        ));
+    }
+
+    #[test]
+    fn problems_inside_a_trashed_page_are_not_reported_at_all() {
+        // The trashed page is absent from `pages` because it lives in
+        // trash/, so its own broken references are invisible. This is the
+        // requirement "issues in deleted pages should not trigger any errors
+        // or warnings", asserted rather than assumed.
+        let pages = vec![page("aaa11", "Entrance", vec![])];
+        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
+
+        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
+
+        assert!(report.problems.is_empty(), "got {:?}", report.problems);
+    }
+
+    #[test]
+    fn a_page_reachable_only_from_the_trash_is_unreachable() {
+        // Trashing the only page that led here must not keep this page
+        // "reachable" — the trashed page is not a traversal source.
+        let pages = vec![
+            page("aaa11", "Entrance", vec![]),
+            page("ccc33", "Orphan", vec![]),
+        ];
+        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
+
+        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
+
+        let unreachable: Vec<&Option<String>> = report
+            .problems
+            .iter()
+            .filter(|p| matches!(p.detail, ProblemDetail::UnreachablePage))
+            .map(|p| &p.page_id)
+            .collect();
+        assert_eq!(unreachable, vec![&Some("ccc33".to_string())]);
+    }
+
     #[test]
     fn clean_story_has_no_problems() {
         let pages = vec![
             page("aaa11", "Start", vec![choice("c1", "Go", "bbb22")]),
             page("bbb22", "End", vec![]),
         ];
-        let report = validate(&story("aaa11", vec![]), &pages);
+        let report = validate(&story("aaa11", vec![]), &pages, &[]);
         assert!(
             report.problems.is_empty(),
             "unexpected: {:?}",
@@ -369,7 +493,7 @@ mod tests {
             "Start",
             vec![choice("c1", "Go deeper", "gone9")],
         )];
-        let report = validate(&story("aaa11", vec![]), &pages);
+        let report = validate(&story("aaa11", vec![]), &pages, &[]);
 
         assert_eq!(report.problems.len(), 1);
         let problem = &report.problems[0];
@@ -404,7 +528,7 @@ mod tests {
             required_value: true,
         }];
 
-        let report = validate(&story("aaa11", vec![]), &[start]);
+        let report = validate(&story("aaa11", vec![]), &[start], &[]);
 
         assert_eq!(report.error_count(), 3);
 
@@ -466,7 +590,7 @@ mod tests {
             required_value: true,
         }];
 
-        let report = validate(&story("aaa11", vec![flag]), &[start]);
+        let report = validate(&story("aaa11", vec![flag]), &[start], &[]);
 
         assert!(
             report.problems.is_empty(),
@@ -478,7 +602,7 @@ mod tests {
     #[test]
     fn reports_a_start_page_that_does_not_exist() {
         let pages = vec![page("aaa11", "Start", vec![])];
-        let report = validate(&story("nope9", vec![]), &pages);
+        let report = validate(&story("nope9", vec![]), &pages, &[]);
 
         let problem = report
             .problems
@@ -498,7 +622,7 @@ mod tests {
     #[test]
     fn reports_an_unset_start_page() {
         let pages = vec![page("aaa11", "Start", vec![])];
-        let report = validate(&story("", vec![]), &pages);
+        let report = validate(&story("", vec![]), &pages, &[]);
 
         assert!(report
             .problems
@@ -513,7 +637,7 @@ mod tests {
             page("bbb22", "Middle", vec![]),
             page("ccc33", "Attic", vec![]),
         ];
-        let report = validate(&story("aaa11", vec![]), &pages);
+        let report = validate(&story("aaa11", vec![]), &pages, &[]);
 
         assert_eq!(report.problems.len(), 1);
         let problem = &report.problems[0];
@@ -531,7 +655,7 @@ mod tests {
             page("aaa11", "Start", vec![choice("c1", "Go", "bbb22")]),
             page("bbb22", "Middle", vec![choice("c2", "Back", "aaa11")]),
         ];
-        let report = validate(&story("aaa11", vec![]), &pages);
+        let report = validate(&story("aaa11", vec![]), &pages, &[]);
         assert!(
             report.problems.is_empty(),
             "unexpected: {:?}",
@@ -604,7 +728,7 @@ mod tests {
             page("aaa11", "Start", vec![]),
             page("bbb22", "Other", vec![]),
         ];
-        let report = validate(&story("nope9", vec![]), &pages);
+        let report = validate(&story("nope9", vec![]), &pages, &[]);
 
         let codes: Vec<&str> = report.problems.iter().map(|p| p.detail.code()).collect();
         assert_eq!(codes, vec!["start_page_missing"]);

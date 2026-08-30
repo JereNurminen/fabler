@@ -14,7 +14,8 @@ pub fn export_bundle(project: &Project, output_path: &str) -> AppResult<()> {
     // The frontend pre-checks and shows a dialog, but export is a backend
     // operation: refusing here is what makes the block a guarantee rather
     // than a suggestion. Warnings never block.
-    let report = shared::validation::validate(&story, &all_pages);
+    let trashed = project.list_trashed_pages()?;
+    let report = shared::validation::validate(&story, &all_pages, &trashed);
     if report.has_errors() {
         return Err(AppError::ExportBlocked(report.error_count()));
     }
@@ -133,5 +134,37 @@ mod tests {
             .problems
             .iter()
             .any(|p| { p.detail == shared::validation::ProblemDetail::UnreachablePage }));
+    }
+
+    /// The load-bearing test for the whole trash design: a bundle is built
+    /// from `pages/` only, so nothing in `trash/` can reach a reader. This is
+    /// what keeps the directory split a maintained guarantee rather than a
+    /// claim in a design doc.
+    #[test]
+    fn export_excludes_trashed_pages() {
+        let tmp = TempDir::new().unwrap();
+        let project =
+            Project::create(tmp.path().join("p").to_str().unwrap(), "Title").unwrap();
+        let keeper = project.create_page("Keeper").unwrap();
+        let doomed = project.create_page("Doomed").unwrap();
+        project.trash_page(&doomed.id).unwrap();
+
+        let out = tmp.path().join("story.fabler");
+        export_bundle(&project, out.to_str().unwrap()).unwrap();
+
+        let bytes = std::fs::read(&out).unwrap();
+        let unpacked = unpack_bundle(&bytes).unwrap();
+        let ids: Vec<&str> = unpacked
+            .manifest
+            .pages
+            .iter()
+            .map(|p| p.id.as_str())
+            .collect();
+
+        assert!(ids.contains(&keeper.id.as_str()));
+        assert!(
+            !ids.contains(&doomed.id.as_str()),
+            "a trashed page reached the bundle: {ids:?}"
+        );
     }
 }

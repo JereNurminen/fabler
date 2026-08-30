@@ -247,7 +247,8 @@ impl Project {
     pub fn validate(&self) -> AppResult<shared::validation::Report> {
         let story = self.story();
         let pages = self.read_all_pages()?;
-        Ok(shared::validation::validate(&story, &pages))
+        let trashed = self.list_trashed_pages()?;
+        Ok(shared::validation::validate(&story, &pages, &trashed))
     }
 
     /// Build the page/choice graph for the story map.
