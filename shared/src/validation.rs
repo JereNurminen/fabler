@@ -160,7 +160,11 @@ impl<'a> StoryContext<'a> {
 /// registering it in `RULES` below.
 type Rule = fn(&StoryContext) -> Vec<Problem>;
 
-const RULES: &[Rule] = &[dangling_choice_targets, dangling_flag_references];
+const RULES: &[Rule] = &[
+    dangling_choice_targets,
+    dangling_flag_references,
+    start_page_valid,
+];
 
 pub fn validate(story: &Story, pages: &[Page]) -> Report {
     let ctx = StoryContext::new(story, pages);
@@ -238,6 +242,24 @@ fn dangling_flag_references(ctx: &StoryContext) -> Vec<Problem> {
         }
     }
     problems
+}
+
+/// ERROR: the story has no start page, or names one that does not exist.
+/// Either strands the reader on load with no way to recover.
+fn start_page_valid(ctx: &StoryContext) -> Vec<Problem> {
+    let start = ctx.story.start_page.as_str();
+    if start.is_empty() {
+        return vec![Problem::on_story(Severity::Error, ProblemDetail::StartPageUnset)];
+    }
+    if !ctx.has_page(start) {
+        return vec![Problem::on_story(
+            Severity::Error,
+            ProblemDetail::StartPageMissing {
+                start_page: start.to_string(),
+            },
+        )];
+    }
+    Vec::new()
 }
 
 #[cfg(test)]
@@ -354,5 +376,34 @@ mod tests {
         let report = validate(&story("aaa11", vec![flag]), &[start]);
 
         assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+    }
+
+    #[test]
+    fn reports_a_start_page_that_does_not_exist() {
+        let pages = vec![page("aaa11", "Start", vec![])];
+        let report = validate(&story("nope9", vec![]), &pages);
+
+        let problem = report
+            .problems
+            .iter()
+            .find(|p| p.detail.code() == "start_page_missing")
+            .expect("expected start_page_missing");
+        assert_eq!(problem.severity, Severity::Error);
+        assert_eq!(problem.page_id, None, "story-level problems have no page");
+        assert_eq!(
+            problem.detail,
+            ProblemDetail::StartPageMissing { start_page: "nope9".into() }
+        );
+    }
+
+    #[test]
+    fn reports_an_unset_start_page() {
+        let pages = vec![page("aaa11", "Start", vec![])];
+        let report = validate(&story("", vec![]), &pages);
+
+        assert!(report
+            .problems
+            .iter()
+            .any(|p| p.detail == ProblemDetail::StartPageUnset));
     }
 }
