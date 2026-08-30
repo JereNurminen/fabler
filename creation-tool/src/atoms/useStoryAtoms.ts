@@ -1,5 +1,10 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { storyAtom, pageListAtom, storyFlagsAtom } from "./storyAtoms";
+import {
+  storyAtom,
+  pageListAtom,
+  storyFlagsAtom,
+  validationAtom,
+} from "./storyAtoms";
 import {
   openProjectAtom,
   createProjectAtom,
@@ -14,6 +19,7 @@ export const useStoryAtoms = () => {
   const story = useAtomValue(storyAtom);
   const pages = useAtomValue(pageListAtom);
   const flags = useAtomValue(storyFlagsAtom);
+  const problems = useAtomValue(validationAtom).problems;
 
   const openProject = useSetAtom(openProjectAtom);
   const createProject = useSetAtom(createProjectAtom);
@@ -27,6 +33,7 @@ export const useStoryAtoms = () => {
     story,
     pages,
     flags,
+    problems,
     openProject,
     createProject,
     closeProject,

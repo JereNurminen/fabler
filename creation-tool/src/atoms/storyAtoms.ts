@@ -19,6 +19,12 @@ export const pageListAtom = atom(async (get) => {
   return api.listPages();
 });
 
+export const validationAtom = atom(async (get) => {
+  if (!get(projectOpenAtom)) return { problems: [] };
+  get(refreshAtom);
+  return api.validateStory();
+});
+
 export const pageAtomFamily = atomFamily((pageId: string) =>
   atom(async () => {
     return api.getPage(pageId);

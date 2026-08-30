@@ -6,14 +6,17 @@ import {
   PhotoIcon,
   PlayIcon,
   EyeIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "../../i18n";
+import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { FlagsDialog } from "../FlagsDialog";
 import { SectionModal } from "./SectionModal";
 import { StorySettingsSection } from "./StorySettingsSection";
 import { PagesSection } from "./PagesSection";
 import { FlagsSection } from "./FlagsSection";
 import { AssetsSection } from "./AssetsSection";
+import { ProblemsSection } from "./ProblemsSection";
 import clsx from "clsx";
 
 interface BottomBarProps {
@@ -26,7 +29,13 @@ interface BottomBarProps {
   hasPageSelected?: boolean;
 }
 
-type ActiveModal = "pages" | "flags" | "settings" | "assets" | null;
+type ActiveModal =
+  | "pages"
+  | "flags"
+  | "settings"
+  | "assets"
+  | "problems"
+  | null;
 
 export const BottomBar = ({
   storyTitle,
@@ -40,6 +49,7 @@ export const BottomBar = ({
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [showFlagsDialog, setShowFlagsDialog] = useState(false);
   const { t } = useTranslation();
+  const { problems } = useStoryAtoms();
 
   const handleToggleModal = (modal: ActiveModal) => {
     setActiveModal((prev) => (prev === modal ? null : modal));
@@ -89,6 +99,23 @@ export const BottomBar = ({
         >
           <FlagIcon className="w-6 h-6" />
           <span className="text-xs mt-0.5">{t.headings.flags}</span>
+        </button>
+
+        <button
+          onClick={() => handleToggleModal("problems")}
+          className={clsx(
+            iconButtonClass,
+            activeModal === "problems" && "bg-gray-100 text-gray-900",
+          )}
+          aria-label={t.problems.title}
+        >
+          <ExclamationTriangleIcon className="w-6 h-6" />
+          <span className="text-xs mt-0.5">{t.problems.title}</span>
+          {problems.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-danger text-white text-xs font-semibold min-w-[1.25rem] h-5 flex items-center justify-center rounded-full">
+              {problems.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -168,6 +195,15 @@ export const BottomBar = ({
         title={t.headings.assets}
       >
         <AssetsSection />
+      </SectionModal>
+
+      {/* Problems Modal */}
+      <SectionModal
+        open={activeModal === "problems"}
+        onClose={() => setActiveModal(null)}
+        title={t.problems.title}
+      >
+        <ProblemsSection onNavigate={() => setActiveModal(null)} />
       </SectionModal>
 
       {/* Settings Modal */}

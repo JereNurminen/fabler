@@ -5,6 +5,7 @@ import {
   FlagIcon,
   DocumentTextIcon,
   PhotoIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
@@ -13,6 +14,7 @@ import { StorySettingsSection } from "./StorySettingsSection";
 import { FlagsSection } from "./FlagsSection";
 import { PagesSection } from "./PagesSection";
 import { AssetsSection } from "./AssetsSection";
+import { ProblemsSection } from "./ProblemsSection";
 import clsx from "clsx";
 
 interface SidebarProps {
@@ -35,7 +37,7 @@ export const Sidebar = ({
   hasPageSelected,
 }: SidebarProps) => {
   const [showFlags, setShowFlags] = useState(false);
-  const { flags } = useStoryAtoms();
+  const { flags, problems } = useStoryAtoms();
   const { t } = useTranslation();
 
   return (
@@ -91,6 +93,16 @@ export const Sidebar = ({
           className="flags-section"
         >
           <FlagsSection onManageFlags={() => setShowFlags(true)} />
+        </Collapsible>
+
+        {/* Problems Section */}
+        <Collapsible
+          title={t.problems.title}
+          icon={ExclamationTriangleIcon}
+          badge={problems.length || undefined}
+          className="problems-section"
+        >
+          <ProblemsSection />
         </Collapsible>
 
         {/* Assets Section */}
