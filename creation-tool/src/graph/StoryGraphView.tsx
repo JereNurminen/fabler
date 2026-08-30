@@ -20,6 +20,7 @@ import "@xyflow/react/dist/style.css";
 import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import api from "../api";
 import { useTranslation } from "../i18n";
+import { invalidateAllCachedPages } from "../atoms/storyActions";
 import { useTrackedAction } from "../hooks/useTrackedAction";
 import { getLinkToPage } from "../utilities/routing";
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT, type PositionedNode } from "./layout";
@@ -265,6 +266,12 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
 
   const autoArrange = useTrackedAction(async () => {
     await api.clearEditorPositions();
+    // clear_editor_positions rewrites EVERY page's editor.position in one
+    // backend call, so every page cached in pageAtomFamily is now stale —
+    // not just the nodes currently on screen. Without this, the next
+    // ordinary edit through PageCard on any page would read its stale
+    // cached copy and write the old position straight back.
+    invalidateAllCachedPages();
     retry();
   });
 

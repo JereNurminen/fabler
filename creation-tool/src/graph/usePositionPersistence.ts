@@ -1,6 +1,8 @@
 import { useCallback, useRef } from "react";
+import { useSetAtom } from "jotai";
 import type { Node } from "@xyflow/react";
 import api from "../api";
+import { savePageAtom } from "../atoms/storyActions";
 import { useTrackedAction } from "../hooks/useTrackedAction";
 import { MISSING_NODE_PREFIX } from "./missingNode";
 
@@ -15,22 +17,36 @@ const DEBOUNCE_MS = 500;
  * the shared save-status indicator like any other write, but nothing blocks
  * on a drag and no dialog interrupts it.
  *
- * Clobber avoidance: `savePage` persists a whole `Page`, so writing a copy
- * captured when the graph loaded (potentially minutes earlier, while the
- * author kept editing the page's body/choices elsewhere) would revert any
- * text they saved in between. To avoid that, the page is re-fetched with
- * `api.getPage` at write time — right before the save, not at drag time —
- * so only `editor.position` is ever stale; everything else reflects the
- * most recent on-disk state. A perfect fix would need a lock the backend
- * doesn't have; re-fetching immediately before writing shrinks the unsafe
- * window from "however long the graph has been open" to one round trip.
+ * Clobber avoidance, forward direction: `savePage` persists a whole `Page`,
+ * so writing a copy captured when the graph loaded (potentially minutes
+ * earlier, while the author kept editing the page's body/choices
+ * elsewhere) would revert any text they saved in between. To avoid that,
+ * the page is re-fetched with `api.getPage` at write time — right before
+ * the save, not at drag time — so only `editor.position` is ever stale;
+ * everything else reflects the most recent on-disk state. A perfect fix
+ * would need a lock the backend doesn't have; re-fetching immediately
+ * before writing shrinks the unsafe window from "however long the graph
+ * has been open" to one round trip.
+ *
+ * Clobber avoidance, backward direction: PageCard (and its PreviewPanel
+ * sibling) stay mounted while the map overlay is open — they're siblings,
+ * not swapped — so their `pageAtomFamily` cache entry for this page
+ * survives the drag untouched. If this write went straight through
+ * `api.savePage`, that cache entry would still hold the pre-drag `editor`
+ * field; the next ordinary edit through PageCard would then do
+ * `save({ ...staleCachedPage, ...patch })` and write the OLD position back
+ * over the one just persisted here, silently. Routing the write through
+ * `savePageAtom` (rather than calling `api.savePage` directly) is what
+ * invalidates that cache entry, the same as every other write path in the
+ * app already does.
  */
 export function usePositionPersistence() {
   const timers = useRef(new Map<string, number>());
+  const savePage = useSetAtom(savePageAtom);
 
   const persist = useTrackedAction(async (pageId: string, x: number, y: number) => {
     const page = await api.getPage(pageId);
-    await api.savePage({
+    await savePage({
       ...page,
       editor: { ...(page.editor ?? {}), position: { x, y } },
     });

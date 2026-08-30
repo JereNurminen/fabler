@@ -4,6 +4,7 @@ import { Provider } from "jotai";
 import type { Node } from "@xyflow/react";
 import type { Page } from "@fabler/types";
 import { usePositionPersistence } from "../usePositionPersistence";
+import { pageAtomFamily } from "../../atoms/storyAtoms";
 import api from "../../api";
 
 vi.mock("../../api", () => ({
@@ -141,5 +142,32 @@ describe("usePositionPersistence", () => {
 
     expect(getPage).not.toHaveBeenCalled();
     expect(savePage).not.toHaveBeenCalled();
+  });
+
+  // Regression test for a real (silent) data-loss bug: PageCard and
+  // StoryGraphView are mounted as siblings, so opening the map does not
+  // unmount PageCard — its cached `pageAtomFamily` entry survives the whole
+  // time the map is open. If a drag-driven position write does not
+  // invalidate that cache entry, the next ordinary edit through PageCard
+  // (which reads the STALE cached page and does `save({ ...page, ...patch
+  // })`) writes the whole file back with the pre-drag `editor` field,
+  // silently discarding the author's manual arrangement. There is no
+  // visible symptom — the map just quietly reverts next time it's opened.
+  it("invalidates the page's cache entry after persisting a position, so a later editor save cannot clobber it with a stale copy", async () => {
+    // Simulate PageCard/PreviewPanel already holding this page cached, the
+    // way they do for the whole time the map overlay is open.
+    pageAtomFamily.remove("p1");
+    pageAtomFamily("p1");
+    expect([...pageAtomFamily.getParams()]).toContain("p1");
+
+    const { result } = renderHook(() => usePositionPersistence(), { wrapper: Provider });
+
+    act(() => result.current(dragNode("p1", 42, 42)));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+
+    expect(savePage).toHaveBeenCalledTimes(1);
+    expect([...pageAtomFamily.getParams()]).not.toContain("p1");
   });
 });
