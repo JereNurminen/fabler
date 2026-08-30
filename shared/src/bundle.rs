@@ -27,6 +27,15 @@ pub struct ManifestStory {
 
 /// Build a Manifest from a Story and its pages.
 pub fn build_manifest(story: &crate::models::Story, pages: Vec<Page>) -> Manifest {
+    // Authoring state is not part of the published story.
+    let pages = pages
+        .into_iter()
+        .map(|mut p| {
+            p.editor = None;
+            p
+        })
+        .collect();
+
     Manifest {
         format_version: story.format_version,
         story: ManifestStory {
@@ -157,6 +166,7 @@ mod tests {
                     conditions: vec![],
                 }],
                 flag_operations: vec![],
+                editor: None,
             },
             Page {
                 id: "p2".into(),
@@ -164,6 +174,7 @@ mod tests {
                 body: Document::from_plain_text("The end."),
                 choices: vec![],
                 flag_operations: vec![],
+                editor: None,
             },
         ]
     }
@@ -229,5 +240,23 @@ mod tests {
         }
         let result = unpack_bundle(&buf.into_inner());
         assert!(matches!(result, Err(BundleError::MissingManifest)));
+    }
+
+    #[test]
+    fn build_manifest_strips_editor_metadata() {
+        // Authoring state must never reach a reader's bundle.
+        let mut pages = sample_pages();
+        pages[0].editor = Some(crate::models::EditorMetadata {
+            position: Some(crate::models::Position { x: 10.0, y: 20.0 }),
+        });
+
+        let manifest = build_manifest(&sample_story(), pages);
+
+        assert!(manifest.pages.iter().all(|p| p.editor.is_none()));
+        let json = serde_json::to_string(&manifest).unwrap();
+        assert!(
+            !json.contains("editor"),
+            "bundle must not mention editor state: {json}"
+        );
     }
 }

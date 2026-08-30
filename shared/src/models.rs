@@ -36,6 +36,27 @@ pub struct Page {
     pub choices: Vec<Choice>,
     #[serde(default)]
     pub flag_operations: Vec<FlagOperation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub editor: Option<EditorMetadata>,
+}
+
+/// Authoring-only state attached to a page. Never reaches a reader:
+/// `build_manifest` clears it when packing a bundle.
+///
+/// This is a general slot, not a position field with extra steps — the next
+/// authoring-only concern (collapsed state, colour tags) belongs here too.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
+pub struct EditorMetadata {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<Position>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export, export_to = "../../types/src/")]
+pub struct Position {
+    pub x: f64,
+    pub y: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
@@ -128,6 +149,7 @@ mod tests {
                 }],
             }],
             flag_operations: vec![],
+            editor: None,
         };
         let json = serde_json::to_string(&page).unwrap();
         let parsed: Page = serde_json::from_str(&json).unwrap();
@@ -142,9 +164,44 @@ mod tests {
             body: Document::empty(),
             choices: vec![],
             flag_operations: vec![],
+            editor: None,
         };
         let item = PageListItem::from(&page);
         assert_eq!(item.id, "abc12");
         assert_eq!(item.name, "Test Page");
+    }
+
+    #[test]
+    fn page_without_editor_metadata_round_trips() {
+        // Existing story.json files have no `editor` key at all.
+        let json = r#"{"id":"a1b2c","name":"Start","body":{"content":[]},"choices":[],"flag_operations":[]}"#;
+        let page: Page = serde_json::from_str(json).unwrap();
+        assert!(page.editor.is_none());
+
+        // And a page without it must not write the key back.
+        let out = serde_json::to_string(&page).unwrap();
+        assert!(
+            !out.contains("editor"),
+            "absent metadata must stay absent: {out}"
+        );
+    }
+
+    #[test]
+    fn page_with_position_round_trips() {
+        let mut page = Page {
+            id: "a1b2c".into(),
+            name: "Start".into(),
+            body: Document::empty(),
+            choices: vec![],
+            flag_operations: vec![],
+            editor: None,
+        };
+        page.editor = Some(EditorMetadata {
+            position: Some(Position { x: 1.5, y: -2.5 }),
+        });
+
+        let parsed: Page = serde_json::from_str(&serde_json::to_string(&page).unwrap()).unwrap();
+        let pos = parsed.editor.unwrap().position.unwrap();
+        assert_eq!((pos.x, pos.y), (1.5, -2.5));
     }
 }

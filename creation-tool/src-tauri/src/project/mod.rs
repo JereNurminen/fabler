@@ -64,6 +64,7 @@ impl Project {
             body: shared::content::Document::empty(),
             choices: vec![],
             flag_operations: vec![],
+            editor: None,
         };
         pages::write_page(&pages_dir, &page)?;
 
@@ -138,6 +139,7 @@ impl Project {
             body: shared::content::Document::empty(),
             choices: vec![],
             flag_operations: vec![],
+            editor: None,
         };
         pages::write_page(&pages_dir, &page)?;
         Ok(page)

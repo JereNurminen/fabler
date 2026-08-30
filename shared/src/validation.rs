@@ -332,6 +332,7 @@ mod tests {
             body: Document::from_plain_text("body"),
             choices,
             flag_operations: vec![],
+            editor: None,
         }
     }
 

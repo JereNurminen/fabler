@@ -152,6 +152,7 @@ mod tests {
                 body: shared::content::Document::from_plain_text("You begin your adventure."),
                 choices: vec![],
                 flag_operations: vec![],
+                editor: None,
             }],
         }
     }
@@ -214,6 +215,7 @@ mod tests {
                 body: shared::content::Document::from_plain_text("Begin."),
                 choices: vec![],
                 flag_operations: vec![],
+                editor: None,
             }];
             let contents = BundleContents {
                 manifest: build_manifest(&story, pages),
@@ -325,6 +327,7 @@ mod tests {
                         body: shared::content::Document::from_plain_text("Updated content."),
                         choices: vec![],
                         flag_operations: vec![],
+                        editor: None,
                     }],
                 },
                 assets: HashMap::new(),

@@ -130,6 +130,7 @@ mod tests {
             body: shared::content::Document::from_plain_text("Some body text"),
             choices: vec![],
             flag_operations: vec![],
+            editor: None,
         }
     }
 
