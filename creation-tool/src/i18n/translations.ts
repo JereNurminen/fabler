@@ -160,6 +160,13 @@ export const translations = {
     },
   },
 
+  // Save status indicator
+  saveStatus: {
+    saving: "Saving…",
+    saved: "Saved",
+    failed: "Couldn't save",
+  },
+
   // Dynamic strings (with interpolation)
   dynamic: {
     storyListItem: (_id: string, title: string) => `${title}`,
