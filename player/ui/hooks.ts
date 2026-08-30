@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import type {
   Manifest,
-  ManifestChoice,
+  Choice,
   GameState,
   UserPreferences,
 } from "../engine/types";
@@ -31,7 +31,7 @@ export function useGameState(manifest: Manifest) {
   const [navigationError, setNavigationError] = useState<string | null>(null);
 
   const handleChoice = useCallback(
-    (choice: ManifestChoice) => {
+    (choice: Choice) => {
       const result = navigate(manifest, gameState, choice);
       if (!result.ok) {
         setNavigationError(result.target);

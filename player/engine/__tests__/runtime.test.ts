@@ -9,17 +9,17 @@ import {
 import type {
   FlagState,
   Manifest,
-  ManifestChoice,
-  ManifestCondition,
-  ManifestFlagOperation,
-  ManifestPage,
+  Choice,
+  Condition,
+  FlagOperation,
+  Page,
 } from "../types";
 
 // -- Helpers --
 
 function makeChoice(
-  overrides: Partial<ManifestChoice> = {},
-): ManifestChoice {
+  overrides: Partial<Choice> = {},
+): Choice {
   return {
     id: "choice-1",
     text: "Go north",
@@ -30,12 +30,11 @@ function makeChoice(
   };
 }
 
-function makePage(overrides: Partial<ManifestPage> = {}): ManifestPage {
+function makePage(overrides: Partial<Page> = {}): Page {
   return {
     id: "page-1",
     name: "Start",
     body: { content: [{ type: "markdown", source: "You are at the start." }] },
-    assets: [],
     flag_operations: [],
     choices: [],
     ...overrides,
@@ -62,7 +61,7 @@ describe("evaluateConditions", () => {
 
   it("returns true when all conditions are met", () => {
     const flags: FlagState = { "flag-a": true, "flag-b": false };
-    const conditions: ManifestCondition[] = [
+    const conditions: Condition[] = [
       { flag_id: "flag-a", required_value: true },
       { flag_id: "flag-b", required_value: false },
     ];
@@ -71,7 +70,7 @@ describe("evaluateConditions", () => {
 
   it("returns false when any condition is not met", () => {
     const flags: FlagState = { "flag-a": false };
-    const conditions: ManifestCondition[] = [
+    const conditions: Condition[] = [
       { flag_id: "flag-a", required_value: true },
     ];
     expect(evaluateConditions(conditions, flags)).toBe(false);
@@ -79,7 +78,7 @@ describe("evaluateConditions", () => {
 
   it("treats missing flags as false", () => {
     const flags: FlagState = {};
-    const conditions: ManifestCondition[] = [
+    const conditions: Condition[] = [
       { flag_id: "missing-flag", required_value: false },
     ];
     expect(evaluateConditions(conditions, flags)).toBe(true);
@@ -87,7 +86,7 @@ describe("evaluateConditions", () => {
 
   it("returns false for missing flag required to be true", () => {
     const flags: FlagState = {};
-    const conditions: ManifestCondition[] = [
+    const conditions: Condition[] = [
       { flag_id: "missing-flag", required_value: true },
     ];
     expect(evaluateConditions(conditions, flags)).toBe(false);
@@ -105,7 +104,7 @@ describe("applyFlagOperations", () => {
 
   it("is immutable: does not mutate the original flags", () => {
     const flags: FlagState = { "flag-a": false };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "set_true" },
     ];
     const result = applyFlagOperations(ops, flags);
@@ -116,7 +115,7 @@ describe("applyFlagOperations", () => {
 
   it("applies set_true", () => {
     const flags: FlagState = { "flag-a": false };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "set_true" },
     ];
     expect(applyFlagOperations(ops, flags)["flag-a"]).toBe(true);
@@ -124,7 +123,7 @@ describe("applyFlagOperations", () => {
 
   it("applies set_false", () => {
     const flags: FlagState = { "flag-a": true };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "set_false" },
     ];
     expect(applyFlagOperations(ops, flags)["flag-a"]).toBe(false);
@@ -132,7 +131,7 @@ describe("applyFlagOperations", () => {
 
   it("applies toggle (false -> true)", () => {
     const flags: FlagState = { "flag-a": false };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "toggle" },
     ];
     expect(applyFlagOperations(ops, flags)["flag-a"]).toBe(true);
@@ -140,7 +139,7 @@ describe("applyFlagOperations", () => {
 
   it("applies toggle (true -> false)", () => {
     const flags: FlagState = { "flag-a": true };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "toggle" },
     ];
     expect(applyFlagOperations(ops, flags)["flag-a"]).toBe(false);
@@ -148,7 +147,7 @@ describe("applyFlagOperations", () => {
 
   it("applies multiple operations in order", () => {
     const flags: FlagState = { "flag-a": false };
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "flag-a", operation: "set_true" },
       { flag_id: "flag-a", operation: "toggle" },
     ];
@@ -158,7 +157,7 @@ describe("applyFlagOperations", () => {
 
   it("creates entries for flags not previously in state", () => {
     const flags: FlagState = {};
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "new-flag", operation: "set_true" },
     ];
     const result = applyFlagOperations(ops, flags);
@@ -167,7 +166,7 @@ describe("applyFlagOperations", () => {
 
   it("toggles unset flag (treated as false -> true)", () => {
     const flags: FlagState = {};
-    const ops: ManifestFlagOperation[] = [
+    const ops: FlagOperation[] = [
       { flag_id: "new-flag", operation: "toggle" },
     ];
     expect(applyFlagOperations(ops, flags)["new-flag"]).toBe(true);

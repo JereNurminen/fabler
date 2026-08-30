@@ -1,8 +1,8 @@
-import type { AssetResolver, ManifestPage } from "../engine/types";
+import type { AssetResolver, Page } from "../engine/types";
 import { ContentRenderer } from "./ContentRenderer";
 
 interface PageViewProps {
-  page: ManifestPage;
+  page: Page;
   assets: AssetResolver;
 }
 

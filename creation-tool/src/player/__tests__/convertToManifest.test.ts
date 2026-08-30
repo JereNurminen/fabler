@@ -92,7 +92,6 @@ describe("convertPageToManifestPage", () => {
     expect(result.body).toEqual({
       content: [{ type: "markdown", source: "You are at the start." }],
     });
-    expect(result.assets).toEqual([]);
 
     // flag_operations on page
     expect(result.flag_operations).toHaveLength(1);
@@ -124,7 +123,6 @@ describe("convertPageToManifestPage", () => {
     expect(result.id).toBe("99");
     expect(result.choices).toEqual([]);
     expect(result.flag_operations).toEqual([]);
-    expect(result.assets).toEqual([]);
   });
 });
 

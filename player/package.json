@@ -19,6 +19,9 @@
     "dev:test-app": "vite serve e2e/test-app --config e2e/test-app/vite.config.ts",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@fabler/types": "0.1.0"
+  },
   "peerDependencies": {
     "marked": "^15.0.0",
     "react": "^18.2.0",

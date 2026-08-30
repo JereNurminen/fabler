@@ -1,8 +1,8 @@
-import type { ManifestChoice } from "../engine/types";
+import type { Choice } from "../engine/types";
 
 interface ChoiceListProps {
-  choices: ManifestChoice[];
-  onChoose: (choice: ManifestChoice) => void;
+  choices: Choice[];
+  onChoose: (choice: Choice) => void;
 }
 
 export function ChoiceList({ choices, onChoose }: ChoiceListProps) {

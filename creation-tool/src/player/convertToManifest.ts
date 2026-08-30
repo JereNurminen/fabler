@@ -21,7 +21,6 @@ export function convertToManifest(
       id: p.id,
       name: p.name,
       body: p.body,
-      assets: [],
       flag_operations: (p.flag_operations || []).map((op) => ({
         flag_id: op.flag_id,
         operation: op.operation,
@@ -48,7 +47,6 @@ export function convertPageToManifestPage(page: Page) {
     id: page.id,
     name: page.name,
     body: page.body,
-    assets: [] as string[],
     flag_operations: (page.flag_operations || []).map((op) => ({
       flag_id: op.flag_id,
       operation: op.operation,

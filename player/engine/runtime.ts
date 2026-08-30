@@ -2,14 +2,14 @@ import type {
   FlagState,
   GameState,
   Manifest,
-  ManifestChoice,
-  ManifestCondition,
-  ManifestFlagOperation,
-  ManifestPage,
+  Choice,
+  Condition,
+  FlagOperation,
+  Page,
 } from "./types";
 
 export function evaluateConditions(
-  conditions: ManifestCondition[],
+  conditions: Condition[],
   flags: FlagState,
 ): boolean {
   // AND logic: all conditions must be met
@@ -21,7 +21,7 @@ export function evaluateConditions(
 }
 
 export function applyFlagOperations(
-  operations: ManifestFlagOperation[],
+  operations: FlagOperation[],
   flags: FlagState,
 ): FlagState {
   // Returns NEW state (immutable). Supports set_true, set_false, toggle
@@ -45,9 +45,9 @@ export function applyFlagOperations(
 }
 
 export function getAvailableChoices(
-  page: ManifestPage,
+  page: Page,
   flags: FlagState,
-): ManifestChoice[] {
+): Choice[] {
   return (page.choices || []).filter((c) => evaluateConditions(c.conditions, flags));
 }
 
@@ -75,7 +75,7 @@ export type NavigationResult =
 export function navigate(
   manifest: Manifest,
   state: GameState,
-  choice: ManifestChoice,
+  choice: Choice,
 ): NavigationResult {
   const targetPage = manifest.pages.find((p) => p.id === choice.target);
   if (!targetPage) {
