@@ -44,6 +44,7 @@ fn main() {
             commands::create_page,
             commands::delete_page,
             commands::export_bundle,
+            commands::validate_story,
             commands::copy_asset,
             commands::get_project_assets_dir,
             commands::list_assets,

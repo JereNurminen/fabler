@@ -129,6 +129,23 @@ async fn invoke_handler(
                 Ok(json!(project.get_assets_dir().to_string_lossy()))
             }
 
+            "validate_story" => project
+                .validate()
+                .map(|r| json!(r))
+                .map_err(|e| e.to_string()),
+
+            // Export in test mode writes to a fixed temp path so e2e can
+            // assert on blocked vs successful export. Safe because
+            // playwright.config.ts pins `workers: 1, fullyParallel: false`.
+            "export_bundle" => {
+                let out = std::env::temp_dir().join("fabler-test-export.fabler");
+                let _ = std::fs::remove_file(&out);
+                project
+                    .export_bundle(out.to_str().unwrap())
+                    .map(|_| json!(null))
+                    .map_err(|e| e.to_string())
+            }
+
             _ => Err(format!("unknown command: {cmd}")),
         }
     })();

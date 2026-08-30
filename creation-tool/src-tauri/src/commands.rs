@@ -95,6 +95,11 @@ pub fn export_bundle(
 }
 
 #[tauri::command]
+pub fn validate_story(state: State<ProjectState>) -> Result<shared::validation::Report, String> {
+    with_project(&state, |p| p.validate())
+}
+
+#[tauri::command]
 pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<String, String> {
     with_project(&state, |p| p.copy_asset(&source_path))
 }

@@ -63,3 +63,28 @@ export interface PageListItem {
   id: string;
   name: string;
 }
+
+// -- Story validation --
+
+export type Severity = "error" | "warning" | "info";
+
+export type ProblemDetail =
+  | { code: "dangling_choice_target"; choice_id: string; choice_text: string; target: string }
+  | { code: "dangling_page_flag_operation"; flag_id: string }
+  | { code: "dangling_choice_flag_operation"; choice_id: string; choice_text: string; flag_id: string }
+  | { code: "dangling_choice_condition"; choice_id: string; choice_text: string; flag_id: string }
+  | { code: "start_page_unset" }
+  | { code: "start_page_missing"; start_page: string }
+  | { code: "unreachable_page" };
+
+export interface Problem {
+  severity: Severity;
+  /** Null for story-level problems that belong to no page. */
+  page_id: string | null;
+  page_name: string | null;
+  detail: ProblemDetail;
+}
+
+export interface ValidationReport {
+  problems: Problem[];
+}
