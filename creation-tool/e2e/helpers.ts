@@ -47,6 +47,14 @@ export async function listPagesViaApi(request: APIRequestContext) {
   return invoke<PageListItem[]>(request, "list_pages");
 }
 
+export async function trashPageViaApi(request: APIRequestContext, id: string) {
+  await invoke(request, "trash_page", { id });
+}
+
+export async function listTrashedPagesViaApi(request: APIRequestContext) {
+  return invoke<PageListItem[]>(request, "list_trashed_pages");
+}
+
 export async function navigateToEditor(page: Page) {
   await page.goto("/editor", { waitUntil: "networkidle" });
 }
