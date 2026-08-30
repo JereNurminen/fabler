@@ -113,3 +113,8 @@ pub fn list_assets(state: State<ProjectState>) -> Result<Vec<String>, String> {
 pub fn delete_asset(filename: String, state: State<ProjectState>) -> Result<(), String> {
     with_project(&state, |p| p.delete_asset(&filename))
 }
+
+#[tauri::command]
+pub fn read_asset_base64(filename: String, state: State<ProjectState>) -> Result<String, String> {
+    with_project(&state, |p| p.read_asset_base64(&filename))
+}

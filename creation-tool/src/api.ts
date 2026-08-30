@@ -46,6 +46,9 @@ const api = {
 
   deleteAsset: (filename: string) =>
     invoke<void>("delete_asset", { filename }),
+
+  readAssetBase64: (filename: string) =>
+    invoke<string>("read_asset_base64", { filename }),
 };
 
 export default api;

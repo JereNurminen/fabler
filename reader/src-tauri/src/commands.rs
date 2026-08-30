@@ -62,3 +62,25 @@ pub async fn delete_slot(
 ) -> Result<(), String> {
     storage.delete_slot(&story_id, &slot_id).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn read_asset_base64(
+    story_id: String,
+    filename: String,
+    library: State<'_, Library>,
+) -> Result<String, String> {
+    let asset_path = library.get_asset_path(&story_id, &filename).map_err(|e| e.to_string())?;
+    let data = std::fs::read(&asset_path).map_err(|e| e.to_string())?;
+    let ext = asset_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let mime = match ext {
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "svg" => "image/svg+xml",
+        _ => "application/octet-stream",
+    };
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&data);
+    Ok(format!("data:{};base64,{}", mime, b64))
+}

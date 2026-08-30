@@ -21,17 +21,14 @@ export default ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [choices, setChoices] = useState<Choice[]>([]);
-  const [assetsDir, setAssetsDir] = useState<string | null>(null);
+  const imageCache = useState<Record<string, string>>({})[0];
+  const [, forceUpdate] = useState(0);
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
   const savePage = useSetAtom(savePageAtom);
   const { flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    api.getProjectAssetsDir().then(setAssetsDir).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (page) {
@@ -43,9 +40,14 @@ export default ({ pageId }: { pageId: string }) => {
   }, [page]);
 
   const resolveImageUrl = useCallback((filename: string) => {
-    if (!assetsDir) return filename;
-    return `asset://localhost${assetsDir}/${filename}`;
-  }, [assetsDir]);
+    if (imageCache[filename]) return imageCache[filename];
+    // Load async, cache, and trigger re-render
+    api.readAssetBase64(filename).then((dataUrl) => {
+      imageCache[filename] = dataUrl;
+      forceUpdate((n) => n + 1);
+    }).catch(() => {});
+    return ""; // Return empty while loading
+  }, [imageCache, forceUpdate]);
 
   const handleSave = useCallback(async () => {
     if (!page) return;
