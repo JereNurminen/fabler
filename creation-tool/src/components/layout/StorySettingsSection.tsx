@@ -1,7 +1,8 @@
 import { Select } from "../ui/Select";
 import { Button } from "../ui/Button";
 import { useTranslation } from "../../i18n";
-import { save } from "@tauri-apps/plugin-dialog";
+import { useExportStory } from "../../hooks/useExportStory";
+import { ExportBlockedDialog } from "../ExportBlockedDialog";
 import api from "../../api";
 
 interface StorySettingsSectionProps {
@@ -16,23 +17,7 @@ export const StorySettingsSection = ({
   startPage,
 }: StorySettingsSectionProps) => {
   const { t } = useTranslation();
-
-  const handleExportBundle = async () => {
-    try {
-      const filePath = await save({
-        defaultPath: `${storyTitle}.fabler`,
-        filters: [{ name: "Fabler Story", extensions: ["fabler"] }],
-      });
-
-      if (filePath) {
-        await api.exportBundle(filePath);
-        alert(t.alerts.exportSuccess);
-      }
-    } catch (error) {
-      console.error("Failed to export bundle:", error);
-      alert(t.alerts.exportFailed);
-    }
-  };
+  const { exportStory, blockedProblems, dismissBlocked } = useExportStory(storyTitle);
 
   const handleStartPageChange = async (newStartPage: string) => {
     try {
@@ -56,9 +41,12 @@ export const StorySettingsSection = ({
           </option>
         ))}
       </Select>
-      <Button size="sm" onClick={handleExportBundle} className="w-full">
+      <Button size="sm" onClick={exportStory} className="w-full">
         {t.buttons.exportBundle}
       </Button>
+      {blockedProblems && (
+        <ExportBlockedDialog problems={blockedProblems} onClose={dismissBlocked} />
+      )}
     </div>
   );
 };
