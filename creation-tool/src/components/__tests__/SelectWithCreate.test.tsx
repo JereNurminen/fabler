@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { createStore, Provider } from "jotai";
 import { saveStatusAtom } from "../../atoms/saveStatus";
@@ -55,5 +55,89 @@ describe("SelectWithCreate", () => {
     const status = store.get(saveStatusAtom);
     if (status.state !== "failed") throw new Error("expected failed");
     expect(status.message).toContain("disk full");
+  });
+});
+
+const options = [
+  { id: "a1b2c", label: "Entrance" },
+  { id: "d4e5f", label: "Great Hall" },
+];
+
+describe("SelectWithCreate unresolved value handling", () => {
+  it("renders a fallback option for a value it cannot resolve", () => {
+    render(
+      <SelectWithCreate
+        label="Leads to"
+        value="b7c1d"
+        options={options}
+        onChange={vi.fn()}
+        onCreate={vi.fn()}
+        unknownValueLabel={(id) => `Dark Tunnel (in trash) [${id}]`}
+      />,
+    );
+
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.value).toBe("b7c1d");
+    expect(screen.getByText(/Dark Tunnel \(in trash\)/)).toBeTruthy();
+  });
+
+  it("does not fire onChange just because the value is unresolvable", () => {
+    // A native select whose value matches no option renders blank and does
+    // NOT fire onChange — so the stored target survives. This test locks that
+    // in, because a regression here would silently rewrite choice targets.
+    const onChange = vi.fn();
+    render(
+      <SelectWithCreate
+        label="Leads to"
+        value="b7c1d"
+        options={options}
+        onChange={onChange}
+        onCreate={vi.fn()}
+      />,
+    );
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("adds no fallback option when the value does resolve", () => {
+    render(
+      <SelectWithCreate
+        label="Leads to"
+        value="a1b2c"
+        options={options}
+        onChange={vi.fn()}
+        onCreate={vi.fn()}
+        unknownValueLabel={(id) => `unknown ${id}`}
+      />,
+    );
+    expect(screen.queryByText(/unknown/)).toBeNull();
+  });
+
+  it("adds no fallback option for an empty value", () => {
+    render(
+      <SelectWithCreate
+        label="Leads to"
+        value=""
+        options={options}
+        onChange={vi.fn()}
+        onCreate={vi.fn()}
+        unknownValueLabel={(id) => `unknown ${id}`}
+      />,
+    );
+    expect(screen.queryByText(/unknown/)).toBeNull();
+  });
+
+  it("falls back to the raw id when no unknownValueLabel is supplied", () => {
+    render(
+      <SelectWithCreate
+        label="Leads to"
+        value="b7c1d"
+        options={options}
+        onChange={vi.fn()}
+        onCreate={vi.fn()}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.value).toBe("b7c1d");
+    expect(screen.getByText("b7c1d")).toBeTruthy();
   });
 });

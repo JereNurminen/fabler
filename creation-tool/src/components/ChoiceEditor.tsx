@@ -14,6 +14,7 @@ interface ChoiceEditorProps {
   choice: Choice;
   pages: PageListItem[];
   flags: Flag[];
+  trashedPages: Array<{ id: string; name: string }>;
   /** Local (unsaved) text edits, mirroring the previous inline behaviour. */
   onDraftChange: (patch: Partial<Choice>) => void;
   onCommit: (patch: Partial<Choice>) => void;
@@ -26,6 +27,7 @@ export const ChoiceEditor = ({
   choice,
   pages,
   flags,
+  trashedPages,
   onDraftChange,
   onCommit,
   onDelete,
@@ -60,6 +62,12 @@ export const ChoiceEditor = ({
             onChange={(target) => {
               onDraftChange({ target });
               onCommit({ target });
+            }}
+            unknownValueLabel={(id) => {
+              const trashedPage = trashedPages.find((p) => p.id === id);
+              return trashedPage
+                ? t.dynamic.pageInTrash(trashedPage.name || trashedPage.id)
+                : id;
             }}
             onCreate={onCreatePage}
             createLabel={t.buttons.createPage}

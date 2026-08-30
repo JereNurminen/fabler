@@ -12,6 +12,12 @@ interface SelectWithCreateProps {
   createPlaceholder?: string;
   createPromptLabel?: string;
   placeholder?: string;
+  /**
+   * Label for a `value` that matches no option. Without this the native
+   * select renders blank with no explanation — which happens whenever a
+   * choice targets a trashed or deleted page.
+   */
+  unknownValueLabel?: (value: string) => string;
 }
 
 export function SelectWithCreate({
@@ -25,6 +31,7 @@ export function SelectWithCreate({
   createPlaceholder,
   createPromptLabel,
   placeholder,
+  unknownValueLabel,
 }: SelectWithCreateProps) {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
@@ -90,6 +97,8 @@ export function SelectWithCreate({
     );
   }
 
+  const isUnresolved = value !== "" && !options.some((opt) => opt.id === value);
+
   return (
     <div>
       {label && (
@@ -110,6 +119,11 @@ export function SelectWithCreate({
         className="w-full px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
       >
         {placeholder && <option value="">{placeholder}</option>}
+        {isUnresolved && (
+          <option value={value}>
+            {unknownValueLabel ? unknownValueLabel(value) : value}
+          </option>
+        )}
         {options.map((opt) => (
           <option key={opt.id} value={opt.id}>
             {opt.label}

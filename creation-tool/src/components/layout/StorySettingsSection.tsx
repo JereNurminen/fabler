@@ -20,6 +20,9 @@ export const StorySettingsSection = ({
   const { t } = useTranslation();
   const { exportStory, blockedProblems, dismissBlocked } = useExportStory(storyTitle);
 
+  const startPageMissing =
+    !!startPage && !pages.some((p) => p.id === startPage);
+
   const handleStartPageChange = useTrackedAction(async (newStartPage: string) => {
     const currentStory = await api.getStory();
     await api.saveStory({ ...currentStory, start_page: newStartPage });
@@ -32,6 +35,7 @@ export const StorySettingsSection = ({
         value={startPage || ""}
         onChange={(e) => handleStartPageChange(e.target.value)}
       >
+        {startPageMissing && <option value={startPage ?? ""}>{startPage}</option>}
         {pages.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name || p.id}

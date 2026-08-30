@@ -1,7 +1,7 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { pageAtomFamily, pageListAtom } from "../atoms/storyAtoms";
+import { pageAtomFamily, pageListAtom, trashedPageListAtom } from "../atoms/storyAtoms";
 import { saveStoryAtom } from "../atoms/storyActions";
 import { saveStatusAtom } from "../atoms/saveStatus";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
@@ -27,6 +27,7 @@ const PageCard = ({ pageId }: { pageId: string }) => {
 
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
+  const trashedPages = useAtomValue(trashedPageListAtom);
   const { flags, createPage, story } = useStoryAtoms();
   const saveStory = useSetAtom(saveStoryAtom);
   const setSaveStatus = useSetAtom(saveStatusAtom);
@@ -168,6 +169,7 @@ const PageCard = ({ pageId }: { pageId: string }) => {
                 choice={choice}
                 pages={pages}
                 flags={flags}
+                trashedPages={trashedPages}
                 onDraftChange={(patch) =>
                   setChoices((prev) =>
                     prev.map((c) =>

@@ -37,9 +37,11 @@ vi.mock("../../atoms/storyAtoms", () => {
     flag_operations: [],
   });
   const pageListAtom = atom<Array<{ id: string; name: string }>>([]);
+  const trashedPageListAtom = atom<Array<{ id: string; name: string }>>([]);
   return {
     pageAtomFamily: () => pageAtom,
     pageListAtom,
+    trashedPageListAtom,
   };
 });
 
