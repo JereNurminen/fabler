@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { StoryPlayer } from "@fabler/player/ui";
 import type { AssetResolver, Manifest } from "@fabler/player/engine/types";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { convertToManifest } from "./convertToManifest";
 import { MemoryStorage } from "./MemoryStorage";
 import { useTranslation } from "../i18n";
 import api from "../api";
-import type { Page } from "../types";
 import "../../../player/ui/theme.css";
-
-const noopAssets: AssetResolver = {
-  getAssetUrl: (path: string) => path,
-};
 
 interface PlaytestViewProps {
   onClose: () => void;
@@ -19,6 +15,7 @@ interface PlaytestViewProps {
 export function PlaytestView({ onClose }: PlaytestViewProps) {
   const { t } = useTranslation();
   const [manifest, setManifest] = useState<Manifest | null>(null);
+  const [assets, setAssets] = useState<AssetResolver>({ getAssetUrl: (p) => p });
   const storageRef = useRef(new MemoryStorage());
 
   useEffect(() => {
@@ -29,6 +26,11 @@ export function PlaytestView({ onClose }: PlaytestViewProps) {
         pageList.map((p) => api.getPage(p.id)),
       );
       setManifest(convertToManifest(story, pages));
+
+      const assetsDir = await api.getProjectAssetsDir();
+      setAssets({
+        getAssetUrl: (filename: string) => convertFileSrc(`${assetsDir}/${filename}`),
+      });
     }
     loadStory();
   }, []);
@@ -58,7 +60,7 @@ export function PlaytestView({ onClose }: PlaytestViewProps) {
         <StoryPlayer
           manifest={manifest}
           storage={storageRef.current}
-          assets={noopAssets}
+          assets={assets}
         />
       </div>
     </div>

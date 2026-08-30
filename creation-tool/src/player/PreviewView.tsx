@@ -1,16 +1,27 @@
+import { useState, useEffect } from "react";
 import { ContentRenderer } from "@fabler/player/ui/ContentRenderer";
 import type { Page } from "../types";
 import type { AssetResolver } from "@fabler/player/engine/types";
-
-const noopAssets: AssetResolver = {
-  getAssetUrl: (path: string) => path,
-};
+import { convertFileSrc } from "@tauri-apps/api/core";
+import api from "../api";
 
 interface PreviewViewProps {
   page: Page;
 }
 
 export function PreviewView({ page }: PreviewViewProps) {
+  const [assets, setAssets] = useState<AssetResolver>({
+    getAssetUrl: (p: string) => p,
+  });
+
+  useEffect(() => {
+    api.getProjectAssetsDir().then((dir) => {
+      setAssets({
+        getAssetUrl: (filename: string) => convertFileSrc(`${dir}/${filename}`),
+      });
+    }).catch(() => {});
+  }, []);
+
   return (
     <div
       className="h-full overflow-y-auto p-6"
@@ -21,7 +32,7 @@ export function PreviewView({ page }: PreviewViewProps) {
         <h1 className="text-xl font-bold mb-4 text-gray-900">
           {page.name}
         </h1>
-        <ContentRenderer document={page.body} assets={noopAssets} />
+        <ContentRenderer document={page.body} assets={assets} />
         {page.choices.length > 0 && (
           <nav className="mt-8 pt-4 border-t border-gray-200">
             <ul className="list-none p-0 m-0 flex flex-col gap-3">
