@@ -6,6 +6,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
 import { MainLayout } from "../components/layout/MainLayout";
 import { EditorChromeProvider } from "../components/layout/EditorChromeContext";
+import { TrashPageProvider } from "../components/TrashPageContext";
 import { PlaytestView } from "../player/PlaytestView";
 import { PreviewView } from "../player/PreviewView";
 import { StoryGraphView } from "../graph/StoryGraphView";
@@ -33,7 +34,7 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
   if (!story) return <LoadingSpinner />;
 
   return (
-    <>
+    <TrashPageProvider>
       <EditorChromeProvider
         value={{
           onPlaytest: () => setPlaytestOpen(true),
@@ -72,7 +73,7 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
         </Suspense>
       )}
       {graphOpen && <StoryGraphView onClose={() => setGraphOpen(false)} />}
-    </>
+    </TrashPageProvider>
   );
 };
 
