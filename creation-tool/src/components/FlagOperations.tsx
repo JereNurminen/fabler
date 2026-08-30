@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/Button";
+import { SelectWithCreate } from "./ui/SelectWithCreate";
 import { useTranslation } from "../i18n";
 import type { Flag, FlagOperation } from "../types";
 
@@ -8,20 +9,20 @@ type FlagOperationsProps = {
   availableFlags: Flag[];
   onAdd: (flagId: string, operation: string) => void;
   onRemove: (flagId: string) => void;
+  onCreateFlag?: (name: string) => Promise<{ id: string } | null>;
 };
 
-export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: FlagOperationsProps) => {
+export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove, onCreateFlag }: FlagOperationsProps) => {
   const { t } = useTranslation();
-  const [selectedFlagId, setSelectedFlagId] = useState<string | null>(null);
+  const [selectedFlagId, setSelectedFlagId] = useState<string>("");
   const [selectedOperation, setSelectedOperation] = useState<string>("set_true");
 
   const handleAdd = () => {
-    if (selectedFlagId === null) return;
+    if (!selectedFlagId) return;
     onAdd(selectedFlagId, selectedOperation);
-    setSelectedFlagId(null);
+    setSelectedFlagId("");
   };
 
-  // Filter out flags that already have operations
   const usedFlagIds = new Set(operations.map((op) => op.flag_id));
   const availableForAdd = availableFlags.filter((flag) => !usedFlagIds.has(flag.id));
 
@@ -60,13 +61,27 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
         </div>
       )}
 
-      {availableForAdd.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center mt-1">
+      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end mt-1">
+        {onCreateFlag ? (
+          <div className="flex-1">
+            <SelectWithCreate
+              label=""
+              value={selectedFlagId}
+              options={availableForAdd.map((f) => ({ id: f.id, label: f.name }))}
+              onChange={setSelectedFlagId}
+              onCreate={onCreateFlag}
+              createLabel={t.buttons.addFlag}
+              createPlaceholder={t.placeholders.flagName}
+              createPromptLabel={t.placeholders.flagName}
+              placeholder={`${t.labels.flag}...`}
+            />
+          </div>
+        ) : (
           <select
             aria-label={t.labels.flag}
             className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            value={selectedFlagId ?? ""}
-            onChange={(e) => setSelectedFlagId(e.target.value || null)}
+            value={selectedFlagId}
+            onChange={(e) => setSelectedFlagId(e.target.value)}
           >
             <option value="">{t.labels.flag}...</option>
             {availableForAdd.map((flag) => (
@@ -75,28 +90,28 @@ export const FlagOperations = ({ operations, availableFlags, onAdd, onRemove }: 
               </option>
             ))}
           </select>
+        )}
 
-          <select
-            aria-label={t.labels.operation}
-            className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-            value={selectedOperation}
-            onChange={(e) => setSelectedOperation(e.target.value)}
-          >
-            <option value="set_true">{t.operations.set_true}</option>
-            <option value="set_false">{t.operations.set_false}</option>
-            <option value="toggle">{t.operations.toggle}</option>
-          </select>
+        <select
+          aria-label={t.labels.operation}
+          className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded bg-white text-gray-900 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+          value={selectedOperation}
+          onChange={(e) => setSelectedOperation(e.target.value)}
+        >
+          <option value="set_true">{t.operations.set_true}</option>
+          <option value="set_false">{t.operations.set_false}</option>
+          <option value="toggle">{t.operations.toggle}</option>
+        </select>
 
-          <Button
-            onClick={handleAdd}
-            disabled={selectedFlagId === null}
-            size="sm"
-            className="whitespace-nowrap"
-          >
-            {t.buttons.addOperation}
-          </Button>
-        </div>
-      )}
+        <Button
+          onClick={handleAdd}
+          disabled={!selectedFlagId}
+          size="sm"
+          className="whitespace-nowrap"
+        >
+          {t.buttons.addOperation}
+        </Button>
+      </div>
     </div>
   );
 };

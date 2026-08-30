@@ -13,6 +13,7 @@ import { ChoiceConditions } from "./ChoiceConditions";
 import { Input } from "./ui/Input";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Select } from "./ui/Select";
+import { SelectWithCreate } from "./ui/SelectWithCreate";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -26,7 +27,7 @@ export default ({ pageId }: { pageId: string }) => {
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
   const savePage = useSetAtom(savePageAtom);
-  const { flags, createPage } = useStoryAtoms();
+  const { flags, createPage, saveStory, story } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
@@ -229,6 +230,17 @@ export default ({ pageId }: { pageId: string }) => {
     }
   };
 
+  const handleCreateFlag = async (name: string): Promise<{ id: string } | null> => {
+    if (!story) return null;
+    const id = generateId();
+    const updatedStory = {
+      ...story,
+      flags: [...story.flags, { id, name, default_value: false }],
+    };
+    await saveStory(updatedStory);
+    return { id };
+  };
+
   if (!page) return null;
 
   return (
@@ -261,6 +273,7 @@ export default ({ pageId }: { pageId: string }) => {
             availableFlags={flags}
             onAdd={handleSetPageFlagOp}
             onRemove={handleRemovePageFlagOp}
+            onCreateFlag={handleCreateFlag}
           />
         </div>
       )}
@@ -297,10 +310,12 @@ export default ({ pageId }: { pageId: string }) => {
                   />
 
                   <div>
-                    <ChoiceTargetSelect
-                      choice={choice}
-                      pages={pages}
-                      onTargetChange={(newTarget) => {
+                    <SelectWithCreate
+                      label={t.labels.leadsTo}
+                      id={`choice-target-${choice.id}`}
+                      value={choice.target}
+                      options={pages.map((p) => ({ id: p.id, label: t.dynamic.pageDisplay(p.name, p.id) }))}
+                      onChange={(newTarget) => {
                         setChoices(
                           choices.map((c) =>
                             c.id === choice.id ? { ...c, target: newTarget } : c
@@ -308,8 +323,13 @@ export default ({ pageId }: { pageId: string }) => {
                         );
                         handleChoiceTargetChange(choice.id, newTarget);
                       }}
-                      onCreatePage={createPage}
-                      t={t}
+                      onCreate={async (name) => {
+                        const p = await createPage(name);
+                        return p ? { id: p.id } : null;
+                      }}
+                      createLabel={t.buttons.createPage}
+                      createPlaceholder={t.placeholders.newPageTitle}
+                      createPromptLabel={t.placeholders.newPageTitle}
                     />
                     <button
                       onClick={() => setLocation(getLinkToPage(choice.target))}
@@ -338,6 +358,7 @@ export default ({ pageId }: { pageId: string }) => {
                           handleSetCondition(choice.id, flagId, requiredValue)
                         }
                         onRemove={(flagId) => handleRemoveCondition(choice.id, flagId)}
+                        onCreateFlag={handleCreateFlag}
                       />
                     </div>
 
@@ -382,88 +403,3 @@ export default ({ pageId }: { pageId: string }) => {
   );
 };
 
-function ChoiceTargetSelect({
-  choice,
-  pages,
-  onTargetChange,
-  onCreatePage,
-  t,
-}: {
-  choice: Choice;
-  pages: { id: string; name: string }[];
-  onTargetChange: (target: string) => void;
-  onCreatePage: (name: string) => Promise<any>;
-  t: any;
-}) {
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-
-  const handleCreate = async () => {
-    if (!newName.trim()) return;
-    try {
-      const newPage = await onCreatePage(newName.trim());
-      if (newPage) {
-        onTargetChange(newPage.id);
-      }
-    } catch (err) {
-      console.error("Failed to create page:", err);
-    }
-    setCreating(false);
-    setNewName("");
-  };
-
-  if (creating) {
-    return (
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
-          {t.placeholders.newPageTitle}
-        </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
-            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
-            placeholder={t.placeholders.storyTitle}
-            autoFocus
-          />
-          <button
-            onClick={handleCreate}
-            className="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          >
-            {t.buttons.create}
-          </button>
-          <button
-            onClick={() => { setCreating(false); setNewName(""); }}
-            className="px-2 py-1 text-sm text-gray-600 hover:text-gray-800"
-          >
-            {t.buttons.cancel}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Select
-      label={t.labels.leadsTo}
-      id={`choice-target-${choice.id}`}
-      value={choice.target}
-      onChange={(e) => {
-        if (e.target.value === "__create_new__") {
-          setCreating(true);
-          return;
-        }
-        onTargetChange(e.target.value);
-      }}
-    >
-      {pages.map((p) => (
-        <option key={p.id} value={p.id}>
-          {t.dynamic.pageDisplay(p.name, p.id)}
-        </option>
-      ))}
-      <option value="__create_new__">+ {t.buttons.createPage}</option>
-    </Select>
-  );
-}
