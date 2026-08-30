@@ -26,7 +26,7 @@ export default ({ pageId }: { pageId: string }) => {
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
   const savePage = useSetAtom(savePageAtom);
-  const { flags } = useStoryAtoms();
+  const { flags, createPage } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
 
@@ -301,14 +301,36 @@ export default ({ pageId }: { pageId: string }) => {
                       label={t.labels.leadsTo}
                       id={`choice-target-${choice.id}`}
                       value={choice.target}
-                      onChange={(e) => {
-                        const newTarget = e.target.value;
+                      onChange={async (e) => {
+                        const value = e.target.value;
+                        if (value === "__create_new__") {
+                          const title = prompt(t.placeholders.newPageTitle || "Page title:");
+                          if (!title) {
+                            // Reset the select to previous value
+                            e.target.value = choice.target;
+                            return;
+                          }
+                          try {
+                            const newPage = await createPage(title);
+                            if (newPage) {
+                              setChoices(
+                                choices.map((c) =>
+                                  c.id === choice.id ? { ...c, target: newPage.id } : c
+                                )
+                              );
+                              handleChoiceTargetChange(choice.id, newPage.id);
+                            }
+                          } catch (err) {
+                            console.error("Failed to create page:", err);
+                          }
+                          return;
+                        }
                         setChoices(
                           choices.map((c) =>
-                            c.id === choice.id ? { ...c, target: newTarget } : c
+                            c.id === choice.id ? { ...c, target: value } : c
                           )
                         );
-                        handleChoiceTargetChange(choice.id, newTarget);
+                        handleChoiceTargetChange(choice.id, value);
                       }}
                     >
                       {pages.map((p) => (
@@ -316,6 +338,7 @@ export default ({ pageId }: { pageId: string }) => {
                           {t.dynamic.pageDisplay(p.name, p.id)}
                         </option>
                       ))}
+                      <option value="__create_new__">+ {t.buttons.createPage}</option>
                     </Select>
                     <button
                       onClick={() => setLocation(getLinkToPage(choice.target))}

@@ -56,6 +56,7 @@ export const translations = {
     storyTitleLong: "Story title",
     choiceText: "Enter choice text...",
     flagName: "Enter flag name...",
+    newPageTitle: "Page title:",
   },
 
   // Headings
