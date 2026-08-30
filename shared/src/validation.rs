@@ -389,10 +389,46 @@ mod tests {
         let report = validate(&story("aaa11", vec![]), &[start]);
 
         assert_eq!(report.error_count(), 3);
-        let codes: Vec<&str> = report.problems.iter().map(|p| p.detail.code()).collect();
-        assert!(codes.contains(&"dangling_page_flag_operation"));
-        assert!(codes.contains(&"dangling_choice_flag_operation"));
-        assert!(codes.contains(&"dangling_choice_condition"));
+
+        let page_flag_op = report
+            .problems
+            .iter()
+            .find(|p| p.detail.code() == "dangling_page_flag_operation")
+            .expect("expected dangling_page_flag_operation");
+        assert_eq!(
+            page_flag_op.detail,
+            ProblemDetail::DanglingPageFlagOperation {
+                flag_id: "gonef".into(),
+            }
+        );
+
+        let choice_flag_op = report
+            .problems
+            .iter()
+            .find(|p| p.detail.code() == "dangling_choice_flag_operation")
+            .expect("expected dangling_choice_flag_operation");
+        assert_eq!(
+            choice_flag_op.detail,
+            ProblemDetail::DanglingChoiceFlagOperation {
+                choice_id: "c1".into(),
+                choice_text: "Open".into(),
+                flag_id: "gonef".into(),
+            }
+        );
+
+        let choice_condition = report
+            .problems
+            .iter()
+            .find(|p| p.detail.code() == "dangling_choice_condition")
+            .expect("expected dangling_choice_condition");
+        assert_eq!(
+            choice_condition.detail,
+            ProblemDetail::DanglingChoiceCondition {
+                choice_id: "c1".into(),
+                choice_text: "Open".into(),
+                flag_id: "gonef".into(),
+            }
+        );
     }
 
     #[test]
@@ -473,6 +509,59 @@ mod tests {
         ];
         let report = validate(&story("aaa11", vec![]), &pages);
         assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+    }
+
+    /// Guards the Rust <-> TypeScript seam: `ProblemDetail::code()` strings
+    /// are mirrored by hand in `creation-tool/src/types.ts` (the `ProblemDetail`
+    /// union) and `creation-tool/src/i18n/translations.ts` (`problemMessages`).
+    /// Nothing in the type system ties those together, so adding a variant
+    /// here without updating both TS files compiles clean and renders
+    /// `undefined` at runtime. This test fails loudly the moment the set of
+    /// codes changes, forcing whoever adds a variant to go update the TS side.
+    #[test]
+    fn code_set_matches_the_hand_mirrored_typescript_union() {
+        let all_details = vec![
+            ProblemDetail::DanglingChoiceTarget {
+                choice_id: "c".into(),
+                choice_text: "c".into(),
+                target: "t".into(),
+            },
+            ProblemDetail::DanglingPageFlagOperation { flag_id: "f".into() },
+            ProblemDetail::DanglingChoiceFlagOperation {
+                choice_id: "c".into(),
+                choice_text: "c".into(),
+                flag_id: "f".into(),
+            },
+            ProblemDetail::DanglingChoiceCondition {
+                choice_id: "c".into(),
+                choice_text: "c".into(),
+                flag_id: "f".into(),
+            },
+            ProblemDetail::StartPageUnset,
+            ProblemDetail::StartPageMissing { start_page: "s".into() },
+            ProblemDetail::UnreachablePage,
+        ];
+
+        let mut codes: Vec<&str> = all_details.iter().map(|d| d.code()).collect();
+        codes.sort();
+
+        let mut expected = vec![
+            "dangling_choice_target",
+            "dangling_page_flag_operation",
+            "dangling_choice_flag_operation",
+            "dangling_choice_condition",
+            "start_page_unset",
+            "start_page_missing",
+            "unreachable_page",
+        ];
+        expected.sort();
+
+        assert_eq!(
+            codes, expected,
+            "ProblemDetail's set of codes changed — update the mirrored union in \
+             creation-tool/src/types.ts and the messages in \
+             creation-tool/src/i18n/translations.ts, then update `expected` here"
+        );
     }
 
     #[test]

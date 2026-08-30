@@ -19,7 +19,6 @@ export const useStoryAtoms = () => {
   const story = useAtomValue(storyAtom);
   const pages = useAtomValue(pageListAtom);
   const flags = useAtomValue(storyFlagsAtom);
-  const problems = useAtomValue(validationAtom).problems;
 
   const openProject = useSetAtom(openProjectAtom);
   const createProject = useSetAtom(createProjectAtom);
@@ -33,7 +32,6 @@ export const useStoryAtoms = () => {
     story,
     pages,
     flags,
-    problems,
     openProject,
     createProject,
     closeProject,
@@ -42,4 +40,14 @@ export const useStoryAtoms = () => {
     createPage,
     deletePage,
   };
+};
+
+/**
+ * Reads the live validation report on its own, so consumers that don't need
+ * it (most of `useStoryAtoms`'s callers) don't suspend on a full
+ * re-validation — which re-reads every page file — after every mutation.
+ */
+export const useValidation = () => {
+  const problems = useAtomValue(validationAtom).problems;
+  return { problems };
 };

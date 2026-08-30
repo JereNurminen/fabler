@@ -2,6 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  // `fullyParallel: false` and `workers: 1` are required, not just a
+  // performance choice: the Rust test server (`test_server.rs`) writes
+  // bundle exports to a single fixed temp path, which is only safe if no
+  // two tests can export concurrently.
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

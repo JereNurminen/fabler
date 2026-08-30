@@ -43,7 +43,7 @@ test.describe("Story problems", () => {
     await navigateToEditor(page);
 
     await page.getByRole("button", { name: /problems/i }).click();
-    const problem = page.getByTestId("problem-dangling_choice_target");
+    const problem = page.locator('[data-testid^="problem-dangling_choice_target"]');
     await expect(problem).toBeVisible();
     await expect(problem).toContainText("Go deeper");
     await expect(problem).toContainText("Start");
@@ -55,7 +55,7 @@ test.describe("Story problems", () => {
 
     await page.getByRole("button", { name: /problems/i }).click();
     await page
-      .getByTestId("problem-dangling_choice_target")
+      .locator('[data-testid^="problem-dangling_choice_target"]')
       .getByRole("button", { name: /go to page/i })
       .click();
 
@@ -73,14 +73,15 @@ test.describe("Story problems", () => {
     await navigateToEditor(page);
 
     await page.getByRole("button", { name: /problems/i }).click();
-    const problem = page.getByTestId("problem-start_page_missing");
+    const problem = page.locator('[data-testid^="problem-start_page_missing"]');
     await expect(problem).toBeVisible();
     await expect(problem).toContainText("Story");
 
     // Story-level problems have no page to navigate to — the "go to page"
-    // link must be absent from this entry specifically. Other problems on
-    // the page (e.g. the unreachable-page warnings this fixture also
-    // produces) legitimately have one, so this must be scoped to `problem`.
+    // link must be absent from this entry specifically. Problems in general
+    // can carry a "go to page" link (page-level ones do), so a global
+    // assertion here would be testing the wrong thing; it must be scoped to
+    // `problem`.
     await expect(problem.getByRole("button", { name: /go to page/i })).toHaveCount(0);
   });
 

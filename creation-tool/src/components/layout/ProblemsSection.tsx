@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { useStoryAtoms } from "../../atoms/useStoryAtoms";
+import { useValidation } from "../../atoms/useStoryAtoms";
 import { getLinkToPage } from "../../utilities/routing";
 import { ProblemList } from "../ProblemList";
 
@@ -9,7 +9,7 @@ interface ProblemsSectionProps {
 }
 
 export const ProblemsSection = ({ onNavigate }: ProblemsSectionProps) => {
-  const { problems } = useStoryAtoms();
+  const { problems } = useValidation();
   const [, setLocation] = useLocation();
 
   return (

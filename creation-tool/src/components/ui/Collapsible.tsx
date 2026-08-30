@@ -2,12 +2,13 @@ import { Disclosure, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { ReactNode } from "react";
-import { Badge } from "./Badge";
+import { Badge, BadgeProps } from "./Badge";
 
 export interface CollapsibleProps {
   title: string;
   icon?: React.ComponentType<{ className?: string }>;
   badge?: number;
+  badgeVariant?: BadgeProps["variant"];
   defaultOpen?: boolean;
   className?: string;
   children: ReactNode;
@@ -17,6 +18,7 @@ export const Collapsible = ({
   title,
   icon: Icon,
   badge,
+  badgeVariant = "primary",
   defaultOpen = false,
   className,
   children,
@@ -30,7 +32,7 @@ export const Collapsible = ({
               {Icon && <Icon className="w-5 h-5 text-gray-600" />}
               <span>{title}</span>
               {badge !== undefined && badge > 0 && (
-                <Badge variant="primary">{badge}</Badge>
+                <Badge variant={badgeVariant}>{badge}</Badge>
               )}
             </div>
             <ChevronDownIcon

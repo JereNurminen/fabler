@@ -9,7 +9,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useTranslation } from "../../i18n";
-import { useStoryAtoms } from "../../atoms/useStoryAtoms";
+import { useValidation } from "../../atoms/useStoryAtoms";
 import { FlagsDialog } from "../FlagsDialog";
 import { SectionModal } from "./SectionModal";
 import { StorySettingsSection } from "./StorySettingsSection";
@@ -49,7 +49,7 @@ export const BottomBar = ({
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [showFlagsDialog, setShowFlagsDialog] = useState(false);
   const { t } = useTranslation();
-  const { problems } = useStoryAtoms();
+  const { problems } = useValidation();
 
   const handleToggleModal = (modal: ActiveModal) => {
     setActiveModal((prev) => (prev === modal ? null : modal));

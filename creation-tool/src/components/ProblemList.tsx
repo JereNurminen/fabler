@@ -38,7 +38,7 @@ export const ProblemList = ({ problems, onNavigate }: ProblemListProps) => {
         <li
           key={`${problem.page_id ?? "story"}-${problem.detail.code}-${i}`}
           className={clsx("p-2.5 rounded border text-xs", CONTAINER_CLASSES[problem.severity])}
-          data-testid={`problem-${problem.detail.code}`}
+          data-testid={`problem-${problem.detail.code}-${i}`}
         >
           <div className="flex items-center gap-2 mb-1">
             <span

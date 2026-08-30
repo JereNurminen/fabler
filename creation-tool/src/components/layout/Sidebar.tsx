@@ -7,7 +7,7 @@ import {
   PhotoIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { useStoryAtoms } from "../../atoms/useStoryAtoms";
+import { useStoryAtoms, useValidation } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
 import { FlagsDialog } from "../FlagsDialog";
 import { StorySettingsSection } from "./StorySettingsSection";
@@ -37,7 +37,8 @@ export const Sidebar = ({
   hasPageSelected,
 }: SidebarProps) => {
   const [showFlags, setShowFlags] = useState(false);
-  const { flags, problems } = useStoryAtoms();
+  const { flags } = useStoryAtoms();
+  const { problems } = useValidation();
   const { t } = useTranslation();
 
   return (
@@ -100,6 +101,7 @@ export const Sidebar = ({
           title={t.problems.title}
           icon={ExclamationTriangleIcon}
           badge={problems.length || undefined}
+          badgeVariant="danger"
           className="problems-section"
         >
           <ProblemsSection />
