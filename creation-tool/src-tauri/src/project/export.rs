@@ -2,19 +2,21 @@ use std::collections::HashMap;
 
 use shared::bundle::{build_manifest, pack_bundle, BundleContents};
 
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 
 use super::Project;
 
 /// Export the project as a .fabler bundle to the given output path.
 pub fn export_bundle(project: &Project, output_path: &str) -> AppResult<()> {
     let story = project.story();
-    let page_list = project.list_pages()?;
+    let all_pages = project.read_all_pages()?;
 
-    let mut all_pages = Vec::new();
-    for item in &page_list {
-        let page = project.read_page(&item.id)?;
-        all_pages.push(page);
+    // The frontend pre-checks and shows a dialog, but export is a backend
+    // operation: refusing here is what makes the block a guarantee rather
+    // than a suggestion. Warnings never block.
+    let report = shared::validation::validate(&story, &all_pages);
+    if report.has_errors() {
+        return Err(AppError::ExportBlocked(report.error_count()));
     }
 
     let manifest = build_manifest(&story, all_pages);
@@ -83,5 +85,45 @@ mod tests {
         let second = export_of(&project, &tmp.path().join("2.fabler"));
 
         assert_eq!(first.story.id, second.story.id);
+    }
+
+    #[test]
+    fn export_is_blocked_when_the_story_has_errors() {
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Story").unwrap();
+
+        // Point the start page's only choice at a page that does not exist.
+        let mut start = project.read_page(&project.story().start_page).unwrap();
+        start.choices.push(shared::models::Choice {
+            id: "c1".into(),
+            text: "Go nowhere".into(),
+            target: "gone9".into(),
+            flag_operations: vec![],
+            conditions: vec![],
+        });
+        project.save_page(&start).unwrap();
+
+        let out = tmp.path().join("blocked.fabler");
+        let result = project.export_bundle(out.to_str().unwrap());
+
+        assert!(result.is_err(), "export must refuse a story with errors");
+        assert!(!out.exists(), "a blocked export must not write a file");
+    }
+
+    #[test]
+    fn export_succeeds_when_the_only_problems_are_warnings() {
+        let tmp = TempDir::new().unwrap();
+        let project = Project::create(tmp.path().join("p").to_str().unwrap(), "Story").unwrap();
+
+        // An extra page nothing links to is a warning, not an error.
+        project.create_page("Orphan").unwrap();
+
+        let out = tmp.path().join("ok.fabler");
+        project.export_bundle(out.to_str().unwrap()).unwrap();
+
+        assert!(out.exists());
+        assert!(project.validate().unwrap().problems.iter().any(|p| {
+            p.detail == shared::validation::ProblemDetail::UnreachablePage
+        }));
     }
 }

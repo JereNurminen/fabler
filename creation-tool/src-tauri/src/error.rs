@@ -17,6 +17,9 @@ pub enum AppError {
     #[error("Page not found: {0}")]
     PageNotFound(String),
 
+    #[error("Cannot export: the story has {0} structural error(s)")]
+    ExportBlocked(usize),
+
     #[error("{0}")]
     Custom(String),
 }

@@ -155,6 +155,22 @@ impl Project {
         export::export_bundle(self, output_path)
     }
 
+    /// Read every page in the project. Used by export and validation.
+    pub fn read_all_pages(&self) -> AppResult<Vec<Page>> {
+        let mut pages = Vec::new();
+        for item in self.list_pages()? {
+            pages.push(self.read_page(&item.id)?);
+        }
+        Ok(pages)
+    }
+
+    /// Check the story for structural problems.
+    pub fn validate(&self) -> AppResult<shared::validation::Report> {
+        let story = self.story();
+        let pages = self.read_all_pages()?;
+        Ok(shared::validation::validate(&story, &pages))
+    }
+
     /// Get the project directory path.
     pub fn dir(&self) -> &Path {
         &self.dir
