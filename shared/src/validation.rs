@@ -160,7 +160,7 @@ impl<'a> StoryContext<'a> {
 /// registering it in `RULES` below.
 type Rule = fn(&StoryContext) -> Vec<Problem>;
 
-const RULES: &[Rule] = &[dangling_choice_targets];
+const RULES: &[Rule] = &[dangling_choice_targets, dangling_flag_references];
 
 pub fn validate(story: &Story, pages: &[Page]) -> Report {
     let ctx = StoryContext::new(story, pages);
@@ -184,6 +184,56 @@ fn dangling_choice_targets(ctx: &StoryContext) -> Vec<Problem> {
                         target: choice.target.clone(),
                     },
                 ));
+            }
+        }
+    }
+    problems
+}
+
+/// ERROR: a flag operation or condition references a flag id the story no
+/// longer defines. These survive a flag deletion and export into bundles.
+fn dangling_flag_references(ctx: &StoryContext) -> Vec<Problem> {
+    let mut problems = Vec::new();
+    for page in ctx.pages {
+        for op in &page.flag_operations {
+            if !ctx.has_flag(&op.flag_id) {
+                problems.push(Problem::on_page(
+                    Severity::Error,
+                    page,
+                    ProblemDetail::DanglingPageFlagOperation {
+                        flag_id: op.flag_id.clone(),
+                    },
+                ));
+            }
+        }
+
+        for choice in &page.choices {
+            for op in &choice.flag_operations {
+                if !ctx.has_flag(&op.flag_id) {
+                    problems.push(Problem::on_page(
+                        Severity::Error,
+                        page,
+                        ProblemDetail::DanglingChoiceFlagOperation {
+                            choice_id: choice.id.clone(),
+                            choice_text: choice.text.clone(),
+                            flag_id: op.flag_id.clone(),
+                        },
+                    ));
+                }
+            }
+
+            for condition in &choice.conditions {
+                if !ctx.has_flag(&condition.flag_id) {
+                    problems.push(Problem::on_page(
+                        Severity::Error,
+                        page,
+                        ProblemDetail::DanglingChoiceCondition {
+                            choice_id: choice.id.clone(),
+                            choice_text: choice.text.clone(),
+                            flag_id: condition.flag_id.clone(),
+                        },
+                    ));
+                }
             }
         }
     }
@@ -257,5 +307,52 @@ mod tests {
         );
         assert!(report.has_errors());
         assert_eq!(report.error_count(), 1);
+    }
+
+    #[test]
+    fn reports_flag_operations_and_conditions_referencing_a_deleted_flag() {
+        let mut start = page("aaa11", "Start", vec![choice("c1", "Open", "aaa11")]);
+        start.flag_operations = vec![FlagOperation {
+            flag_id: "gonef".into(),
+            operation: "set_true".into(),
+        }];
+        start.choices[0].flag_operations = vec![FlagOperation {
+            flag_id: "gonef".into(),
+            operation: "toggle".into(),
+        }];
+        start.choices[0].conditions = vec![Condition {
+            flag_id: "gonef".into(),
+            required_value: true,
+        }];
+
+        let report = validate(&story("aaa11", vec![]), &[start]);
+
+        assert_eq!(report.error_count(), 3);
+        let codes: Vec<&str> = report.problems.iter().map(|p| p.detail.code()).collect();
+        assert!(codes.contains(&"dangling_page_flag_operation"));
+        assert!(codes.contains(&"dangling_choice_flag_operation"));
+        assert!(codes.contains(&"dangling_choice_condition"));
+    }
+
+    #[test]
+    fn does_not_report_flag_references_that_resolve() {
+        let flag = Flag {
+            id: "f1a2c".into(),
+            name: "has_key".into(),
+            default_value: false,
+        };
+        let mut start = page("aaa11", "Start", vec![choice("c1", "Open", "aaa11")]);
+        start.flag_operations = vec![FlagOperation {
+            flag_id: "f1a2c".into(),
+            operation: "set_true".into(),
+        }];
+        start.choices[0].conditions = vec![Condition {
+            flag_id: "f1a2c".into(),
+            required_value: true,
+        }];
+
+        let report = validate(&story("aaa11", vec![flag]), &[start]);
+
+        assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
     }
 }
