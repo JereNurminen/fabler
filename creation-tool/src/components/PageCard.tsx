@@ -14,6 +14,7 @@ import { ChoiceEditor } from "./ChoiceEditor";
 import { Input } from "./ui/Input";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "./ui/Button";
+import { useTrashPage } from "./TrashPageContext";
 import api from "../api";
 import type { Choice, FlagOperation } from "@fabler/types";
 
@@ -32,6 +33,7 @@ const PageCard = ({ pageId }: { pageId: string }) => {
   const { updatePage, updateChoice, addChoice, removeChoice } =
     usePageMutations(page);
   const { t } = useTranslation();
+  const { requestTrash } = useTrashPage();
 
   useEffect(() => {
     void api
@@ -92,6 +94,16 @@ const PageCard = ({ pageId }: { pageId: string }) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="flex items-center justify-end mb-2">
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => requestTrash(pageId)}
+          data-testid="delete-page-button"
+        >
+          {t.buttons.deletePage}
+        </Button>
+      </div>
       <div className="space-y-4">
         <Input
           label={t.labels.pageTitle}

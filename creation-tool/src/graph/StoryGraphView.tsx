@@ -24,6 +24,9 @@ import { useTranslation } from "../i18n";
 import { invalidateAllCachedPagesAtom } from "../atoms/storyActions";
 import { useTrackedAction } from "../hooks/useTrackedAction";
 import { getLinkToPage } from "../utilities/routing";
+import { ContextMenu } from "../components/ui/ContextMenu";
+import { useContextMenu } from "../hooks/useContextMenu";
+import { useTrashPage } from "../components/TrashPageContext";
 import { layoutGraph, NODE_WIDTH, NODE_HEIGHT, type PositionedNode } from "./layout";
 import { MISSING_NODE_PREFIX, missingNodeId } from "./missingNode";
 import { usePositionPersistence } from "./usePositionPersistence";
@@ -209,6 +212,17 @@ export function buildMissingNodes(
 }
 
 /**
+ * True when a node id belongs to a real, page-backed node rather than one
+ * of the synthetic missing-target stubs. Stubs have no backing page, so
+ * there is nothing to delete — pulled out as its own function so the
+ * decision behind `onNodeContextMenu`'s early return can be unit-tested
+ * without driving the React Flow canvas.
+ */
+export function isDeletableNode(nodeId: string): boolean {
+  return !nodeId.startsWith(MISSING_NODE_PREFIX);
+}
+
+/**
  * Which of the graph view's mutually-exclusive panels to show.
  *
  * Deliberately keyed off `graph` and `loadError` only, never off the
@@ -343,6 +357,19 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     [setLocation, onClose],
   );
 
+  const { menu, openAt, close } = useContextMenu<string>();
+  const { requestTrash } = useTrashPage();
+
+  const onNodeContextMenu = useCallback<NodeMouseHandler<StoryNode>>(
+    (event, node) => {
+      // The synthetic missing-target stubs have no backing page, so there is
+      // nothing to delete — leave the browser menu alone for them.
+      if (!isDeletableNode(node.id)) return;
+      openAt(event, node.id);
+    },
+    [openAt],
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white" data-testid="story-graph">
       <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b shrink-0">
@@ -384,6 +411,7 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onNodeClick={openPage}
+            onNodeContextMenu={onNodeContextMenu}
             onNodeDragStop={onNodeDragStop}
             fitView
           >
@@ -393,6 +421,20 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
           </ReactFlow>
         )}
       </div>
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={close}
+          items={[
+            {
+              label: t.buttons.deletePage,
+              variant: "danger",
+              onSelect: () => requestTrash(menu.target),
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

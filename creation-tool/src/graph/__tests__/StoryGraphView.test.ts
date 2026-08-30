@@ -10,6 +10,7 @@ import {
   resolveGraphViewMode,
   applySeverity,
   buildMissingNodes,
+  isDeletableNode,
 } from "../StoryGraphView";
 
 const problem = (over: Partial<Problem> = {}): Problem => ({
@@ -265,5 +266,21 @@ describe("resolveGraphViewMode", () => {
   // graph reads as "graph" immediately, with nothing else required.
   it("shows the graph as soon as the fetched graph has pages, with no dependency on any other state", () => {
     expect(resolveGraphViewMode({ graph: graphWithPages, loadError: false })).toBe("graph");
+  });
+});
+
+// `onNodeContextMenu`'s early-return decision, pulled out into a pure
+// function: driving a real right-click through the React Flow canvas in
+// jsdom is impractical (no layout engine, no pointer-capture), so this pins
+// the rule the handler relies on instead -- a synthetic missing-target
+// stub must never open the delete menu (there is no page behind it), while
+// a real, page-backed node always may.
+describe("isDeletableNode", () => {
+  it("is deletable for a real, page-backed node id", () => {
+    expect(isDeletableNode("a3f2b")).toBe(true);
+  });
+
+  it("is not deletable for a synthetic missing-target stub id", () => {
+    expect(isDeletableNode(missingNodeId("a3f2b"))).toBe(false);
   });
 });

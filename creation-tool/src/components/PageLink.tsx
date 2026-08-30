@@ -1,15 +1,17 @@
 import { Link } from "wouter";
 import { getLinkToPage } from "../utilities/routing";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, type MouseEvent as ReactMouseEvent } from "react";
 import clsx from "clsx";
 
 const PageLink = ({
   pageId,
   children,
   onClick,
+  onContextMenu,
 }: PropsWithChildren<{
   pageId: string;
   onClick?: () => void;
+  onContextMenu?: (event: ReactMouseEvent) => void;
 }>) => {
   // Base structure
   const base = clsx(
@@ -37,6 +39,7 @@ const PageLink = ({
       to={getLinkToPage(pageId)}
       className={clsx(base, light, dark)}
       onClick={onClick}
+      onContextMenu={onContextMenu}
     >
       {children}
     </Link>
