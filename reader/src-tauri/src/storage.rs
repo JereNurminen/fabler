@@ -2,11 +2,9 @@ use std::path::{Path, PathBuf};
 
 use crate::error::{ReaderError, ReaderResult};
 
-// `GameState` isn't named directly outside tests (production code only reaches it
-// through `SavedState::game_state`), but it's re-exported here so this module's public
-// surface still offers all three save-format types by name.
-#[allow(unused_imports)]
-pub use shared::save::{GameState, SavedState, SlotInfo};
+// Re-exported so `commands.rs`'s `use crate::storage::{SaveStorage, SavedState, SlotInfo};`
+// keeps resolving.
+pub use shared::save::{SavedState, SlotInfo};
 
 pub struct SaveStorage {
     stories_dir: PathBuf,
@@ -114,6 +112,8 @@ impl SaveStorage {
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+
+    use shared::save::GameState;
 
     use super::*;
     use tempfile::TempDir;

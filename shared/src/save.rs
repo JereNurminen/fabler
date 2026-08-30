@@ -32,3 +32,59 @@ pub struct SlotInfo {
     pub name: String,
     pub timestamp: u64,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn saved_state_serialises_to_camel_case_keys() {
+        let state = SavedState {
+            game_state: GameState {
+                current_page_id: "page-1".to_string(),
+                flags: HashMap::new(),
+            },
+            name: "My Save".to_string(),
+            timestamp: 1000,
+        };
+
+        let json = serde_json::to_string(&state).unwrap();
+
+        assert!(
+            json.contains("\"gameState\""),
+            "expected camelCase key \"gameState\" in {json}"
+        );
+        assert!(
+            json.contains("\"currentPageId\""),
+            "expected camelCase key \"currentPageId\" in {json}"
+        );
+        assert!(
+            !json.contains("\"game_state\""),
+            "did not expect snake_case key \"game_state\" in {json}"
+        );
+        assert!(
+            !json.contains("\"current_page_id\""),
+            "did not expect snake_case key \"current_page_id\" in {json}"
+        );
+    }
+
+    #[test]
+    fn slot_info_serialises_to_camel_case_keys() {
+        let slot = SlotInfo {
+            slot_id: "slot-1".to_string(),
+            name: "My Save".to_string(),
+            timestamp: 1000,
+        };
+
+        let json = serde_json::to_string(&slot).unwrap();
+
+        assert!(
+            json.contains("\"slotId\""),
+            "expected camelCase key \"slotId\" in {json}"
+        );
+        assert!(
+            !json.contains("\"slot_id\""),
+            "did not expect snake_case key \"slot_id\" in {json}"
+        );
+    }
+}
