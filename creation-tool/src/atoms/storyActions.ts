@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import api from "../api";
-import type { Story, Page } from "../types";
+import type { Story, Page } from "@fabler/types";
 import { projectOpenAtom, refreshAtom, pageAtomFamily } from "./storyAtoms";
 
 export const openProjectAtom = atom(null, async (_get, set, path: string) => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { problemMessage } from "../problemMessage";
-import type { ProblemDetail } from "../../types";
+import type { ProblemDetail } from "@fabler/types";
 
 const ALL_CODES: ProblemDetail[] = [
   { code: "dangling_choice_target", choice_id: "c1", choice_text: "Go deeper", target: "gone9" },

@@ -4,7 +4,7 @@ import { Button } from "./ui/Button";
 import { ProblemList } from "./ProblemList";
 import { useTranslation } from "../i18n";
 import { getLinkToPage } from "../utilities/routing";
-import type { Problem } from "../types";
+import type { Problem } from "@fabler/types";
 
 interface ExportBlockedDialogProps {
   problems: Problem[];

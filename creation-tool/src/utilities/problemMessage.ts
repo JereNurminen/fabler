@@ -1,5 +1,5 @@
 import { translations } from "../i18n";
-import type { ProblemDetail } from "../types";
+import type { ProblemDetail } from "@fabler/types";
 
 /**
  * Render a structured problem from the Rust validator into a sentence.

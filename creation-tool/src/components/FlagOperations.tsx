@@ -1,6 +1,6 @@
 import { FlagRuleList } from "./FlagRuleList";
 import { useTranslation } from "../i18n";
-import type { Flag, FlagOperation } from "../types";
+import type { Flag, FlagOperation } from "@fabler/types";
 
 type FlagOperationsProps = {
   operations: FlagOperation[];

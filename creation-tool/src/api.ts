@@ -1,4 +1,4 @@
-import type { Story, Page, PageListItem, ValidationReport } from "./types";
+import type { Story, Page, PageListItem, Report } from "@fabler/types";
 
 const useHttpApi = import.meta.env.VITE_USE_HTTP_API === "true";
 
@@ -32,7 +32,7 @@ function buildHttpApi() {
     createPage: (name: string) => call<Page>("create_page", { name }),
     deletePage: (id: string) => call<void>("delete_page", { id }),
     exportBundle: (_outputPath: string) => call<void>("export_bundle"),
-    validateStory: () => call<ValidationReport>("validate_story"),
+    validateStory: () => call<Report>("validate_story"),
     copyAsset: async (_sourcePath: string) => "test-asset.png" as string,
     getProjectAssetsDir: () => call<string>("get_project_assets_dir"),
     listAssets: () => call<string[]>("list_assets"),
@@ -63,7 +63,7 @@ function buildTauriApi() {
     deletePage: (id: string) => invoke<void>("delete_page", { id }),
     exportBundle: (outputPath: string) =>
       invoke<void>("export_bundle", { outputPath }),
-    validateStory: () => invoke<ValidationReport>("validate_story"),
+    validateStory: () => invoke<Report>("validate_story"),
     copyAsset: (sourcePath: string) =>
       invoke<string>("copy_asset", { sourcePath }),
     getProjectAssetsDir: () => invoke<string>("get_project_assets_dir"),

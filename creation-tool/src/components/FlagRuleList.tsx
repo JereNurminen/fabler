@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/Button";
 import { SelectWithCreate } from "./ui/SelectWithCreate";
 import { useTranslation } from "../i18n";
-import type { Flag } from "../types";
+import type { Flag } from "@fabler/types";
 
 export interface FlagRule<V extends string> {
   flag_id: string;

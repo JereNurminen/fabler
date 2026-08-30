@@ -1,5 +1,5 @@
 import { APIRequestContext, Page } from "@playwright/test";
-import type { Page as StoryPage, PageListItem, Story } from "../src/types";
+import type { Page as StoryPage, PageListItem, Story } from "@fabler/types";
 
 const API_BASE = "http://127.0.0.1:3001/api";
 

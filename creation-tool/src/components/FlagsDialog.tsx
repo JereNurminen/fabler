@@ -6,7 +6,7 @@ import { useTranslation, translations } from "../i18n";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { generateId } from "../utilities/id";
 import { useTrackedAction } from "../hooks/useTrackedAction";
-import type { Flag, Story } from "../types";
+import type { Flag, Story } from "@fabler/types";
 
 type FlagsDialogProps = {
   onClose: () => void;

@@ -1,5 +1,5 @@
 import { useTranslation } from "../i18n";
-import type { Problem, Severity } from "../types";
+import type { Problem, Severity } from "@fabler/types";
 import { problemMessage } from "../utilities/problemMessage";
 import clsx from "clsx";
 

@@ -1,6 +1,6 @@
 import { FlagRuleList } from "./FlagRuleList";
 import { useTranslation } from "../i18n";
-import type { Flag, Condition } from "../types";
+import type { Flag, Condition } from "@fabler/types";
 
 type ChoiceConditionsProps = {
   conditions: Condition[];

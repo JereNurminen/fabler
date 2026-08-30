@@ -6,7 +6,7 @@ import type {
   Condition,
   Flag,
   Story,
-} from "../../types";
+} from "@fabler/types";
 import {
   convertPageToManifestPage,
   convertToManifest,

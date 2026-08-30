@@ -15,7 +15,7 @@ import { Input } from "./ui/Input";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { Button } from "./ui/Button";
 import api from "../api";
-import type { Choice } from "../types";
+import type { Choice } from "@fabler/types";
 
 const PageCard = ({ pageId }: { pageId: string }) => {
   // Draft state: edits are local until blur, matching the previous behaviour.

@@ -1,5 +1,5 @@
 import type { Manifest } from "@fabler/player/engine/types";
-import type { Page, Story } from "../types";
+import type { Page, Story } from "@fabler/types";
 
 export function convertToManifest(
   story: Story,

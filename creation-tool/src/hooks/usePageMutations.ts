@@ -3,7 +3,7 @@ import { useSetAtom } from "jotai";
 import { savePageAtom } from "../atoms/storyActions";
 import { useTrackedAction } from "./useTrackedAction";
 import { generateId } from "../utilities/id";
-import type { Choice, Page } from "../types";
+import type { Choice, Page } from "@fabler/types";
 
 /**
  * Every write PageCard performs, in one place.

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@fabler/player": "0.1.0",
+    "@fabler/types": "0.1.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@tauri-apps/api": "^2.0.0-rc.5",

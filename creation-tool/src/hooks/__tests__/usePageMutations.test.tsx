@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor, cleanup } from "@testing-library/react";
 import { Provider } from "jotai";
-import type { Page } from "../../types";
+import type { Page } from "@fabler/types";
 import { usePageMutations } from "../usePageMutations";
 import api from "../../api";
 

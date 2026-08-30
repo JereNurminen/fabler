@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { save } from "@tauri-apps/plugin-dialog";
 import api from "../api";
 import { translations } from "../i18n";
-import type { Problem } from "../types";
+import type { Problem } from "@fabler/types";
 
 /**
  * The export flow, shared by the sidebar button and the File menu.

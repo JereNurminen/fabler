@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ContentRenderer } from "@fabler/player/ui/ContentRenderer";
-import type { Page } from "../types";
+import type { Page } from "@fabler/types";
 import type { AssetResolver } from "@fabler/player/engine/types";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import api from "../api";

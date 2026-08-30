@@ -8,7 +8,7 @@ import { ChoiceConditions } from "./ChoiceConditions";
 import { useTranslation } from "../i18n";
 import { getLinkToPage } from "../utilities/routing";
 import { upsertFlagRule, removeFlagRule } from "../utilities/flagRules";
-import type { Choice, Flag, PageListItem } from "../types";
+import type { Choice, Flag, PageListItem } from "@fabler/types";
 
 interface ChoiceEditorProps {
   choice: Choice;
