@@ -40,6 +40,12 @@ const api = {
 
   getProjectAssetsDir: () =>
     invoke<string>("get_project_assets_dir"),
+
+  listAssets: () =>
+    invoke<string[]>("list_assets"),
+
+  deleteAsset: (filename: string) =>
+    invoke<void>("delete_asset", { filename }),
 };
 
 export default api;

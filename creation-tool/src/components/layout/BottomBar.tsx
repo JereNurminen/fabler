@@ -3,6 +3,7 @@ import {
   Cog6ToothIcon,
   FlagIcon,
   DocumentTextIcon,
+  PhotoIcon,
   PlayIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
@@ -12,6 +13,7 @@ import { SectionModal } from "./SectionModal";
 import { StorySettingsSection } from "./StorySettingsSection";
 import { PagesSection } from "./PagesSection";
 import { FlagsSection } from "./FlagsSection";
+import { AssetsSection } from "./AssetsSection";
 import clsx from "clsx";
 
 interface BottomBarProps {
@@ -24,7 +26,7 @@ interface BottomBarProps {
   hasPageSelected?: boolean;
 }
 
-type ActiveModal = "pages" | "flags" | "settings" | null;
+type ActiveModal = "pages" | "flags" | "settings" | "assets" | null;
 
 export const BottomBar = ({
   storyTitle,
@@ -90,6 +92,18 @@ export const BottomBar = ({
         </button>
 
         <button
+          onClick={() => handleToggleModal("assets")}
+          className={clsx(
+            iconButtonClass,
+            activeModal === "assets" && "bg-gray-100 text-gray-900",
+          )}
+          aria-label={t.headings.assets}
+        >
+          <PhotoIcon className="w-6 h-6" />
+          <span className="text-xs mt-0.5">{t.headings.assets}</span>
+        </button>
+
+        <button
           onClick={() => handleToggleModal("settings")}
           className={clsx(
             iconButtonClass,
@@ -145,6 +159,15 @@ export const BottomBar = ({
         title={t.headings.flags}
       >
         <FlagsSection onManageFlags={handleManageFlags} />
+      </SectionModal>
+
+      {/* Assets Modal */}
+      <SectionModal
+        open={activeModal === "assets"}
+        onClose={() => setActiveModal(null)}
+        title={t.headings.assets}
+      >
+        <AssetsSection />
       </SectionModal>
 
       {/* Settings Modal */}

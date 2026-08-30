@@ -65,6 +65,7 @@ export const translations = {
     storySettings: "Story Settings",
     flags: "Flags",
     pages: "Pages",
+    assets: "Assets",
     menu: "Menu",
   },
 

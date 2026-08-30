@@ -1,3 +1,4 @@
+import { marked } from "marked";
 import type { AssetResolver, Block, Document, Inline } from "../engine/types";
 
 interface ContentRendererProps {
@@ -56,6 +57,26 @@ function BlockRenderer({ block, assets }: { block: Block; assets: AssetResolver 
           style={{ backgroundColor: "var(--player-border)" }}
         />
       );
+    case "markdown": {
+      let html = marked.parse(block.source, { async: false }) as string;
+      html = html.replace(
+        /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/g,
+        (match, before, src, after) => {
+          if (!src.includes("://") && !src.startsWith("/")) {
+            const resolved = assets.getAssetUrl(src);
+            return `<img ${before}src="${typeof resolved === 'string' ? resolved : src}"${after}>`;
+          }
+          return match;
+        }
+      );
+      return (
+        <div
+          className="prose prose-sm max-w-none mb-[1em]"
+          style={{ color: "var(--player-text)" }}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    }
     default:
       return null;
   }

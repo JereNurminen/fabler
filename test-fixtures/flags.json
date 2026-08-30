@@ -16,8 +16,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You are in a small room. There is a locked door on the north wall and a table in the corner.", "marks": [] }]
+            "type": "markdown",
+            "source": "You are in a small room. There is a locked door on the north wall and a table in the corner."
           }
         ]
       },
@@ -57,8 +57,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You find a rusty key under some papers.", "marks": [] }]
+            "type": "markdown",
+            "source": "You find a rusty key under some papers."
           }
         ]
       },
@@ -82,8 +82,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "The door is locked tight.", "marks": [] }]
+            "type": "markdown",
+            "source": "The door is locked tight."
           }
         ]
       },
@@ -116,8 +116,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You step through the door into the sunlight. You are free!", "marks": [] }]
+            "type": "markdown",
+            "source": "You step through the door into the sunlight. You are free!"
           }
         ]
       },

@@ -21,6 +21,9 @@ pub enum Block {
         alt: String,
     },
     HorizontalRule,
+    Markdown {
+        source: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -40,28 +43,30 @@ pub enum Mark {
 impl Document {
     pub fn empty() -> Self {
         Document {
-            content: vec![Block::Paragraph { content: vec![] }],
+            content: vec![Block::Markdown { source: String::new() }],
         }
     }
 
     pub fn from_plain_text(text: &str) -> Self {
-        if text.is_empty() {
-            return Self::empty();
-        }
         Document {
-            content: text
-                .split('\n')
-                .map(|line| Block::Paragraph {
-                    content: if line.is_empty() {
-                        vec![]
-                    } else {
-                        vec![Inline {
-                            text: line.to_string(),
-                            marks: vec![],
-                        }]
-                    },
-                })
-                .collect(),
+            content: vec![Block::Markdown { source: text.to_string() }],
+        }
+    }
+
+    /// Get the markdown source if this document contains a single Markdown block.
+    pub fn as_markdown(&self) -> Option<&str> {
+        if self.content.len() == 1 {
+            if let Block::Markdown { source } = &self.content[0] {
+                return Some(source);
+            }
+        }
+        None
+    }
+
+    /// Create a document from a markdown string.
+    pub fn from_markdown(source: &str) -> Self {
+        Document {
+            content: vec![Block::Markdown { source: source.to_string() }],
         }
     }
 }
@@ -74,7 +79,7 @@ mod tests {
     fn empty_document() {
         let doc = Document::empty();
         assert_eq!(doc.content.len(), 1);
-        assert!(matches!(&doc.content[0], Block::Paragraph { content } if content.is_empty()));
+        assert!(matches!(&doc.content[0], Block::Markdown { source } if source.is_empty()));
 
         let json = serde_json::to_string(&doc).unwrap();
         let parsed: Document = serde_json::from_str(&json).unwrap();
@@ -129,17 +134,25 @@ mod tests {
     #[test]
     fn from_plain_text() {
         let doc = Document::from_plain_text("line one\nline two\n\nline four");
-        assert_eq!(doc.content.len(), 4);
-        assert!(matches!(&doc.content[0], Block::Paragraph { content } if content.len() == 1));
-        assert!(matches!(&doc.content[1], Block::Paragraph { content } if content.len() == 1));
-        assert!(matches!(&doc.content[2], Block::Paragraph { content } if content.is_empty()));
-        assert!(matches!(&doc.content[3], Block::Paragraph { content } if content.len() == 1));
+        assert_eq!(doc.content.len(), 1);
+        assert!(matches!(&doc.content[0], Block::Markdown { source } if source == "line one\nline two\n\nline four"));
     }
 
     #[test]
     fn from_plain_text_empty() {
         let doc = Document::from_plain_text("");
         assert_eq!(doc.content.len(), 1);
-        assert!(matches!(&doc.content[0], Block::Paragraph { content } if content.is_empty()));
+        assert!(matches!(&doc.content[0], Block::Markdown { source } if source.is_empty()));
+    }
+
+    #[test]
+    fn markdown_round_trip() {
+        let doc = Document::from_markdown("# Hello\n\nSome **bold** text");
+        let json = serde_json::to_string(&doc).unwrap();
+        assert!(json.contains("\"type\":\"markdown\""));
+        assert!(json.contains("\"source\":\"# Hello"));
+        let parsed: Document = serde_json::from_str(&json).unwrap();
+        assert_eq!(doc, parsed);
+        assert_eq!(doc.as_markdown(), Some("# Hello\n\nSome **bold** text"));
     }
 }

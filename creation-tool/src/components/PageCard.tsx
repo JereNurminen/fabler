@@ -4,23 +4,21 @@ import { pageAtomFamily, pageListAtom } from "../atoms/storyAtoms";
 import { savePageAtom } from "../atoms/storyActions";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
 import { useTranslation } from "../i18n";
-import type { Choice, Document } from "../types";
+import type { Choice } from "../types";
 import { generateId } from "../utilities/id";
 import { useLocation } from "wouter";
 import { getLinkToPage } from "../utilities/routing";
 import { FlagOperations } from "./FlagOperations";
 import { ChoiceConditions } from "./ChoiceConditions";
 import { Input } from "./ui/Input";
-import { RichTextEditor } from "./RichTextEditor";
+import { MarkdownEditor } from "./MarkdownEditor";
 import { Select } from "./ui/Select";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import api from "../api";
 
 export default ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
-  const [body, setBody] = useState<Document>({ content: [] });
+  const [body, setBody] = useState("");
   const [choices, setChoices] = useState<Choice[]>([]);
   const page = useAtomValue(pageAtomFamily(pageId));
   const pages = useAtomValue(pageListAtom);
@@ -28,27 +26,22 @@ export default ({ pageId }: { pageId: string }) => {
   const { flags } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const [assetsBaseUrl, setAssetsBaseUrl] = useState<string | undefined>();
-
-  useEffect(() => {
-    api.getProjectAssetsDir().then((dir) => {
-      setAssetsBaseUrl(dir);
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     if (page) {
       setName(page.name);
-      setBody(page.body);
+      const md = page.body.content?.[0];
+      setBody(md?.type === "markdown" ? md.source : "");
       setChoices(page.choices);
     }
   }, [page]);
 
   const handleSave = useCallback(async () => {
     if (!page) return;
-    if (name !== page.name || JSON.stringify(body) !== JSON.stringify(page.body)) {
+    const newBody = { content: [{ type: "markdown" as const, source: body }] };
+    if (name !== page.name || JSON.stringify(newBody) !== JSON.stringify(page.body)) {
       try {
-        await savePage({ ...page, name, body });
+        await savePage({ ...page, name, body: newBody });
       } catch (error) {
         console.error("Failed to save page:", error);
       }
@@ -224,17 +217,6 @@ export default ({ pageId }: { pageId: string }) => {
     }
   };
 
-  const handleImageInsert = async (): Promise<string | null> => {
-    const filePath = await openDialog({
-      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }],
-    });
-    if (!filePath) return null;
-    const filename = await api.copyAsset(filePath);
-    // Return full path so TipTap can display the image;
-    // the conversion layer strips it back to filename on save
-    return assetsBaseUrl ? `${assetsBaseUrl}/${filename}` : filename;
-  };
-
   if (!page) return null;
 
   return (
@@ -250,19 +232,10 @@ export default ({ pageId }: { pageId: string }) => {
           value={name}
         />
 
-        <RichTextEditor
-          document={body}
-          assetsBaseUrl={assetsBaseUrl}
-          onUpdate={(doc) => {
-            setBody(doc);
-            // Save immediately when editor content changes (on blur)
-            if (page && (name !== page.name || JSON.stringify(doc) !== JSON.stringify(page.body))) {
-              savePage({ ...page, name, body: doc }).catch((e) =>
-                console.error("Failed to save page:", e)
-              );
-            }
-          }}
-          onImageInsert={handleImageInsert}
+        <MarkdownEditor
+          value={body}
+          onChange={setBody}
+          onBlur={handleSave}
         />
       </div>
 

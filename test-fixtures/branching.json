@@ -13,8 +13,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You stand at a fork in the road. Two paths stretch out before you.", "marks": [] }]
+            "type": "markdown",
+            "source": "You stand at a fork in the road. Two paths stretch out before you."
           }
         ]
       },
@@ -43,8 +43,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "The trees close in around you. Sunlight filters through the canopy.", "marks": [] }]
+            "type": "markdown",
+            "source": "The trees close in around you. Sunlight filters through the canopy."
           }
         ]
       },
@@ -73,8 +73,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "The path winds upward. Rocks crunch beneath your feet.", "marks": [] }]
+            "type": "markdown",
+            "source": "The path winds upward. Rocks crunch beneath your feet."
           }
         ]
       },
@@ -103,8 +103,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You emerge into a beautiful clearing. Wildflowers sway in the breeze. Your journey ends here, at peace.", "marks": [] }]
+            "type": "markdown",
+            "source": "You emerge into a beautiful clearing. Wildflowers sway in the breeze. Your journey ends here, at peace."
           }
         ]
       },
@@ -118,8 +118,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "You reach the top. The world stretches out below you in every direction. Your journey ends here, triumphant.", "marks": [] }]
+            "type": "markdown",
+            "source": "You reach the top. The world stretches out below you in every direction. Your journey ends here, triumphant."
           }
         ]
       },

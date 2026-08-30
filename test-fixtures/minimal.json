@@ -13,8 +13,8 @@
       "body": {
         "content": [
           {
-            "type": "paragraph",
-            "content": [{ "text": "This is a story with just one page. There is nothing else to do.", "marks": [] }]
+            "type": "markdown",
+            "source": "This is a story with just one page. There is nothing else to do."
           }
         ]
       },

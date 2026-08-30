@@ -181,4 +181,30 @@ impl Project {
     pub fn get_assets_dir(&self) -> std::path::PathBuf {
         self.dir.join("assets")
     }
+
+    pub fn list_assets(&self) -> AppResult<Vec<String>> {
+        let assets_dir = self.dir.join("assets");
+        if !assets_dir.exists() {
+            return Ok(vec![]);
+        }
+        let mut names = Vec::new();
+        for entry in std::fs::read_dir(&assets_dir)? {
+            let entry = entry?;
+            if entry.path().is_file() {
+                if let Some(name) = entry.file_name().to_str() {
+                    names.push(name.to_string());
+                }
+            }
+        }
+        names.sort();
+        Ok(names)
+    }
+
+    pub fn delete_asset(&self, filename: &str) -> AppResult<()> {
+        let path = self.dir.join("assets").join(filename);
+        if path.exists() {
+            std::fs::remove_file(path)?;
+        }
+        Ok(())
+    }
 }

@@ -103,3 +103,13 @@ pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<Str
 pub fn get_project_assets_dir(state: State<ProjectState>) -> Result<String, String> {
     with_project(&state, |p| Ok(p.get_assets_dir().to_string_lossy().to_string()))
 }
+
+#[tauri::command]
+pub fn list_assets(state: State<ProjectState>) -> Result<Vec<String>, String> {
+    with_project(&state, |p| p.list_assets())
+}
+
+#[tauri::command]
+pub fn delete_asset(filename: String, state: State<ProjectState>) -> Result<(), String> {
+    with_project(&state, |p| p.delete_asset(&filename))
+}

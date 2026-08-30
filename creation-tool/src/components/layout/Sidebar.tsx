@@ -4,6 +4,7 @@ import {
   Cog6ToothIcon,
   FlagIcon,
   DocumentTextIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { useStoryAtoms } from "../../atoms/useStoryAtoms";
 import { useTranslation } from "../../i18n";
@@ -11,6 +12,7 @@ import { FlagsDialog } from "../FlagsDialog";
 import { StorySettingsSection } from "./StorySettingsSection";
 import { FlagsSection } from "./FlagsSection";
 import { PagesSection } from "./PagesSection";
+import { AssetsSection } from "./AssetsSection";
 import clsx from "clsx";
 
 interface SidebarProps {
@@ -89,6 +91,15 @@ export const Sidebar = ({
           className="flags-section"
         >
           <FlagsSection onManageFlags={() => setShowFlags(true)} />
+        </Collapsible>
+
+        {/* Assets Section */}
+        <Collapsible
+          title={t.headings.assets}
+          icon={PhotoIcon}
+          className="assets-section"
+        >
+          <AssetsSection />
         </Collapsible>
 
         {/* Pages Section */}

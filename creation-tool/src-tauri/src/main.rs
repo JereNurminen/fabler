@@ -35,6 +35,8 @@ fn main() {
             commands::export_bundle,
             commands::copy_asset,
             commands::get_project_assets_dir,
+            commands::list_assets,
+            commands::delete_asset,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -19,6 +19,7 @@
     "dev:test-app": "vite serve e2e/test-app --config e2e/test-app/vite.config.ts"
   },
   "peerDependencies": {
+    "marked": "^15.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

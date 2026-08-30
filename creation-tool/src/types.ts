@@ -21,7 +21,8 @@ export type Block =
   | { type: "paragraph"; content: Inline[] }
   | { type: "blockquote"; content: Block[] }
   | { type: "image"; src: string; alt: string }
-  | { type: "horizontal_rule" };
+  | { type: "horizontal_rule" }
+  | { type: "markdown"; source: string };
 
 export interface Inline {
   text: string;
