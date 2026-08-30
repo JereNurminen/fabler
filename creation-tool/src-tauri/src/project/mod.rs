@@ -146,21 +146,24 @@ impl Project {
         pages::write_page(&self.pages_dir(), page)
     }
 
+    /// Every id currently in use, live or trashed.
+    ///
+    /// Spans BOTH directories: if trashed ids were left out, a new page
+    /// could be minted with a trashed page's id; restoring later would put
+    /// two files with one id on disk, and `find_page_file` would return
+    /// whichever `read_dir` yielded first.
+    fn existing_page_ids(&self) -> AppResult<Vec<String>> {
+        let live = pages::list_pages(&self.pages_dir())?;
+        let trashed = pages::list_pages(&self.trash_dir())?;
+        Ok(live.iter().chain(trashed.iter()).map(|p| p.id.clone()).collect())
+    }
+
     /// Create a new page with the given name, returning it.
     pub fn create_page(&self, name: &str) -> AppResult<Page> {
         let pages_dir = self.pages_dir();
 
-        // Seeded from BOTH directories. If trashed ids were left out, a new
-        // page could be minted with a trashed page's id; restoring later
-        // would put two files with one id on disk, and `find_page_file`
-        // would return whichever `read_dir` yielded first.
-        let live = pages::list_pages(&pages_dir)?;
-        let trashed = pages::list_pages(&self.trash_dir())?;
-        let existing_ids: Vec<&str> = live
-            .iter()
-            .chain(trashed.iter())
-            .map(|p| p.id.as_str())
-            .collect();
+        let existing_ids = self.existing_page_ids()?;
+        let existing_ids: Vec<&str> = existing_ids.iter().map(|id| id.as_str()).collect();
         let id = shared::id::generate_unique_id(&existing_ids);
 
         let page = Page {
@@ -471,13 +474,31 @@ mod tests {
     fn trashing_restamps_last_modified() {
         let (_tmp, project) = project_with_pages();
         let page = project.create_page("Doomed").unwrap();
-        let before = project.read_page(&page.id).unwrap().last_modified;
+
+        // Force a known, deliberately-old stamp so the assertion below can't
+        // pass by accident: two real `now()` calls are almost always
+        // increasing anyway, so `after >= before` would still pass even if
+        // `move_page` preserved the old timestamp and never restamped at
+        // all. Pinning `before` rules that out.
+        let old_stamp = "2020-01-01T00:00:00.000Z";
+        let pages_dir = project.dir.join("pages");
+        crate::project::pages::write_page_at(&pages_dir, &page, old_stamp).unwrap();
 
         project.trash_page(&page.id).unwrap();
-        let after = project.read_trashed_page(&page.id).unwrap().last_modified;
+        let after = project
+            .read_trashed_page(&page.id)
+            .unwrap()
+            .last_modified
+            .expect("write must stamp");
 
-        assert!(after.is_some());
-        assert!(after >= before, "the move is a write, so it restamps");
+        assert_ne!(
+            after, old_stamp,
+            "the move is a write, so it must not preserve the old stamp"
+        );
+        assert!(
+            after.as_str() > old_stamp,
+            "the fresh stamp must be later than the pinned old one"
+        );
     }
 
     #[test]
@@ -501,26 +522,23 @@ mod tests {
     }
 
     #[test]
-    fn create_page_never_reuses_a_trashed_id() {
+    fn existing_page_ids_spans_both_live_and_trashed_pages() {
+        // Deterministic test for the guard `create_page` relies on: if the
+        // trash half of the union in `existing_page_ids` were removed, this
+        // fails every run, unlike a statistical test that hopes a random
+        // mint collides with a trashed id.
         let (_tmp, project) = project_with_pages();
+        let doomed = project.create_page("Doomed").unwrap();
+        project.trash_page(&doomed.id).unwrap();
+        let live = project.create_page("Fresh").unwrap();
 
-        // Trash enough pages that a colliding mint would be likely if the
-        // uniqueness set ignored trash/.
-        let mut trashed_ids = Vec::new();
-        for n in 0..8 {
-            let p = project.create_page(&format!("Doomed {n}")).unwrap();
-            project.trash_page(&p.id).unwrap();
-            trashed_ids.push(p.id);
-        }
+        let existing_ids = project.existing_page_ids().unwrap();
 
-        for n in 0..30 {
-            let fresh = project.create_page(&format!("Fresh {n}")).unwrap();
-            assert!(
-                !trashed_ids.contains(&fresh.id),
-                "minted {} which is already in the trash",
-                fresh.id
-            );
-        }
+        assert!(
+            existing_ids.contains(&doomed.id),
+            "must include trashed ids, or a fresh mint could reuse one"
+        );
+        assert!(existing_ids.contains(&live.id), "must include live ids");
     }
 
     #[test]
@@ -575,7 +593,7 @@ mod tests {
         let trash_dir = project.dir.join("trash");
         std::fs::create_dir_all(&trash_dir).unwrap();
 
-        let mut mk = |id: &str, name: &str, stamp: &str| {
+        let mk = |id: &str, name: &str, stamp: &str| {
             let page = Page {
                 id: id.into(),
                 name: name.into(),
