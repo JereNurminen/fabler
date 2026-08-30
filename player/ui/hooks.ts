@@ -26,14 +26,25 @@ export function useGameState(manifest: Manifest) {
     ? getAvailableChoices(currentPage, gameState.flags)
     : [];
 
+  // Set when a choice points at a page that isn't in the manifest. Cleared on
+  // the next successful move; the reader stays put and can choose again.
+  const [navigationError, setNavigationError] = useState<string | null>(null);
+
   const handleChoice = useCallback(
     (choice: ManifestChoice) => {
-      setGameState((prev) => navigate(manifest, prev, choice));
+      const result = navigate(manifest, gameState, choice);
+      if (!result.ok) {
+        setNavigationError(result.target);
+        return;
+      }
+      setNavigationError(null);
+      setGameState(result.state);
     },
-    [manifest],
+    [manifest, gameState],
   );
 
   const restoreState = useCallback((saved: GameState) => {
+    setNavigationError(null);
     setGameState(saved);
   }, []);
 
@@ -43,6 +54,7 @@ export function useGameState(manifest: Manifest) {
     availableChoices,
     handleChoice,
     restoreState,
+    navigationError,
   };
 }
 

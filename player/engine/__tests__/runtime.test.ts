@@ -34,7 +34,7 @@ function makePage(overrides: Partial<ManifestPage> = {}): ManifestPage {
   return {
     id: "page-1",
     name: "Start",
-    body: "You are at the start.",
+    body: { content: [{ type: "markdown", source: "You are at the start." }] },
     assets: [],
     flag_operations: [],
     choices: [],
@@ -251,6 +251,14 @@ describe("initGameState", () => {
 
 // -- navigate --
 
+/** Unwrap a successful navigation, failing the test if it did not succeed. */
+function expectMoved(result: ReturnType<typeof navigate>) {
+  if (!result.ok) {
+    throw new Error(`expected navigation to succeed, got ${result.reason}`);
+  }
+  return result.state;
+}
+
 describe("navigate", () => {
   it("moves to the target page", () => {
     const page2 = makePage({ id: "page-2" });
@@ -259,7 +267,7 @@ describe("navigate", () => {
     });
     const state = { currentPageId: "page-1", flags: {} };
     const choice = makeChoice({ target: "page-2" });
-    const newState = navigate(manifest, state, choice);
+    const newState = expectMoved(navigate(manifest, state, choice));
     expect(newState.currentPageId).toBe("page-2");
   });
 
@@ -272,7 +280,7 @@ describe("navigate", () => {
       target: "page-2",
       flag_operations: [{ flag_id: "flag-a", operation: "set_true" }],
     });
-    const newState = navigate(manifest, state, choice);
+    const newState = expectMoved(navigate(manifest, state, choice));
     expect(newState.flags["flag-a"]).toBe(true);
   });
 
@@ -292,7 +300,7 @@ describe("navigate", () => {
       target: "page-2",
       flag_operations: [{ flag_id: "flag-a", operation: "set_true" }],
     });
-    const newState = navigate(manifest, state, choice);
+    const newState = expectMoved(navigate(manifest, state, choice));
     expect(newState.flags["flag-a"]).toBe(true);
     expect(newState.flags["flag-b"]).toBe(true);
   });
@@ -309,6 +317,38 @@ describe("navigate", () => {
     });
     navigate(manifest, state, choice);
     expect(state.currentPageId).toBe("page-1");
+    expect(state.flags["flag-a"]).toBe(false);
+  });
+
+  it("refuses to move when the target page is missing", () => {
+    // Regression: navigate() used to commit choice.target unconditionally, so
+    // a choice pointing at a deleted page left the player on a "page not
+    // found" screen with no choices — an unrecoverable end to the story.
+    const manifest = makeManifest({ pages: [makePage({ id: "page-1" })] });
+    const state = { currentPageId: "page-1", flags: {} };
+    const choice = makeChoice({ target: "page-gone" });
+
+    const result = navigate(manifest, state, choice);
+
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.reason).toBe("missing-target");
+    expect(result.target).toBe("page-gone");
+  });
+
+  it("applies no flag operations when the target is missing", () => {
+    // The move must be atomic: a failed navigation must not leave the game
+    // with the choice's flag effects half-applied.
+    const manifest = makeManifest({ pages: [makePage({ id: "page-1" })] });
+    const state = { currentPageId: "page-1", flags: { "flag-a": false } };
+    const choice = makeChoice({
+      target: "page-gone",
+      flag_operations: [{ flag_id: "flag-a", operation: "set_true" }],
+    });
+
+    const result = navigate(manifest, state, choice);
+
+    expect(result.ok).toBe(false);
     expect(state.flags["flag-a"]).toBe(false);
   });
 });

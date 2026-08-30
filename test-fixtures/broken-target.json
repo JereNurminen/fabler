@@ -1,0 +1,57 @@
+{
+  "format_version": 1,
+  "story": {
+    "id": "broken-target-1",
+    "title": "Broken Target Story",
+    "start_page": "page-1"
+  },
+  "flags": [
+    { "id": "flag-a", "name": "took_broken_path", "default_value": false }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "The Fork",
+      "body": {
+        "content": [
+          {
+            "type": "markdown",
+            "source": "One path is intact. The other points at a page that was deleted."
+          }
+        ]
+      },
+      "assets": [],
+      "flag_operations": [],
+      "choices": [
+        {
+          "id": "choice-broken",
+          "text": "Take the broken path",
+          "target": "page-deleted",
+          "flag_operations": [
+            { "flag_id": "flag-a", "operation": "set_true" }
+          ],
+          "conditions": []
+        },
+        {
+          "id": "choice-ok",
+          "text": "Take the intact path",
+          "target": "page-2",
+          "flag_operations": [],
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "page-2",
+      "name": "Safe Ground",
+      "body": {
+        "content": [
+          { "type": "markdown", "source": "You made it through." }
+        ]
+      },
+      "assets": [],
+      "flag_operations": [],
+      "choices": []
+    }
+  ]
+}

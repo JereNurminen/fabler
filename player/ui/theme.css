@@ -25,6 +25,9 @@
   --player-choice-text: #111827;
   --player-accent: #2563eb;
   --player-accent-text: #ffffff;
+  --player-warning-bg: #fef3c7;
+  --player-warning-text: #713f12;
+  --player-warning-border: #fcd34d;
 }
 
 /* Theme: dark */
@@ -40,4 +43,7 @@
   --player-choice-text: #f9fafb;
   --player-accent: #3b82f6;
   --player-accent-text: #ffffff;
+  --player-warning-bg: #422006;
+  --player-warning-text: #fde68a;
+  --player-warning-border: #854d0e;
 }

@@ -62,16 +62,32 @@ export function initGameState(manifest: Manifest): GameState {
   };
 }
 
+/**
+ * Outcome of attempting a choice. A choice whose target page is missing from
+ * the manifest (typically a page deleted after the choice was authored) fails
+ * rather than moving, so the caller can report it and let the reader pick
+ * something else.
+ */
+export type NavigationResult =
+  | { ok: true; state: GameState }
+  | { ok: false; reason: "missing-target"; target: string };
+
 export function navigate(
   manifest: Manifest,
   state: GameState,
   choice: ManifestChoice,
-): GameState {
-  // Apply choice flag operations first, then target page flag operations
-  let flags = applyFlagOperations(choice.flag_operations || [], state.flags);
+): NavigationResult {
   const targetPage = manifest.pages.find((p) => p.id === choice.target);
-  if (targetPage) {
-    flags = applyFlagOperations(targetPage.flag_operations || [], flags);
+  if (!targetPage) {
+    // Do not commit a page id that isn't in the manifest: the player would
+    // render a "page not found" screen with no choices and no way back,
+    // ending the story. Failing atomically — without applying the choice's
+    // flag operations — leaves the reader on a page they can still act from.
+    return { ok: false, reason: "missing-target", target: choice.target };
   }
-  return { currentPageId: choice.target, flags };
+
+  // Choice operations run first, then the target page's.
+  let flags = applyFlagOperations(choice.flag_operations || [], state.flags);
+  flags = applyFlagOperations(targetPage.flag_operations || [], flags);
+  return { ok: true, state: { currentPageId: choice.target, flags } };
 }

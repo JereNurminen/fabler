@@ -128,3 +128,41 @@ test.describe("Player — settings", () => {
     await expect(root).toBeVisible();
   });
 });
+
+test.describe("Player — dangling choice target", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/?fixture=broken-target");
+    await page.waitForSelector("article");
+  });
+
+  test("stays on the page and explains when a choice target is missing", async ({
+    page,
+  }) => {
+    // Regression: the player used to navigate to the missing page id and
+    // render a "page not found" screen with no choices, ending the story.
+    await page.click("text=Take the broken path");
+
+    await expect(page.locator("article h1")).toHaveText("The Fork");
+    await expect(page.getByRole("alert")).toContainText("no longer exists");
+    await expect(page.locator("body")).not.toContainText("Page not found");
+  });
+
+  test("the reader can still continue via another choice", async ({ page }) => {
+    await page.click("text=Take the broken path");
+    await expect(page.getByRole("alert")).toBeVisible();
+
+    await page.click("text=Take the intact path");
+    await expect(page.locator("article h1")).toHaveText("Safe Ground");
+    await expect(page.getByRole("alert")).toHaveCount(0);
+  });
+
+  test("passes accessibility audit while showing the warning", async ({
+    page,
+  }) => {
+    await page.click("text=Take the broken path");
+    await expect(page.getByRole("alert")).toBeVisible();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+  });
+});

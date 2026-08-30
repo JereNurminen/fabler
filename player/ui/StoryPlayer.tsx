@@ -27,8 +27,14 @@ export const StoryPlayer = forwardRef<StoryPlayerHandle, StoryPlayerProps>(
   function StoryPlayer({ manifest, storage, assets, hideChrome = false }, ref) {
     const rootRef = useRef<HTMLDivElement>(null);
     const { preferences, updatePreference } = usePreferences(rootRef);
-    const { gameState, currentPage, availableChoices, handleChoice, restoreState } =
-      useGameState(manifest);
+    const {
+      gameState,
+      currentPage,
+      availableChoices,
+      handleChoice,
+      restoreState,
+      navigationError,
+    } = useGameState(manifest);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [saveOpen, setSaveOpen] = useState(false);
 
@@ -59,6 +65,28 @@ export const StoryPlayer = forwardRef<StoryPlayerHandle, StoryPlayerProps>(
       );
     }
 
+    const content = (
+      <>
+        <div aria-live="polite">
+          <PageView page={currentPage} assets={assets} />
+        </div>
+        {navigationError && (
+          <div
+            role="alert"
+            className="max-w-prose mx-auto mt-[1em] p-[0.75em] rounded-lg border text-[0.9em]"
+            style={{
+              backgroundColor: "var(--player-warning-bg)",
+              borderColor: "var(--player-warning-border)",
+              color: "var(--player-warning-text)",
+            }}
+          >
+            That choice leads to a page that no longer exists. Try another one.
+          </div>
+        )}
+        <ChoiceList choices={availableChoices} onChoose={handleChoice} />
+      </>
+    );
+
     return (
       <div
         ref={rootRef}
@@ -67,12 +95,7 @@ export const StoryPlayer = forwardRef<StoryPlayerHandle, StoryPlayerProps>(
       >
         {hideChrome ? (
           <div className="flex flex-col h-full">
-            <main className="flex-1 overflow-y-auto p-[1.5em]">
-              <div aria-live="polite">
-                <PageView page={currentPage} assets={assets} />
-              </div>
-              <ChoiceList choices={availableChoices} onChoose={handleChoice} />
-            </main>
+            <main className="flex-1 overflow-y-auto p-[1.5em]">{content}</main>
           </div>
         ) : (
           <PlayerChrome
@@ -80,10 +103,7 @@ export const StoryPlayer = forwardRef<StoryPlayerHandle, StoryPlayerProps>(
             onSettingsOpen={() => setSettingsOpen(true)}
             onSaveOpen={() => setSaveOpen(true)}
           >
-            <div aria-live="polite">
-              <PageView page={currentPage} assets={assets} />
-            </div>
-            <ChoiceList choices={availableChoices} onChoose={handleChoice} />
+            {content}
           </PlayerChrome>
         )}
 
