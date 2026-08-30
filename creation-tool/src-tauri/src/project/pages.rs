@@ -43,7 +43,7 @@ fn page_filename(id: &str, name: &str) -> String {
 
 /// Find the page file matching the given ID prefix in the pages directory.
 pub fn find_page_file(pages_dir: &Path, id: &str) -> AppResult<PathBuf> {
-    let prefix = format!("{}-", id);
+    let prefix = format!("{id}-");
     let entries = std::fs::read_dir(pages_dir)?;
     for entry in entries {
         let entry = entry?;
@@ -209,7 +209,7 @@ mod tests {
         assert!(result.is_err());
         match result.unwrap_err() {
             AppError::PageNotFound(id) => assert_eq!(id, "zzzzz"),
-            other => panic!("Expected PageNotFound, got: {:?}", other),
+            other => panic!("Expected PageNotFound, got: {other:?}"),
         }
     }
 

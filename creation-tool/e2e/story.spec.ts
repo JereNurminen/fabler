@@ -78,6 +78,13 @@ test.describe("Choice management", () => {
     await createPageViaApi(request, "Second Page");
     const pages = await listPagesViaApi(request);
     const firstPage = pages.find((p) => p.name === "Start");
+    // Narrowing here also turns a missing fixture page into a legible failure
+    // rather than "cannot read property 'id' of undefined".
+    if (!firstPage) {
+      throw new Error(
+        `expected a "Start" page, got: ${pages.map((p) => p.name).join(", ")}`,
+      );
+    }
 
     await navigateToPage(page, firstPage.id);
 

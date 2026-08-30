@@ -116,15 +116,6 @@ impl Library {
         Ok(manifest)
     }
 
-    pub fn get_asset_path(&self, story_id: &str, asset_name: &str) -> ReaderResult<PathBuf> {
-        let story_dir = self.stories_dir.join(story_id);
-        if !story_dir.exists() {
-            return Err(ReaderError::StoryNotFound(story_id.to_string()));
-        }
-        let asset_path = story_dir.join("assets").join(asset_name);
-        Ok(asset_path)
-    }
-
     pub fn delete_story(&self, story_id: &str) -> ReaderResult<()> {
         let story_dir = self.stories_dir.join(story_id);
         if !story_dir.exists() {
@@ -207,7 +198,7 @@ mod tests {
         let tmp = tempfile::TempDir::new().unwrap();
         let lib = Library::new(tmp.path()).unwrap();
 
-        let mut made = |id: &str, title: &str| {
+        let made = |id: &str, title: &str| {
             let story = Story {
                 format_version: 1,
                 id: id.to_string(),
@@ -236,13 +227,23 @@ mod tests {
         lib.install_bundle(&second).unwrap();
 
         let stories = lib.list_stories().unwrap();
-        assert_eq!(stories.len(), 2, "installing a second story must not evict the first");
+        assert_eq!(
+            stories.len(),
+            2,
+            "installing a second story must not evict the first"
+        );
         assert_eq!(stories[0].title, "First Story");
         assert_eq!(stories[1].title, "Second Story");
 
         // Each keeps its own manifest, so save slots stay separate too.
-        assert_eq!(lib.get_manifest("aaa11").unwrap().story.title, "First Story");
-        assert_eq!(lib.get_manifest("bbb22").unwrap().story.title, "Second Story");
+        assert_eq!(
+            lib.get_manifest("aaa11").unwrap().story.title,
+            "First Story"
+        );
+        assert_eq!(
+            lib.get_manifest("bbb22").unwrap().story.title,
+            "Second Story"
+        );
     }
 
     #[test]
@@ -257,16 +258,13 @@ mod tests {
         let bundle = make_bundle_with_assets("story-assets", "Asset Story", assets);
         let installed = lib.install_bundle(&bundle).unwrap();
 
-        let asset_path = lib
-            .get_asset_path(&installed.id, "cover.png")
-            .unwrap();
-        assert!(asset_path.exists());
+        let assets_dir = Path::new(&installed.path).join("assets");
 
-        let data = fs::read(&asset_path).unwrap();
-        assert_eq!(data, b"fake png");
+        let cover = assets_dir.join("cover.png");
+        assert!(cover.exists());
+        assert_eq!(fs::read(&cover).unwrap(), b"fake png");
 
-        let ogg_path = lib.get_asset_path(&installed.id, "sound.ogg").unwrap();
-        assert!(ogg_path.exists());
+        assert!(assets_dir.join("sound.ogg").exists());
     }
 
     #[test]
@@ -340,7 +338,10 @@ mod tests {
 
         let manifest = lib.get_manifest("story-overwrite").unwrap();
         assert_eq!(manifest.story.title, "New Title");
-        assert_eq!(manifest.pages[0].body, shared::content::Document::from_plain_text("Updated content."));
+        assert_eq!(
+            manifest.pages[0].body,
+            shared::content::Document::from_plain_text("Updated content.")
+        );
     }
 
     #[test]

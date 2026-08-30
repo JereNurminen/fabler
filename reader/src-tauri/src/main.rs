@@ -39,7 +39,6 @@ fn main() {
             commands::load_slot,
             commands::list_slots,
             commands::delete_slot,
-            commands::read_asset_base64,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

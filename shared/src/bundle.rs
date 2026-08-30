@@ -72,8 +72,7 @@ pub fn pack_bundle(contents: &BundleContents) -> Result<Vec<u8>, BundleError> {
 /// Unpack a .fabler zip archive from bytes.
 pub fn unpack_bundle(data: &[u8]) -> Result<BundleContents, BundleError> {
     let cursor = Cursor::new(data);
-    let mut archive =
-        zip::ZipArchive::new(cursor).map_err(|e| BundleError::Zip(e.to_string()))?;
+    let mut archive = zip::ZipArchive::new(cursor).map_err(|e| BundleError::Zip(e.to_string()))?;
 
     let manifest: Manifest = {
         let mut file = archive
@@ -201,12 +200,18 @@ mod tests {
         let mut assets = HashMap::new();
         assets.insert("hero.png".into(), vec![0x89, 0x50, 0x4E, 0x47]);
 
-        let contents = BundleContents { manifest: manifest.clone(), assets };
+        let contents = BundleContents {
+            manifest: manifest.clone(),
+            assets,
+        };
         let packed = pack_bundle(&contents).unwrap();
         let unpacked = unpack_bundle(&packed).unwrap();
 
         assert_eq!(manifest, unpacked.manifest);
-        assert_eq!(unpacked.assets.get("hero.png"), Some(&vec![0x89, 0x50, 0x4E, 0x47]));
+        assert_eq!(
+            unpacked.assets.get("hero.png"),
+            Some(&vec![0x89, 0x50, 0x4E, 0x47])
+        );
     }
 
     #[test]

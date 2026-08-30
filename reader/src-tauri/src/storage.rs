@@ -44,15 +44,10 @@ impl SaveStorage {
     }
 
     fn slot_path(&self, story_id: &str, slot_id: &str) -> PathBuf {
-        self.saves_dir(story_id).join(format!("{}.json", slot_id))
+        self.saves_dir(story_id).join(format!("{slot_id}.json"))
     }
 
-    pub fn save_slot(
-        &self,
-        story_id: &str,
-        slot_id: &str,
-        state: &SavedState,
-    ) -> ReaderResult<()> {
+    pub fn save_slot(&self, story_id: &str, slot_id: &str, state: &SavedState) -> ReaderResult<()> {
         let saves_dir = self.saves_dir(story_id);
         std::fs::create_dir_all(&saves_dir)?;
 
@@ -126,8 +121,7 @@ impl SaveStorage {
 
         if !path.exists() {
             return Err(ReaderError::Custom(format!(
-                "Save slot not found: {}",
-                slot_id
+                "Save slot not found: {slot_id}"
             )));
         }
 

@@ -10,7 +10,6 @@ mod test_server;
 
 use commands::ProjectState;
 use std::sync::Mutex;
-use tauri::Manager;
 
 fn main() {
     #[cfg(feature = "test-server")]
@@ -27,9 +26,9 @@ fn main() {
         .manage(ProjectState(Mutex::new(None)))
         .setup(|app| {
             let handle = app.handle();
-            let menu = app::menu::create_menus(&handle)?;
+            let menu = app::menu::create_menus(handle)?;
             app.set_menu(menu)?;
-            app::menu::setup_menu_handlers(&handle);
+            app::menu::setup_menu_handlers(handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -49,7 +48,6 @@ fn main() {
             commands::get_project_assets_dir,
             commands::list_assets,
             commands::delete_asset,
-            commands::read_asset_base64,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

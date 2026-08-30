@@ -1,7 +1,7 @@
-use tauri::State;
-use crate::library::{Library, InstalledStory};
+use crate::library::{InstalledStory, Library};
 use crate::storage::{SaveStorage, SavedState, SlotInfo};
 use shared::bundle::Manifest;
+use tauri::State;
 
 // -- Library commands --
 
@@ -11,12 +11,20 @@ pub async fn list_stories(library: State<'_, Library>) -> Result<Vec<InstalledSt
 }
 
 #[tauri::command]
-pub async fn install_bundle(bundle_data: Vec<u8>, library: State<'_, Library>) -> Result<InstalledStory, String> {
-    library.install_bundle(&bundle_data).map_err(|e| e.to_string())
+pub async fn install_bundle(
+    bundle_data: Vec<u8>,
+    library: State<'_, Library>,
+) -> Result<InstalledStory, String> {
+    library
+        .install_bundle(&bundle_data)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn get_manifest(story_id: String, library: State<'_, Library>) -> Result<Manifest, String> {
+pub async fn get_manifest(
+    story_id: String,
+    library: State<'_, Library>,
+) -> Result<Manifest, String> {
     library.get_manifest(&story_id).map_err(|e| e.to_string())
 }
 
@@ -34,7 +42,9 @@ pub async fn save_slot(
     state: SavedState,
     storage: State<'_, SaveStorage>,
 ) -> Result<(), String> {
-    storage.save_slot(&story_id, &slot_id, &state).map_err(|e| e.to_string())
+    storage
+        .save_slot(&story_id, &slot_id, &state)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -43,7 +53,9 @@ pub async fn load_slot(
     slot_id: String,
     storage: State<'_, SaveStorage>,
 ) -> Result<Option<SavedState>, String> {
-    storage.load_slot(&story_id, &slot_id).map_err(|e| e.to_string())
+    storage
+        .load_slot(&story_id, &slot_id)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -60,27 +72,7 @@ pub async fn delete_slot(
     slot_id: String,
     storage: State<'_, SaveStorage>,
 ) -> Result<(), String> {
-    storage.delete_slot(&story_id, &slot_id).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub async fn read_asset_base64(
-    story_id: String,
-    filename: String,
-    library: State<'_, Library>,
-) -> Result<String, String> {
-    let asset_path = library.get_asset_path(&story_id, &filename).map_err(|e| e.to_string())?;
-    let data = std::fs::read(&asset_path).map_err(|e| e.to_string())?;
-    let ext = asset_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    let mime = match ext {
-        "png" => "image/png",
-        "jpg" | "jpeg" => "image/jpeg",
-        "gif" => "image/gif",
-        "webp" => "image/webp",
-        "svg" => "image/svg+xml",
-        _ => "application/octet-stream",
-    };
-    use base64::Engine;
-    let b64 = base64::engine::general_purpose::STANDARD.encode(&data);
-    Ok(format!("data:{};base64,{}", mime, b64))
+    storage
+        .delete_slot(&story_id, &slot_id)
+        .map_err(|e| e.to_string())
 }

@@ -37,7 +37,6 @@ function buildHttpApi() {
     getProjectAssetsDir: () => call<string>("get_project_assets_dir"),
     listAssets: () => call<string[]>("list_assets"),
     deleteAsset: (filename: string) => call<void>("delete_asset", { filename }),
-    readAssetBase64: async (_filename: string) => "" as string,
   };
 }
 
@@ -71,8 +70,6 @@ function buildTauriApi() {
     listAssets: () => invoke<string[]>("list_assets"),
     deleteAsset: (filename: string) =>
       invoke<void>("delete_asset", { filename }),
-    readAssetBase64: (filename: string) =>
-      invoke<string>("read_asset_base64", { filename }),
   };
 }
 

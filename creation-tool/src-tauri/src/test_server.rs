@@ -1,9 +1,4 @@
-use axum::{
-    extract::State as AxumState,
-    response::Json,
-    routing::post,
-    Router,
-};
+use axum::{extract::State as AxumState, response::Json, routing::post, Router};
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::CorsLayer;
@@ -22,8 +17,8 @@ pub async fn start_test_server() {
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
 
-    let project =
-        Project::create(temp_dir.to_str().unwrap(), "Test Story").expect("Failed to create test project");
+    let project = Project::create(temp_dir.to_str().unwrap(), "Test Story")
+        .expect("Failed to create test project");
 
     let state = Arc::new(AppState {
         project: Mutex::new(Some(project)),
@@ -59,8 +54,10 @@ async fn invoke_handler(
         if temp_dir.exists() {
             let _ = std::fs::remove_dir_all(&temp_dir);
         }
-        let project = Project::create(temp_dir.to_str().unwrap(), "Test Story")
-            .map_err(|e| { eprintln!("reset error: {e}"); axum::http::StatusCode::INTERNAL_SERVER_ERROR })?;
+        let project = Project::create(temp_dir.to_str().unwrap(), "Test Story").map_err(|e| {
+            eprintln!("reset error: {e}");
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR
+        })?;
         *lock = Some(project);
         return Ok(Json(json!(null)));
     }
@@ -74,8 +71,8 @@ async fn invoke_handler(
             "get_story" => Ok(json!(project.story())),
 
             "save_story" => {
-                let story: Story = serde_json::from_value(args["story"].clone())
-                    .map_err(|e| e.to_string())?;
+                let story: Story =
+                    serde_json::from_value(args["story"].clone()).map_err(|e| e.to_string())?;
                 project.save_story(story).map_err(|e| e.to_string())?;
                 Ok(json!(null))
             }
@@ -102,8 +99,8 @@ async fn invoke_handler(
             }
 
             "save_page" => {
-                let page: Page = serde_json::from_value(args["page"].clone())
-                    .map_err(|e| e.to_string())?;
+                let page: Page =
+                    serde_json::from_value(args["page"].clone()).map_err(|e| e.to_string())?;
                 project.save_page(&page).map_err(|e| e.to_string())?;
                 Ok(json!(null))
             }
@@ -120,14 +117,14 @@ async fn invoke_handler(
                 .map_err(|e| e.to_string()),
 
             "delete_asset" => {
-                let filename = args["filename"].as_str().ok_or("missing filename".to_string())?;
+                let filename = args["filename"]
+                    .as_str()
+                    .ok_or("missing filename".to_string())?;
                 project.delete_asset(filename).map_err(|e| e.to_string())?;
                 Ok(json!(null))
             }
 
-            "get_project_assets_dir" => {
-                Ok(json!(project.get_assets_dir().to_string_lossy()))
-            }
+            "get_project_assets_dir" => Ok(json!(project.get_assets_dir().to_string_lossy())),
 
             "validate_story" => project
                 .validate()

@@ -15,5 +15,5 @@
     "jsx": "react-jsx"
   },
   "include": ["engine/**/*.ts", "ui/**/*.ts", "ui/**/*.tsx"],
-  "exclude": ["node_modules", "dist", "**/__tests__/**", "e2e/**"]
+  "exclude": ["node_modules", "dist"]
 }

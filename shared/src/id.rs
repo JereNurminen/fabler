@@ -4,7 +4,7 @@ use rand::Rng;
 pub fn generate_id() -> String {
     let mut rng = rand::thread_rng();
     let value: u32 = rng.gen_range(0..0x100000);
-    format!("{:05x}", value)
+    format!("{value:05x}")
 }
 
 /// Generate an ID that doesn't collide with existing IDs.
@@ -30,7 +30,9 @@ mod tests {
     #[test]
     fn id_is_lowercase_hex() {
         let id = generate_id();
-        assert!(id.chars().all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
+        assert!(id
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_uppercase()));
     }
 
     #[test]

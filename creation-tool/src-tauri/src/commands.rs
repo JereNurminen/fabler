@@ -13,17 +13,12 @@ fn with_project<T>(
     f: impl FnOnce(&Project) -> crate::error::AppResult<T>,
 ) -> Result<T, String> {
     let lock = state.0.lock().unwrap();
-    let project = lock
-        .as_ref()
-        .ok_or_else(|| "No project open".to_string())?;
+    let project = lock.as_ref().ok_or_else(|| "No project open".to_string())?;
     f(project).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub fn open_project(
-    state: State<ProjectState>,
-    story_json_path: String,
-) -> Result<Story, String> {
+pub fn open_project(state: State<ProjectState>, story_json_path: String) -> Result<Story, String> {
     let project = Project::open(&story_json_path).map_err(|e| e.to_string())?;
     let story = project.story();
     *state.0.lock().unwrap() = Some(project);
@@ -74,10 +69,7 @@ pub fn save_page(state: State<ProjectState>, page: Page) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn create_page(
-    state: State<ProjectState>,
-    name: String,
-) -> Result<Page, String> {
+pub fn create_page(state: State<ProjectState>, name: String) -> Result<Page, String> {
     with_project(&state, |p| p.create_page(&name))
 }
 
@@ -87,10 +79,7 @@ pub fn delete_page(state: State<ProjectState>, id: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub fn export_bundle(
-    state: State<ProjectState>,
-    output_path: String,
-) -> Result<(), String> {
+pub fn export_bundle(state: State<ProjectState>, output_path: String) -> Result<(), String> {
     with_project(&state, |p| p.export_bundle(&output_path))
 }
 
@@ -106,7 +95,9 @@ pub fn copy_asset(source_path: String, state: State<ProjectState>) -> Result<Str
 
 #[tauri::command]
 pub fn get_project_assets_dir(state: State<ProjectState>) -> Result<String, String> {
-    with_project(&state, |p| Ok(p.get_assets_dir().to_string_lossy().to_string()))
+    with_project(&state, |p| {
+        Ok(p.get_assets_dir().to_string_lossy().to_string())
+    })
 }
 
 #[tauri::command]
@@ -117,9 +108,4 @@ pub fn list_assets(state: State<ProjectState>) -> Result<Vec<String>, String> {
 #[tauri::command]
 pub fn delete_asset(filename: String, state: State<ProjectState>) -> Result<(), String> {
     with_project(&state, |p| p.delete_asset(&filename))
-}
-
-#[tauri::command]
-pub fn read_asset_base64(filename: String, state: State<ProjectState>) -> Result<String, String> {
-    with_project(&state, |p| p.read_asset_base64(&filename))
 }

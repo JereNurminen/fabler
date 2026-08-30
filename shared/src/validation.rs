@@ -250,7 +250,10 @@ fn dangling_flag_references(ctx: &StoryContext) -> Vec<Problem> {
 fn start_page_valid(ctx: &StoryContext) -> Vec<Problem> {
     let start = ctx.story.start_page.as_str();
     if start.is_empty() {
-        return vec![Problem::on_story(Severity::Error, ProblemDetail::StartPageUnset)];
+        return vec![Problem::on_story(
+            Severity::Error,
+            ProblemDetail::StartPageUnset,
+        )];
     }
     if !ctx.has_page(start) {
         return vec![Problem::on_story(
@@ -305,7 +308,7 @@ fn unreachable_pages(ctx: &StoryContext) -> Vec<Problem> {
 mod tests {
     use super::*;
     use crate::content::Document;
-    use crate::models::{Choice, Flag, FlagOperation, Condition, Page, Story};
+    use crate::models::{Choice, Condition, Flag, FlagOperation, Page, Story};
 
     pub(crate) fn story(start_page: &str, flags: Vec<Flag>) -> Story {
         Story {
@@ -344,13 +347,21 @@ mod tests {
             page("bbb22", "End", vec![]),
         ];
         let report = validate(&story("aaa11", vec![]), &pages);
-        assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+        assert!(
+            report.problems.is_empty(),
+            "unexpected: {:?}",
+            report.problems
+        );
         assert!(!report.has_errors());
     }
 
     #[test]
     fn reports_a_choice_pointing_at_a_missing_page() {
-        let pages = vec![page("aaa11", "Start", vec![choice("c1", "Go deeper", "gone9")])];
+        let pages = vec![page(
+            "aaa11",
+            "Start",
+            vec![choice("c1", "Go deeper", "gone9")],
+        )];
         let report = validate(&story("aaa11", vec![]), &pages);
 
         assert_eq!(report.problems.len(), 1);
@@ -450,7 +461,11 @@ mod tests {
 
         let report = validate(&story("aaa11", vec![flag]), &[start]);
 
-        assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+        assert!(
+            report.problems.is_empty(),
+            "unexpected: {:?}",
+            report.problems
+        );
     }
 
     #[test]
@@ -467,7 +482,9 @@ mod tests {
         assert_eq!(problem.page_id, None, "story-level problems have no page");
         assert_eq!(
             problem.detail,
-            ProblemDetail::StartPageMissing { start_page: "nope9".into() }
+            ProblemDetail::StartPageMissing {
+                start_page: "nope9".into()
+            }
         );
     }
 
@@ -508,7 +525,11 @@ mod tests {
             page("bbb22", "Middle", vec![choice("c2", "Back", "aaa11")]),
         ];
         let report = validate(&story("aaa11", vec![]), &pages);
-        assert!(report.problems.is_empty(), "unexpected: {:?}", report.problems);
+        assert!(
+            report.problems.is_empty(),
+            "unexpected: {:?}",
+            report.problems
+        );
     }
 
     /// Guards the Rust <-> TypeScript seam: `ProblemDetail::code()` strings
@@ -526,7 +547,9 @@ mod tests {
                 choice_text: "c".into(),
                 target: "t".into(),
             },
-            ProblemDetail::DanglingPageFlagOperation { flag_id: "f".into() },
+            ProblemDetail::DanglingPageFlagOperation {
+                flag_id: "f".into(),
+            },
             ProblemDetail::DanglingChoiceFlagOperation {
                 choice_id: "c".into(),
                 choice_text: "c".into(),
@@ -538,7 +561,9 @@ mod tests {
                 flag_id: "f".into(),
             },
             ProblemDetail::StartPageUnset,
-            ProblemDetail::StartPageMissing { start_page: "s".into() },
+            ProblemDetail::StartPageMissing {
+                start_page: "s".into(),
+            },
             ProblemDetail::UnreachablePage,
         ];
 

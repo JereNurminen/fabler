@@ -51,7 +51,9 @@ mod tests {
 
     fn export_of(project: &Project, out: &std::path::Path) -> shared::bundle::Manifest {
         project.export_bundle(out.to_str().unwrap()).unwrap();
-        unpack_bundle(&std::fs::read(out).unwrap()).unwrap().manifest
+        unpack_bundle(&std::fs::read(out).unwrap())
+            .unwrap()
+            .manifest
     }
 
     #[test]
@@ -65,7 +67,10 @@ mod tests {
         let ma = export_of(&a, &tmp.path().join("a.fabler"));
         let mb = export_of(&b, &tmp.path().join("b.fabler"));
 
-        assert!(!ma.story.id.is_empty(), "exported story id must not be empty");
+        assert!(
+            !ma.story.id.is_empty(),
+            "exported story id must not be empty"
+        );
         assert_ne!(
             ma.story.id, mb.story.id,
             "two independent projects must not export the same story id"
@@ -122,8 +127,11 @@ mod tests {
         project.export_bundle(out.to_str().unwrap()).unwrap();
 
         assert!(out.exists());
-        assert!(project.validate().unwrap().problems.iter().any(|p| {
-            p.detail == shared::validation::ProblemDetail::UnreachablePage
-        }));
+        assert!(project
+            .validate()
+            .unwrap()
+            .problems
+            .iter()
+            .any(|p| { p.detail == shared::validation::ProblemDetail::UnreachablePage }));
     }
 }

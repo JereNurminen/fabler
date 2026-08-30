@@ -11,9 +11,6 @@ pub enum AppError {
     #[error("Bundle error: {0}")]
     Bundle(#[from] shared::bundle::BundleError),
 
-    #[error("No project open")]
-    NoProjectOpen,
-
     #[error("Page not found: {0}")]
     PageNotFound(String),
 

@@ -1,5 +1,4 @@
 pub mod export;
-pub mod import;
 pub mod pages;
 pub mod story;
 
@@ -171,11 +170,6 @@ impl Project {
         Ok(shared::validation::validate(&story, &pages))
     }
 
-    /// Get the project directory path.
-    pub fn dir(&self) -> &Path {
-        &self.dir
-    }
-
     pub fn copy_asset(&self, source_path: &str) -> AppResult<String> {
         let source = std::path::PathBuf::from(source_path);
         let filename = source
@@ -199,9 +193,9 @@ impl Project {
                 .and_then(|s| s.to_str())
                 .unwrap_or("");
             target_name = if ext.is_empty() {
-                format!("{}-{}", stem, counter)
+                format!("{stem}-{counter}")
             } else {
-                format!("{}-{}.{}", stem, counter, ext)
+                format!("{stem}-{counter}.{ext}")
             };
             counter += 1;
         }
@@ -230,31 +224,6 @@ impl Project {
         }
         names.sort();
         Ok(names)
-    }
-
-    pub fn read_asset_base64(&self, filename: &str) -> AppResult<String> {
-        use std::io::Read;
-        let path = self.dir.join("assets").join(filename);
-        if !path.exists() {
-            return Err(AppError::Custom(format!("Asset not found: {}", filename)));
-        }
-        let mut file = std::fs::File::open(&path)?;
-        let mut buf = Vec::new();
-        file.read_to_end(&mut buf)?;
-
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        let mime = match ext {
-            "png" => "image/png",
-            "jpg" | "jpeg" => "image/jpeg",
-            "gif" => "image/gif",
-            "webp" => "image/webp",
-            "svg" => "image/svg+xml",
-            _ => "application/octet-stream",
-        };
-
-        use base64::Engine;
-        let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
-        Ok(format!("data:{};base64,{}", mime, b64))
     }
 
     pub fn delete_asset(&self, filename: &str) -> AppResult<()> {

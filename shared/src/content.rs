@@ -43,13 +43,17 @@ pub enum Mark {
 impl Document {
     pub fn empty() -> Self {
         Document {
-            content: vec![Block::Markdown { source: String::new() }],
+            content: vec![Block::Markdown {
+                source: String::new(),
+            }],
         }
     }
 
     pub fn from_plain_text(text: &str) -> Self {
         Document {
-            content: vec![Block::Markdown { source: text.to_string() }],
+            content: vec![Block::Markdown {
+                source: text.to_string(),
+            }],
         }
     }
 
@@ -66,7 +70,9 @@ impl Document {
     /// Create a document from a markdown string.
     pub fn from_markdown(source: &str) -> Self {
         Document {
-            content: vec![Block::Markdown { source: source.to_string() }],
+            content: vec![Block::Markdown {
+                source: source.to_string(),
+            }],
         }
     }
 }
@@ -135,7 +141,9 @@ mod tests {
     fn from_plain_text() {
         let doc = Document::from_plain_text("line one\nline two\n\nline four");
         assert_eq!(doc.content.len(), 1);
-        assert!(matches!(&doc.content[0], Block::Markdown { source } if source == "line one\nline two\n\nline four"));
+        assert!(
+            matches!(&doc.content[0], Block::Markdown { source } if source == "line one\nline two\n\nline four")
+        );
     }
 
     #[test]
