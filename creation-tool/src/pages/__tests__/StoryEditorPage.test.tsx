@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { atom } from "jotai";
 import StoryEditorPage from "../StoryEditorPage";
 import { useEditorChrome } from "../../components/layout/EditorChromeContext";
 import { useTrashPage } from "../../components/TrashPageContext";
@@ -25,6 +26,18 @@ import { useTrashPage } from "../../components/TrashPageContext";
 
 vi.mock("../../atoms/useStoryAtoms", () => ({
   useStoryAtoms: () => ({ story: { id: "s1", title: "Test story" } }),
+}));
+
+// `StoryEditorPage` reads `trashedPageListAtom` directly (since Task 11) to
+// decide whether to show `TrashedPageView`. It is async and would suspend
+// with no boundary here; this test has no `pageIdParam`, so the branch is
+// never exercised, but the atom is still read unconditionally on every
+// render. A synchronous empty stand-in avoids the suspend without pulling in
+// `pageAtomFamily`'s real (also async, api-backed) behaviour -- unneeded
+// here since `MainLayout`/`PreviewPanel` never mount in this test.
+vi.mock("../../atoms/storyAtoms", () => ({
+  trashedPageListAtom: atom(() => []),
+  pageAtomFamily: () => atom(() => null),
 }));
 
 vi.mock("../../components/layout/MainLayout", () => ({

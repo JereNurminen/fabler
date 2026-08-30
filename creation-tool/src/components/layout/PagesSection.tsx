@@ -1,6 +1,7 @@
 import { useTranslation } from "../../i18n";
 import PageLink from "../PageLink";
 import NewPageButton from "../NewPageButton";
+import { TrashSection } from "./TrashSection";
 import { ContextMenu } from "../ui/ContextMenu";
 import { useContextMenu } from "../../hooks/useContextMenu";
 import { useTrashPage } from "../TrashPageContext";
@@ -40,6 +41,7 @@ export const PagesSection = ({ pages, startPage, onPageClick }: PagesSectionProp
       <div className="p-2 border-t border-gray-200">
         <NewPageButton />
       </div>
+      <TrashSection />
       {menu && (
         <ContextMenu
           x={menu.x}

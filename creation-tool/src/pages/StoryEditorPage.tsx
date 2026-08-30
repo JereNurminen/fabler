@@ -1,9 +1,10 @@
 import { Suspense, useState } from "react";
 import { useAtomValue } from "jotai";
 import { useStoryAtoms } from "../atoms/useStoryAtoms";
-import { pageAtomFamily } from "../atoms/storyAtoms";
+import { pageAtomFamily, trashedPageListAtom } from "../atoms/storyAtoms";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PageCard from "../components/PageCard";
+import { TrashedPageView } from "../components/TrashedPageView";
 import { MainLayout } from "../components/layout/MainLayout";
 import { EditorChromeProvider } from "../components/layout/EditorChromeContext";
 import { TrashPageProvider } from "../components/TrashPageContext";
@@ -30,6 +31,8 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
   const [playtestOpen, setPlaytestOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [graphOpen, setGraphOpen] = useState(false);
+  const trashed = useAtomValue(trashedPageListAtom);
+  const isTrashed = !!pageIdParam && trashed.some((p) => p.id === pageIdParam);
 
   if (!story) return <LoadingSpinner />;
 
@@ -51,9 +54,13 @@ const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
                 <div
                   className={showPreview ? "flex-1 overflow-auto" : "h-full"}
                 >
-                  <PageCard pageId={pageIdParam} />
+                  {isTrashed ? (
+                    <TrashedPageView pageId={pageIdParam} />
+                  ) : (
+                    <PageCard pageId={pageIdParam} />
+                  )}
                 </div>
-                {showPreview && (
+                {showPreview && !isTrashed && (
                   <Suspense fallback={<LoadingSpinner />}>
                     <PreviewPanel pageId={pageIdParam} />
                   </Suspense>
