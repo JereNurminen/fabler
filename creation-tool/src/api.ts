@@ -1,4 +1,11 @@
-import type { Story, Page, PageListItem, Report, StoryGraph } from "@fabler/types";
+import type {
+  Story,
+  Page,
+  PageListItem,
+  Report,
+  StoryGraph,
+  DeleteImpact,
+} from "@fabler/types";
 
 const useHttpApi = import.meta.env.VITE_USE_HTTP_API === "true";
 
@@ -38,6 +45,13 @@ function buildHttpApi() {
     getProjectAssetsDir: () => call<string>("get_project_assets_dir"),
     listAssets: () => call<string[]>("list_assets"),
     deleteAsset: (filename: string) => call<void>("delete_asset", { filename }),
+    trashPage: (id: string) => call<void>("trash_page", { id }),
+    restorePage: (id: string) => call<void>("restore_page", { id }),
+    deleteTrashedPage: (id: string) => call<void>("delete_trashed_page", { id }),
+    emptyTrash: () => call<void>("empty_trash"),
+    listTrashedPages: () => call<PageListItem[]>("list_trashed_pages"),
+    getTrashedPage: (id: string) => call<Page>("get_trashed_page", { id }),
+    pageDeleteImpact: (id: string) => call<DeleteImpact>("page_delete_impact", { id }),
   };
 }
 
@@ -72,6 +86,15 @@ function buildTauriApi() {
     listAssets: () => invoke<string[]>("list_assets"),
     deleteAsset: (filename: string) =>
       invoke<void>("delete_asset", { filename }),
+    trashPage: (id: string) => invoke<void>("trash_page", { id }),
+    restorePage: (id: string) => invoke<void>("restore_page", { id }),
+    deleteTrashedPage: (id: string) =>
+      invoke<void>("delete_trashed_page", { id }),
+    emptyTrash: () => invoke<void>("empty_trash"),
+    listTrashedPages: () => invoke<PageListItem[]>("list_trashed_pages"),
+    getTrashedPage: (id: string) => invoke<Page>("get_trashed_page", { id }),
+    pageDeleteImpact: (id: string) =>
+      invoke<DeleteImpact>("page_delete_impact", { id }),
   };
 }
 

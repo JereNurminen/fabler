@@ -149,6 +149,50 @@ async fn invoke_handler(
                     .map_err(|e| e.to_string())
             }
 
+            "trash_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project.trash_page(id).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "restore_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project.restore_page(id).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "delete_trashed_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project.delete_trashed_page(id).map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "empty_trash" => {
+                project.empty_trash().map_err(|e| e.to_string())?;
+                Ok(json!(null))
+            }
+
+            "list_trashed_pages" => project
+                .list_trashed_pages()
+                .map(|p| json!(p))
+                .map_err(|e| e.to_string()),
+
+            "get_trashed_page" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project
+                    .read_trashed_page(id)
+                    .map(|p| json!(p))
+                    .map_err(|e| e.to_string())
+            }
+
+            "page_delete_impact" => {
+                let id = args["id"].as_str().ok_or("missing id".to_string())?;
+                project
+                    .delete_impact(id)
+                    .map(|i| json!(i))
+                    .map_err(|e| e.to_string())
+            }
+
             _ => Err(format!("unknown command: {cmd}")),
         }
     })();

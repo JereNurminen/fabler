@@ -114,3 +114,41 @@ pub fn list_assets(state: State<ProjectState>) -> Result<Vec<String>, String> {
 pub fn delete_asset(filename: String, state: State<ProjectState>) -> Result<(), String> {
     with_project(&state, |p| p.delete_asset(&filename))
 }
+
+#[tauri::command]
+pub fn trash_page(state: State<ProjectState>, id: String) -> Result<(), String> {
+    with_project(&state, |p| p.trash_page(&id))
+}
+
+#[tauri::command]
+pub fn restore_page(state: State<ProjectState>, id: String) -> Result<(), String> {
+    with_project(&state, |p| p.restore_page(&id))
+}
+
+#[tauri::command]
+pub fn delete_trashed_page(state: State<ProjectState>, id: String) -> Result<(), String> {
+    with_project(&state, |p| p.delete_trashed_page(&id))
+}
+
+#[tauri::command]
+pub fn empty_trash(state: State<ProjectState>) -> Result<(), String> {
+    with_project(&state, |p| p.empty_trash())
+}
+
+#[tauri::command]
+pub fn list_trashed_pages(state: State<ProjectState>) -> Result<Vec<PageListItem>, String> {
+    with_project(&state, |p| p.list_trashed_pages())
+}
+
+#[tauri::command]
+pub fn get_trashed_page(state: State<ProjectState>, id: String) -> Result<Page, String> {
+    with_project(&state, |p| p.read_trashed_page(&id))
+}
+
+#[tauri::command]
+pub fn page_delete_impact(
+    state: State<ProjectState>,
+    id: String,
+) -> Result<shared::impact::DeleteImpact, String> {
+    with_project(&state, |p| p.delete_impact(&id))
+}

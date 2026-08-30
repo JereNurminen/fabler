@@ -49,6 +49,13 @@ fn main() {
             commands::get_project_assets_dir,
             commands::list_assets,
             commands::delete_asset,
+            commands::trash_page,
+            commands::restore_page,
+            commands::delete_trashed_page,
+            commands::empty_trash,
+            commands::list_trashed_pages,
+            commands::get_trashed_page,
+            commands::page_delete_impact,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
