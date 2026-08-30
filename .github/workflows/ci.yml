@@ -73,18 +73,17 @@ jobs:
       - name: Test
         run: cargo test --workspace
 
-      # The Test step above already regenerated the ts-rs bindings (its
-      # export_bindings_* tests write into types/src/ as a side effect), so
-      # this step only needs to regenerate the index and diff. This step
-      # must stay after Test — if the job is reordered or split so that
-      # Test no longer runs first, this check will silently pass over stale
-      # bindings.
+      # Regenerates types/ from scratch via `yarn codegen` (delete, cargo
+      # test export_bindings, rebuild the index) rather than relying on the
+      # Test step above to have already produced fresh bindings, so this
+      # check is order-independent. This is what catches an orphaned file
+      # left behind when a #[derive(TS)] is removed from a Rust type.
       - name: Types are up to date
         run: |
-          node types/generate-index.mjs
+          yarn codegen
           git diff --exit-code types/
           if [ -n "$(git status --porcelain types/)" ]; then
-            echo "::error::types/ has untracked or orphaned files after regeneration. A removed #[derive(TS)] or deleted Rust type leaves a stale file behind that 'git diff' alone won't catch. Run 'yarn codegen' locally and commit the result (including any deletions)."
+            echo "Untracked or removed files under types/ — run 'yarn codegen' and commit the result."
             git status --porcelain types/
             exit 1
           fi
