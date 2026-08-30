@@ -77,6 +77,7 @@ mod tests {
             choices,
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         }
     }
 

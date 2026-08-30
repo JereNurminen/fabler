@@ -4,4 +4,10 @@ import type { Document } from "./Document";
 import type { EditorMetadata } from "./EditorMetadata";
 import type { FlagOperation } from "./FlagOperation";
 
-export type Page = { id: string, name: string, body: Document, choices: Array<Choice>, flag_operations: Array<FlagOperation>, editor?: EditorMetadata | null, };
+export type Page = { id: string, name: string, body: Document, choices: Array<Choice>, flag_operations: Array<FlagOperation>, editor?: EditorMetadata | null, 
+/**
+ * RFC3339 UTC instant of the last write to this page's file — including
+ * the writes that move it into and out of `trash/`. `#[serde(default)]`:
+ * pages written before this field existed load as `None`.
+ */
+last_modified?: string | null, };

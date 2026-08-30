@@ -65,6 +65,7 @@ impl Project {
             choices: vec![],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         };
         pages::write_page(&pages_dir, &page)?;
 
@@ -140,6 +141,7 @@ impl Project {
             choices: vec![],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         };
         pages::write_page(&pages_dir, &page)?;
         Ok(page)

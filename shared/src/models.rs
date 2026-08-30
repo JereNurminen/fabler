@@ -38,6 +38,11 @@ pub struct Page {
     pub flag_operations: Vec<FlagOperation>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub editor: Option<EditorMetadata>,
+    /// RFC3339 UTC instant of the last write to this page's file — including
+    /// the writes that move it into and out of `trash/`. `#[serde(default)]`:
+    /// pages written before this field existed load as `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_modified: Option<String>,
 }
 
 /// Authoring-only state attached to a page. Never reaches a reader:
@@ -96,6 +101,10 @@ pub struct Condition {
 pub struct PageListItem {
     pub id: String,
     pub name: String,
+    /// Copied from the page so the trash list can sort by recency without
+    /// reading every trashed page in full.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub last_modified: Option<String>,
 }
 
 impl From<&Page> for PageListItem {
@@ -103,6 +112,7 @@ impl From<&Page> for PageListItem {
         PageListItem {
             id: page.id.clone(),
             name: page.name.clone(),
+            last_modified: page.last_modified.clone(),
         }
     }
 }
@@ -150,6 +160,7 @@ mod tests {
             }],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         };
         let json = serde_json::to_string(&page).unwrap();
         let parsed: Page = serde_json::from_str(&json).unwrap();
@@ -165,6 +176,7 @@ mod tests {
             choices: vec![],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         };
         let item = PageListItem::from(&page);
         assert_eq!(item.id, "abc12");
@@ -195,6 +207,7 @@ mod tests {
             choices: vec![],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         };
         page.editor = Some(EditorMetadata {
             position: Some(Position { x: 1.5, y: -2.5 }),
@@ -203,5 +216,38 @@ mod tests {
         let parsed: Page = serde_json::from_str(&serde_json::to_string(&page).unwrap()).unwrap();
         let pos = parsed.editor.unwrap().position.unwrap();
         assert_eq!((pos.x, pos.y), (1.5, -2.5));
+    }
+
+    #[test]
+    fn page_without_last_modified_round_trips() {
+        // Page files written before this field existed have no key at all.
+        let json = r#"{"id":"a1b2c","name":"Start","body":{"content":[]},"choices":[],"flag_operations":[]}"#;
+        let page: Page = serde_json::from_str(json).unwrap();
+        assert!(page.last_modified.is_none());
+
+        // And a page without it must not write the key back.
+        let out = serde_json::to_string(&page).unwrap();
+        assert!(
+            !out.contains("last_modified"),
+            "absent timestamp must stay absent: {out}"
+        );
+    }
+
+    #[test]
+    fn page_list_item_carries_last_modified() {
+        let page = Page {
+            id: "abc12".into(),
+            name: "Test Page".into(),
+            body: Document::empty(),
+            choices: vec![],
+            flag_operations: vec![],
+            editor: None,
+            last_modified: Some("2026-08-27T12:00:00.000Z".into()),
+        };
+        let item = PageListItem::from(&page);
+        assert_eq!(
+            item.last_modified.as_deref(),
+            Some("2026-08-27T12:00:00.000Z")
+        );
     }
 }

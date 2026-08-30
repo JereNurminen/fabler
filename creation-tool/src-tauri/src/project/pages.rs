@@ -64,8 +64,27 @@ pub fn read_page(pages_dir: &Path, id: &str) -> AppResult<Page> {
     Ok(page)
 }
 
-/// Write a page to disk. If a file with the same ID but different name exists, remove it first.
+/// The current instant, in the RFC3339 UTC form every `last_modified` uses.
+///
+/// Millisecond precision with a `Z` suffix, so the strings sort
+/// lexicographically in chronological order — which is what lets
+/// `list_trashed_pages` order by recency without parsing them back.
+pub fn now_rfc3339() -> String {
+    chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+}
+
+/// Write a page to disk, stamping it with the current time.
+///
+/// This is the single choke point every page write funnels through —
+/// `save_page`, `create_page`, and the moves into and out of `trash/` all
+/// reach disk here — which is what makes the stamp impossible to bypass.
 pub fn write_page(pages_dir: &Path, page: &Page) -> AppResult<()> {
+    write_page_at(pages_dir, page, &now_rfc3339())
+}
+
+/// `write_page` with the clock injected, so tests can assert on ordering
+/// without racing the real one.
+pub fn write_page_at(pages_dir: &Path, page: &Page, timestamp: &str) -> AppResult<()> {
     // Remove old file if it exists (name may have changed)
     if let Ok(old_path) = find_page_file(pages_dir, &page.id) {
         let new_filename = page_filename(&page.id, &page.name);
@@ -79,9 +98,14 @@ pub fn write_page(pages_dir: &Path, page: &Page) -> AppResult<()> {
         }
     }
 
-    let filename = page_filename(&page.id, &page.name);
+    let stamped = Page {
+        last_modified: Some(timestamp.to_string()),
+        ..page.clone()
+    };
+
+    let filename = page_filename(&stamped.id, &stamped.name);
     let path = pages_dir.join(filename);
-    let json = serde_json::to_string_pretty(page)?;
+    let json = serde_json::to_string_pretty(&stamped)?;
     std::fs::write(&path, json)?;
     Ok(())
 }
@@ -131,6 +155,7 @@ mod tests {
             choices: vec![],
             flag_operations: vec![],
             editor: None,
+            last_modified: None,
         }
     }
 
@@ -140,7 +165,16 @@ mod tests {
         let page = make_page("ab12c", "Test Page");
         write_page(dir.path(), &page).unwrap();
         let loaded = read_page(dir.path(), "ab12c").unwrap();
-        assert_eq!(page, loaded);
+        // write_page stamps last_modified (covered by
+        // write_page_stamps_last_modified), so the round trip is only equal
+        // once that field is accounted for.
+        assert_eq!(
+            Page {
+                last_modified: loaded.last_modified.clone(),
+                ..page
+            },
+            loaded
+        );
     }
 
     #[test]
@@ -212,6 +246,50 @@ mod tests {
             AppError::PageNotFound(id) => assert_eq!(id, "zzzzz"),
             other => panic!("Expected PageNotFound, got: {other:?}"),
         }
+    }
+
+    #[test]
+    fn write_page_stamps_last_modified() {
+        let dir = TempDir::new().unwrap();
+        let page = make_page("ab12c", "Test Page");
+        assert!(page.last_modified.is_none(), "fixture starts unstamped");
+
+        write_page(dir.path(), &page).unwrap();
+
+        let loaded = read_page(dir.path(), "ab12c").unwrap();
+        let stamp = loaded.last_modified.expect("write must stamp");
+        assert!(stamp.ends_with('Z'), "RFC3339 UTC expected, got {stamp}");
+        assert!(stamp.starts_with("20"), "looks like a year, got {stamp}");
+    }
+
+    #[test]
+    fn write_page_at_uses_the_given_timestamp() {
+        let dir = TempDir::new().unwrap();
+        let page = make_page("ab12c", "Test Page");
+
+        write_page_at(dir.path(), &page, "2020-01-02T03:04:05.678Z").unwrap();
+
+        let loaded = read_page(dir.path(), "ab12c").unwrap();
+        assert_eq!(
+            loaded.last_modified.as_deref(),
+            Some("2020-01-02T03:04:05.678Z")
+        );
+    }
+
+    #[test]
+    fn write_page_overwrites_a_stale_timestamp() {
+        let dir = TempDir::new().unwrap();
+        let mut page = make_page("ab12c", "Test Page");
+        page.last_modified = Some("1999-01-01T00:00:00.000Z".into());
+
+        write_page_at(dir.path(), &page, "2026-08-27T12:00:00.000Z").unwrap();
+
+        let loaded = read_page(dir.path(), "ab12c").unwrap();
+        assert_eq!(
+            loaded.last_modified.as_deref(),
+            Some("2026-08-27T12:00:00.000Z"),
+            "the caller's stamp wins over whatever the page carried in"
+        );
     }
 
     #[test]

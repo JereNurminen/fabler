@@ -32,6 +32,7 @@ pub fn build_manifest(story: &crate::models::Story, pages: Vec<Page>) -> Manifes
         .into_iter()
         .map(|mut p| {
             p.editor = None;
+            p.last_modified = None;
             p
         })
         .collect();
@@ -167,6 +168,7 @@ mod tests {
                 }],
                 flag_operations: vec![],
                 editor: None,
+                last_modified: None,
             },
             Page {
                 id: "p2".into(),
@@ -175,6 +177,7 @@ mod tests {
                 choices: vec![],
                 flag_operations: vec![],
                 editor: None,
+                last_modified: None,
             },
         ]
     }
@@ -258,5 +261,32 @@ mod tests {
             !json.contains("editor"),
             "bundle must not mention editor state: {json}"
         );
+    }
+
+    #[test]
+    fn build_manifest_strips_last_modified() {
+        // `last_modified` is authoring state, like `editor`: no reader uses
+        // it, and leaving it in would make every re-export differ byte for
+        // byte even when nothing about the story changed.
+        let page = Page {
+            id: "a1b2c".into(),
+            name: "Start".into(),
+            body: crate::content::Document::empty(),
+            choices: vec![],
+            flag_operations: vec![],
+            editor: None,
+            last_modified: Some("2026-08-27T12:00:00.000Z".into()),
+        };
+
+        let story = crate::models::Story {
+            format_version: 1,
+            id: "s1a2b".into(),
+            title: "T".into(),
+            start_page: "a1b2c".into(),
+            flags: vec![],
+        };
+        let manifest = build_manifest(&story, vec![page]);
+
+        assert!(manifest.pages[0].last_modified.is_none());
     }
 }

@@ -153,6 +153,7 @@ mod tests {
                 choices: vec![],
                 flag_operations: vec![],
                 editor: None,
+                last_modified: None,
             }],
         }
     }
@@ -216,6 +217,7 @@ mod tests {
                 choices: vec![],
                 flag_operations: vec![],
                 editor: None,
+                last_modified: None,
             }];
             let contents = BundleContents {
                 manifest: build_manifest(&story, pages),
@@ -328,6 +330,7 @@ mod tests {
                         choices: vec![],
                         flag_operations: vec![],
                         editor: None,
+                        last_modified: None,
                     }],
                 },
                 assets: HashMap::new(),

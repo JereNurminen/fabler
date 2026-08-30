@@ -539,6 +539,7 @@ name = "creation-tool"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "chrono",
  "serde",
  "serde_json",
  "shared",
@@ -3482,6 +3483,7 @@ dependencies = [
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "rand 0.10.2",
  "serde",
  "serde_json",
