@@ -1,32 +1,12 @@
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-
-use serde::{Deserialize, Serialize};
 
 use crate::error::{ReaderError, ReaderResult};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GameStateData {
-    #[serde(rename = "currentPageId")]
-    pub current_page_id: String,
-    pub flags: HashMap<String, bool>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SavedState {
-    #[serde(rename = "gameState")]
-    pub game_state: GameStateData,
-    pub name: String,
-    pub timestamp: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SlotInfo {
-    #[serde(rename = "slotId")]
-    pub slot_id: String,
-    pub name: String,
-    pub timestamp: u64,
-}
+// `GameState` isn't named directly outside tests (production code only reaches it
+// through `SavedState::game_state`), but it's re-exported here so this module's public
+// surface still offers all three save-format types by name.
+#[allow(unused_imports)]
+pub use shared::save::{GameState, SavedState, SlotInfo};
 
 pub struct SaveStorage {
     stories_dir: PathBuf,
@@ -133,12 +113,14 @@ impl SaveStorage {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
     use tempfile::TempDir;
 
     fn make_state(page_id: &str, name: &str, timestamp: u64) -> SavedState {
         SavedState {
-            game_state: GameStateData {
+            game_state: GameState {
                 current_page_id: page_id.to_string(),
                 flags: HashMap::new(),
             },
