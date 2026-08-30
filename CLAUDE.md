@@ -61,7 +61,7 @@ my-story/
 │   ├── a3f2b-entrance.page.json
 │   └── b7c1d-dark-tunnel.page.json
 ├── trash/                    # Soft-deleted pages, same filename scheme
-│   └── c9e4a-flooded-cistern.page.json
+│   └── 4e8d2-old-draft.page.json
 └── assets/
     └── hero.png
 ```
@@ -103,7 +103,7 @@ my-story/
 - `project/pages.rs`: Page file I/O (read, write, list, delete, slugify)
 - `project/story.rs`: Story file I/O
 - `project/export.rs`: Bundle export (zip project into .fabler)
-- `commands.rs`: Tauri commands — `open_project`, `create_project`, `get_story`, `save_story`, `list_pages`, `get_page`, `save_page`, `create_page`, `delete_page`, `export_bundle`, `copy_asset`, `list_assets`, `delete_asset`, etc.
+- `commands.rs`: Tauri commands — `open_project`, `create_project`, `get_story`, `save_story`, `list_pages`, `get_page`, `save_page`, `create_page`, `trash_page`, `restore_page`, `delete_trashed_page`, `empty_trash`, `list_trashed_pages`, `get_trashed_page`, `page_delete_impact`, `export_bundle`, `copy_asset`, `list_assets`, `delete_asset`, etc. (there is no `delete_page` command: deleting a page trashes it)
 - `error.rs`: `AppError` enum
 - `test_server.rs`: HTTP test server (only compiled with `test-server` feature)
 

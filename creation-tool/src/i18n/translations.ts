@@ -202,7 +202,6 @@ export const translations = {
         : `${count} choices on other pages lead here and will break:`,
     strandedItem: (pageName: string, choiceText: string) =>
       `${pageName} — "${choiceText}"`,
-    empty: "The trash is empty.",
     bannerTitle: "This page is in the trash",
     bannerBody: "It cannot be edited, it is not exported, and its problems are ignored.",
     purgeTitle: "Delete permanently?",
@@ -228,6 +227,8 @@ export const translations = {
     flagFallback: (id: string) => `Flag ${id}`,
     moreFlags: (count: number) => `+${count} more...`,
     pageInTrash: (name: string) => `${name} (in trash)`,
+    choiceLeadsTo: (choiceText: string, targetName: string) =>
+      `${choiceText} → ${targetName}`,
   },
 } as const;
 

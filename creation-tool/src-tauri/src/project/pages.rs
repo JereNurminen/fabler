@@ -137,7 +137,28 @@ pub fn move_page(from_dir: &Path, to_dir: &Path, id: &str) -> AppResult<()> {
 }
 
 /// List all pages in the pages directory, sorted by name.
+///
+/// Strict: an unreadable or malformed file is an error. A live page that
+/// cannot be parsed is a real problem with the story, and silently dropping
+/// it would make it vanish from the sidebar, from validation and from the
+/// exported bundle without ever saying so.
 pub fn list_pages(pages_dir: &Path) -> AppResult<Vec<PageListItem>> {
+    list_pages_in(pages_dir, false)
+}
+
+/// List the trash, sorted by name.
+///
+/// Tolerant, unlike [`list_pages`]: a file in `trash/` that cannot be read or
+/// parsed is skipped rather than failing the whole listing. A trashed page is
+/// inert by design — it is not validated, not graphed and not exported — so
+/// one corrupt file there must not block `validate` or `export_bundle` for an
+/// otherwise healthy story. The cost of skipping is that the page cannot be
+/// restored through the UI; the file is still on disk to be recovered by hand.
+pub fn list_trashed_pages(trash_dir: &Path) -> AppResult<Vec<PageListItem>> {
+    list_pages_in(trash_dir, true)
+}
+
+fn list_pages_in(pages_dir: &Path, skip_unreadable: bool) -> AppResult<Vec<PageListItem>> {
     let mut items = Vec::new();
 
     if !pages_dir.exists() {
@@ -149,10 +170,18 @@ pub fn list_pages(pages_dir: &Path) -> AppResult<Vec<PageListItem>> {
         let entry = entry?;
         let file_name = entry.file_name();
         let name = file_name.to_string_lossy();
-        if name.ends_with(".page.json") {
-            let data = std::fs::read_to_string(entry.path())?;
-            let page: Page = serde_json::from_str(&data)?;
-            items.push(PageListItem::from(&page));
+        if !name.ends_with(".page.json") {
+            continue;
+        }
+        let parsed = std::fs::read_to_string(entry.path())
+            .map_err(AppError::from)
+            .and_then(|data| Ok(serde_json::from_str::<Page>(&data)?));
+        match parsed {
+            Ok(page) => items.push(PageListItem::from(&page)),
+            Err(error) if skip_unreadable => {
+                eprintln!("Skipping unreadable page file {:?}: {error}", entry.path());
+            }
+            Err(error) => return Err(error),
         }
     }
 

@@ -21,9 +21,18 @@ vi.mock("../../../atoms/useStoryAtoms", () => ({
 }));
 
 vi.mock("../../../atoms/storyActions", () => ({
-  restorePageAtom: atom(null, (_get, _set, id: string) => restore(id)),
-  deleteTrashedPageAtom: atom(null, (_get, _set, id: string) => purge(id)),
-  emptyTrashAtom: atom(null, () => purgeAll()),
+  // The bodies return void rather than the mock's `any` result: these stand
+  // in for write atoms, which resolve to nothing, and returning `any` here
+  // trips `no-unsafe-return`.
+  restorePageAtom: atom(null, (_get, _set, id: string) => {
+    void restore(id);
+  }),
+  deleteTrashedPageAtom: atom(null, (_get, _set, id: string) => {
+    void purge(id);
+  }),
+  emptyTrashAtom: atom(null, () => {
+    void purgeAll();
+  }),
 }));
 
 const darkTunnel: PageListItem = { id: "b7c1d", name: "Dark Tunnel" };
@@ -70,6 +79,26 @@ describe("TrashSection", () => {
     const { container } = renderSection();
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId("trash-section")).toBeNull();
+  });
+
+  /**
+   * The portrait bottom bar renders `PagesSection` inside a `SectionModal`
+   * and closes it on navigation. Live rows already did this; the trash rows
+   * did not, so tapping one navigated behind a modal that stayed open on top
+   * of the page it had just opened.
+   */
+  it("closes the portrait modal when a trash row navigates", async () => {
+    trashedPages = [darkTunnel];
+    const onPageClick = vi.fn();
+    render(
+      <Provider>
+        <TrashSection onPageClick={onPageClick} />
+      </Provider>,
+    );
+
+    await userEvent.click(screen.getByTestId("trash-entry"));
+
+    expect(onPageClick).toHaveBeenCalled();
   });
 
   it("restore calls through to restorePageAtom for the right page", async () => {

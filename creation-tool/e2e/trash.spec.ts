@@ -127,6 +127,68 @@ test.describe("Deleting a page", () => {
       .toBe(0);
   });
 
+  /**
+   * Purging the page currently on screen used to leave the editor on a dead
+   * route: `PageCard` mounted for an id the backend no longer had, the async
+   * atom rejected, and the app-level `ErrorBoundary` -- which wraps the whole
+   * router and never resets -- replaced the editor with an error screen until
+   * restart.
+   */
+  test("purging the page being viewed lands somewhere usable instead of an error screen", async ({
+    page,
+    request,
+  }) => {
+    const { target, startId } = await seedLinkedPage(request);
+    await trashPageViaApi(request, target.id);
+    await navigateToPage(page, target.id);
+
+    await expect(page.getByTestId("trashed-page-banner")).toBeVisible();
+    await page.getByRole("button", { name: /delete permanently/i }).first().click();
+    await page.getByTestId("confirm-purge-dialog").waitFor();
+    await page.getByRole("button", { name: /^delete permanently$/i }).last().click();
+
+    await expect(page).toHaveURL(new RegExp(`/editor/page/${startId}$`));
+    await expect(page.getByTestId("delete-page-button")).toBeVisible();
+    await expect(page.getByText(/^Error:/)).toHaveCount(0);
+  });
+
+  test("emptying the trash while viewing a trashed page leaves the editor usable", async ({
+    page,
+    request,
+  }) => {
+    const { target, startId } = await seedLinkedPage(request);
+    await trashPageViaApi(request, target.id);
+    await navigateToPage(page, target.id);
+
+    await expect(page.getByTestId("trashed-page-banner")).toBeVisible();
+    await page.getByRole("button", { name: /empty trash/i }).click();
+    await page.getByTestId("confirm-purge-dialog").waitFor();
+    await page.getByRole("button", { name: /^delete permanently$/i }).last().click();
+
+    await expect(page).toHaveURL(new RegExp(`/editor/page/${startId}$`));
+    await expect(page.getByText(/^Error:/)).toHaveCount(0);
+  });
+
+  test("trashing a node from the story map removes it from the canvas", async ({
+    page,
+    request,
+  }) => {
+    await seedLinkedPage(request);
+    await navigateToEditor(page);
+    await page.getByRole("button", { name: /story map/i }).click();
+    await expect(page.getByTestId("story-graph")).toBeVisible();
+
+    const node = page.locator(".story-node", { hasText: "Dark Tunnel" });
+    await node.click({ button: "right" });
+    await page.getByRole("menuitem", { name: /delete page/i }).click();
+    await page.getByRole("button", { name: /move to trash/i }).click();
+
+    // The map used to keep showing the deleted node: right-clicking it again
+    // opened a confirmation with an empty page name, and confirming failed
+    // with PageNotFound.
+    await expect(node).toHaveCount(0);
+  });
+
   test("right-clicking a node in the story map offers the same confirmation", async ({
     page,
     request,

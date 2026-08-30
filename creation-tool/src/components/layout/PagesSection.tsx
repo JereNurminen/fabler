@@ -41,7 +41,7 @@ export const PagesSection = ({ pages, startPage, onPageClick }: PagesSectionProp
       <div className="p-2 border-t border-gray-200">
         <NewPageButton />
       </div>
-      <TrashSection />
+      <TrashSection onPageClick={onPageClick} />
       {menu && (
         <ContextMenu
           x={menu.x}

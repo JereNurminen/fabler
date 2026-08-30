@@ -1,26 +1,13 @@
-import { useState, useEffect } from "react";
 import { ContentRenderer } from "@fabler/player/ui/ContentRenderer";
 import type { Page } from "@fabler/types";
-import type { AssetResolver } from "@fabler/player/engine/types";
-import { convertFileSrc } from "@tauri-apps/api/core";
-import api from "../api";
+import { useProjectAssets } from "../hooks/useProjectAssets";
 
 interface PreviewViewProps {
   page: Page;
 }
 
 export function PreviewView({ page }: PreviewViewProps) {
-  const [assets, setAssets] = useState<AssetResolver>({
-    getAssetUrl: (p: string) => p,
-  });
-
-  useEffect(() => {
-    api.getProjectAssetsDir().then((dir) => {
-      setAssets({
-        getAssetUrl: (filename: string) => convertFileSrc(`${dir}/${filename}`),
-      });
-    }).catch(() => {});
-  }, []);
+  const assets = useProjectAssets();
 
   return (
     <div

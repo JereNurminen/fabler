@@ -215,7 +215,7 @@ impl Project {
     /// being recent). RFC3339 with fixed precision sorts lexicographically in
     /// chronological order, so no parsing is needed.
     pub fn list_trashed_pages(&self) -> AppResult<Vec<PageListItem>> {
-        let mut items = pages::list_pages(&self.trash_dir())?;
+        let mut items = pages::list_trashed_pages(&self.trash_dir())?;
         items.sort_by(|a, b| {
             b.last_modified
                 .cmp(&a.last_modified)
@@ -724,6 +724,57 @@ mod tests {
 
         // Newest first; the two same-instant entries break the tie by name.
         assert_eq!(names, vec!["Apple", "Zebra", "Older"]);
+    }
+
+    #[test]
+    fn a_malformed_file_in_the_trash_does_not_block_validation_or_listing() {
+        // A trashed page is inert: not validated, not graphed, not exported.
+        // So one unparseable file in `trash/` must not be able to stop an
+        // author from validating (and therefore shipping) an otherwise
+        // healthy story. It is skipped from the listing instead.
+        let (_tmp, project) = project_with_pages();
+        let doomed = project.create_page("Doomed").unwrap();
+        project.trash_page(&doomed.id).unwrap();
+
+        let trash_dir = project.dir.join("trash");
+        std::fs::write(trash_dir.join("9a0b1-garbage.page.json"), "{ not json").unwrap();
+
+        let trashed = project.list_trashed_pages().unwrap();
+        assert_eq!(
+            trashed.len(),
+            1,
+            "the readable trashed page still lists; the garbage one is skipped"
+        );
+        assert_eq!(trashed[0].id, doomed.id);
+
+        let report = project.validate().unwrap();
+        assert!(
+            report.problems.is_empty(),
+            "a malformed trashed file must raise nothing: {:?}",
+            report.problems
+        );
+
+        // Export reads the trash too (to classify choices pointing into it),
+        // so it has to survive the same file.
+        let out = project.dir.join("out.fabler");
+        project.export_bundle(out.to_str().unwrap()).unwrap();
+        assert!(out.exists());
+    }
+
+    #[test]
+    fn a_malformed_file_in_pages_is_still_a_loud_error() {
+        // The tolerance above is scoped to `trash/` on purpose. A live page
+        // that cannot be parsed is a real problem, and silently dropping it
+        // would make it vanish from the sidebar, from validation and from the
+        // exported bundle without ever saying so.
+        let (_tmp, project) = project_with_pages();
+        std::fs::write(
+            project.dir.join("pages").join("9a0b1-garbage.page.json"),
+            "{ not json",
+        )
+        .unwrap();
+
+        assert!(project.list_pages().is_err());
     }
 
     #[test]

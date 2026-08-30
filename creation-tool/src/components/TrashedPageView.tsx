@@ -1,11 +1,16 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { useLocation } from "wouter";
-import { trashedPageAtomFamily, storyAtom } from "../atoms/storyAtoms";
-import { restorePageAtom, deleteTrashedPageAtom } from "../atoms/storyActions";
+import { ContentRenderer } from "@fabler/player/ui/ContentRenderer";
+import {
+  trashedPageAtomFamily,
+  pageListAtom,
+  trashedPageListAtom,
+} from "../atoms/storyAtoms";
+import { restorePageAtom } from "../atoms/storyActions";
 import { useTrackedAction } from "../hooks/useTrackedAction";
+import { useProjectAssets } from "../hooks/useProjectAssets";
+import { usePurgeConfirmation } from "./usePurgeConfirmation";
 import { Button } from "./ui/Button";
 import { useTranslation } from "../i18n";
-import { getLinkToPage } from "../utilities/routing";
 
 /**
  * A trashed page, shown so the author can confirm what they are about to
@@ -19,26 +24,38 @@ import { getLinkToPage } from "../utilities/routing";
  */
 export const TrashedPageView = ({ pageId }: { pageId: string }) => {
   const { t } = useTranslation();
-  const [, setLocation] = useLocation();
   const page = useAtomValue(trashedPageAtomFamily(pageId));
-  const story = useAtomValue(storyAtom);
+  const pages = useAtomValue(pageListAtom);
+  const trashed = useAtomValue(trashedPageListAtom);
   const restore = useSetAtom(restorePageAtom);
-  const purge = useSetAtom(deleteTrashedPageAtom);
+  const assets = useProjectAssets();
+  // Permanent deletion is confirmed here exactly as it is in the trash list:
+  // both offer the same button, so both go through one flow.
+  //
+  // Purging leaves nothing for this route to show, but this view does not
+  // redirect: `StoryEditorPage` has a single guard that sends any routed id
+  // which is neither live nor trashed somewhere sensible. That covers this
+  // purge, a purge from the sidebar, and "Empty trash" alike — and, unlike a
+  // redirect here, it cannot send the author back to the very page they just
+  // destroyed when that page was also the start page.
+  const { requestPurge, purgeDialog } = usePurgeConfirmation();
 
   const onRestore = useTrackedAction(async () => {
     await restore(pageId);
   });
 
-  // Permanent deletion leaves nothing to show, so this view has to go
-  // somewhere. Trashing does NOT need an equivalent redirect: the route flips
-  // to this view on its own when a page being edited is trashed.
-  const onPurge = useTrackedAction(async () => {
-    await purge(pageId);
-    if (story?.start_page) setLocation(getLinkToPage(story.start_page));
-  });
-
-  const markdown = page.body.content?.[0];
-  const source = markdown?.type === "markdown" ? markdown.source : "";
+  /**
+   * A choice's destination, by name. Live pages first, then the trash (a
+   * trashed page can point at another trashed page), then the raw id — which
+   * is what a genuinely dangling target has to fall back to.
+   */
+  const targetName = (target: string) => {
+    const live = pages.find((p) => p.id === target);
+    if (live) return live.name || live.id;
+    const inTrash = trashed.find((p) => p.id === target);
+    if (inTrash) return t.dynamic.pageInTrash(inTrash.name || inTrash.id);
+    return target;
+  };
 
   return (
     <div className="p-6 max-w-3xl">
@@ -52,16 +69,25 @@ export const TrashedPageView = ({ pageId }: { pageId: string }) => {
           <Button variant="primary" size="sm" onClick={onRestore}>
             {t.buttons.restore}
           </Button>
-          <Button variant="danger" size="sm" onClick={onPurge}>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => requestPurge(page.id, page.name)}
+          >
             {t.buttons.deletePermanently}
           </Button>
         </div>
       </div>
 
       <h2 className="text-xl font-semibold text-gray-900">{page.name || page.id}</h2>
-      <pre className="mt-3 p-3 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded whitespace-pre-wrap font-sans">
-        {source}
-      </pre>
+      <div
+        className="mt-3"
+        data-testid="trashed-page-body"
+        data-theme="light"
+        data-font-size="medium"
+      >
+        <ContentRenderer document={page.body} assets={assets} />
+      </div>
 
       {page.choices.length > 0 && (
         <div className="mt-6">
@@ -69,12 +95,14 @@ export const TrashedPageView = ({ pageId }: { pageId: string }) => {
           <ul className="space-y-1">
             {page.choices.map((choice) => (
               <li key={choice.id} className="text-sm text-gray-700">
-                {choice.text} → {choice.target}
+                {t.dynamic.choiceLeadsTo(choice.text, targetName(choice.target))}
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {purgeDialog}
     </div>
   );
 };

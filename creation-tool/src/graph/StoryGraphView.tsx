@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useLocation } from "wouter";
 import {
   Background,
@@ -22,6 +22,7 @@ import type { GraphEdge, Problem, StoryGraph } from "@fabler/types";
 import api from "../api";
 import { useTranslation } from "../i18n";
 import { invalidateAllCachedPagesAtom } from "../atoms/storyActions";
+import { refreshAtom } from "../atoms/storyAtoms";
 import { useTrackedAction } from "../hooks/useTrackedAction";
 import { getLinkToPage } from "../utilities/routing";
 import { ContextMenu } from "../components/ui/ContextMenu";
@@ -259,6 +260,27 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
   const [nodes, setNodes] = useState<StoryNode[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  /**
+   * Every story mutation bumps `refreshAtom`, so depending on it here is what
+   * keeps the map in step with the rest of the editor: trash a node from the
+   * map and the canvas refetches instead of keeping a node whose page is gone.
+   *
+   * Today the map happens to refetch even without this, but only by accident:
+   * the bump makes `StoryEditorPage`'s async atoms re-suspend, React hides and
+   * re-reveals this overlay, and re-running its effects re-runs the fetch
+   * (measured: one extra `get_story_graph` per mutation with this dependency,
+   * versus one without it). That is a property of how the page above happens
+   * to load its data, not of this component — swap those reads for
+   * `loadable`, or mount the map anywhere that does not suspend, and the
+   * canvas silently goes stale. The dependency states the requirement
+   * directly, for the price of one local read.
+   *
+   * It does not disturb Auto-arrange, which bumps `refreshAtom` (via
+   * `invalidateAllCachedPages`) and `attempt` (via `retry`) in the same
+   * handler: React batches both into one render, so the effect still runs
+   * once — measured as the same number of fetches with and without this.
+   */
+  const refresh = useAtomValue(refreshAtom);
 
   useEffect(() => {
     let cancelled = false;
@@ -289,7 +311,7 @@ export function StoryGraphView({ onClose }: StoryGraphViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
+  }, [attempt, refresh]);
 
   const retry = useCallback(() => setAttempt((a) => a + 1), []);
 
