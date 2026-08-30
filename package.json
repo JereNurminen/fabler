@@ -4,5 +4,14 @@
     "player",
     "creation-tool",
     "reader"
-  ]
+  ],
+  "scripts": {
+    "typecheck": "yarn workspaces run typecheck",
+    "lint": "yarn --cwd creation-tool lint",
+    "test:unit": "yarn --cwd player test && yarn --cwd creation-tool test",
+    "test:rust": "cargo test --workspace",
+    "test:e2e": "yarn --cwd creation-tool test:e2e && yarn --cwd player test:e2e",
+    "build": "yarn --cwd creation-tool build && yarn --cwd reader build",
+    "verify": "yarn typecheck && yarn lint && yarn test:unit && yarn test:rust && yarn build"
+  }
 }

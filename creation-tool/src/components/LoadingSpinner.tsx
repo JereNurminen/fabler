@@ -1,6 +1,6 @@
 import { useTranslation } from "../i18n";
 
-export default () => {
+const LoadingSpinner = () => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center p-8">
@@ -8,3 +8,5 @@ export default () => {
     </div>
   );
 };
+
+export default LoadingSpinner;

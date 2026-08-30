@@ -6,7 +6,7 @@ function buildHttpApi() {
   const API_BASE =
     import.meta.env.VITE_API_URL || "http://127.0.0.1:3001/api";
 
-  async function call<T>(cmd: string, args: Record<string, any> = {}): Promise<T> {
+  async function call<T>(cmd: string, args: Record<string, unknown> = {}): Promise<T> {
     const response = await fetch(`${API_BASE}/invoke`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -14,7 +14,7 @@ function buildHttpApi() {
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    return (text ? JSON.parse(text) : null) as T;
   }
 
   return {

@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "dev:test-app": "vite serve e2e/test-app --config e2e/test-app/vite.config.ts"
+    "dev:test-app": "vite serve e2e/test-app --config e2e/test-app/vite.config.ts",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "marked": "^15.0.0",

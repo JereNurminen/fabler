@@ -16,7 +16,7 @@ export function MarkdownEditor({ value, onChange, onBlur, resolveImageUrl }: Mar
     if (resolveImageUrl) {
       html = html.replace(
         /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/g,
-        (match, before, src, after) => {
+        (match: string, before: string, src: string, after: string) => {
           if (!src.includes("://") && !src.startsWith("/")) {
             return `<img ${before}src="${resolveImageUrl(src)}"${after}>`;
           }

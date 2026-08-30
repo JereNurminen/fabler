@@ -14,11 +14,11 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import "./index.css";
 
 function App() {
-  const [_, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     // Skip Tauri event listeners when running outside Tauri (e.g. in e2e tests)
-    if (!(window as any).__TAURI_INTERNALS__) return;
+    if (!window.__TAURI_INTERNALS__) return;
 
     const unlistenExport = listen("export-story", async () => {
       try {

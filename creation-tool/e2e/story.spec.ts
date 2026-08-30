@@ -2,13 +2,9 @@ import { test, expect } from "@playwright/test";
 import {
   resetProject,
   createPageViaApi,
-  savePageViaApi,
-  getPageViaApi,
   listPagesViaApi,
   navigateToEditor,
   navigateToPage,
-  getStory,
-  saveStoryViaApi,
 } from "./helpers";
 
 test.beforeEach(async ({ request }) => {
@@ -81,7 +77,7 @@ test.describe("Choice management", () => {
     // Create a second page to link to
     await createPageViaApi(request, "Second Page");
     const pages = await listPagesViaApi(request);
-    const firstPage = pages.find((p: any) => p.name === "Start");
+    const firstPage = pages.find((p) => p.name === "Start");
 
     await navigateToPage(page, firstPage.id);
 
@@ -118,6 +114,6 @@ test.describe("Choice management", () => {
     // Verify the page was created
     const updatedPages = await listPagesViaApi(request);
     expect(updatedPages.length).toBe(2);
-    expect(updatedPages.some((p: any) => p.name === "New Destination")).toBe(true);
+    expect(updatedPages.some((p) => p.name === "New Destination")).toBe(true);
   });
 });

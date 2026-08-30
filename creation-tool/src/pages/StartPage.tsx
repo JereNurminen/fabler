@@ -7,7 +7,7 @@ import { useTranslation } from "../i18n";
 import { getLinkToEditor } from "../utilities/routing";
 
 export const StartPage = () => {
-  const [_, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const openProject = useSetAtom(openProjectAtom);
   const createProject = useSetAtom(createProjectAtom);
   const { t } = useTranslation();

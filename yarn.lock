@@ -507,9 +507,6 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
-"@fabler/player@file:player":
-  version "0.1.0"
-
 "@floating-ui/core@^1.7.5":
   version "1.7.5"
   resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.7.5.tgz#d4af157a03330af5a60e69da7a4692507ada0622"

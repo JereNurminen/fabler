@@ -24,8 +24,9 @@ pids/
 
 # Rust
 target/
-Cargo.lock
 **/*.rs.bk
+# Cargo.lock IS committed: this workspace builds binaries, so the lockfile
+# is needed for reproducible CI/release builds.
 
 # Tauri
 /src-tauri/target/

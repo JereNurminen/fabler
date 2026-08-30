@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { getLinkToPage } from "../utilities/routing";
 import { Button } from "./ui/Button";
 
-export default () => {
+const NewPageButton = () => {
   const { createPage } = useStoryAtoms();
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
@@ -24,3 +24,5 @@ export default () => {
     </Button>
   );
 };
+
+export default NewPageButton;

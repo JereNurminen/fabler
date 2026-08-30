@@ -22,7 +22,7 @@ function PreviewPanel({ pageId }: { pageId: string }) {
   );
 }
 
-export default ({ pageIdParam }: StoryEditorPageProps) => {
+const StoryEditorPage = ({ pageIdParam }: StoryEditorPageProps) => {
   const { story, pages } = useStoryAtoms();
   const [playtestOpen, setPlaytestOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -67,3 +67,5 @@ export default ({ pageIdParam }: StoryEditorPageProps) => {
     </>
   );
 };
+
+export default StoryEditorPage;

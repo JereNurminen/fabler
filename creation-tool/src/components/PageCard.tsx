@@ -12,14 +12,13 @@ import { FlagOperations } from "./FlagOperations";
 import { ChoiceConditions } from "./ChoiceConditions";
 import { Input } from "./ui/Input";
 import { MarkdownEditor } from "./MarkdownEditor";
-import { Select } from "./ui/Select";
 import { SelectWithCreate } from "./ui/SelectWithCreate";
 import { Button } from "./ui/Button";
 import clsx from "clsx";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import api from "../api";
 
-export default ({ pageId }: { pageId: string }) => {
+const PageCard = ({ pageId }: { pageId: string }) => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [choices, setChoices] = useState<Choice[]>([]);
@@ -403,3 +402,4 @@ export default ({ pageId }: { pageId: string }) => {
   );
 };
 
+export default PageCard;

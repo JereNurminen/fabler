@@ -1,5 +1,4 @@
-import type { FontSize, Theme, UserPreferences } from "../engine/types";
-import { DEFAULT_PREFERENCES } from "../engine/types";
+import type { Theme, UserPreferences } from "../engine/types";
 
 export function getEffectiveTheme(theme: Theme): "light" | "dark" {
   if (theme === "system") {

@@ -3,7 +3,7 @@ import { getLinkToPage } from "../utilities/routing";
 import { PropsWithChildren } from "react";
 import clsx from "clsx";
 
-export default ({
+const PageLink = ({
   pageId,
   children,
   onClick,
@@ -42,3 +42,5 @@ export default ({
     </Link>
   );
 };
+
+export default PageLink;
