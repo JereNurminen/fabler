@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
-import type { InstalledStory } from "../types";
+import type { InstalledStory } from "@fabler/types";
 
 interface LibraryScreenProps {
   onPlay: (story: InstalledStory) => void;

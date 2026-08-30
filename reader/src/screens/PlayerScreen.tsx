@@ -5,7 +5,7 @@ import type { StoryPlayerHandle } from "@fabler/player/ui";
 import type { Manifest } from "@fabler/player/engine/types";
 import { TauriStorageAdapter } from "../adapters/TauriStorageAdapter";
 import { TauriAssetResolver } from "../adapters/TauriAssetResolver";
-import type { InstalledStory } from "../types";
+import type { InstalledStory } from "@fabler/types";
 import { PlayerBar } from "../components/PlayerBar";
 
 interface PlayerScreenProps {

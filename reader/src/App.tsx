@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LibraryScreen } from "./screens/LibraryScreen";
 import { PlayerScreen } from "./screens/PlayerScreen";
-import type { InstalledStory } from "./types";
+import type { InstalledStory } from "@fabler/types";
 
 type Screen =
   | { type: "library" }

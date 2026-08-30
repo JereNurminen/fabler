@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@fabler/player": "0.1.0",
+    "@fabler/types": "0.1.0",
     "@tauri-apps/api": "^2.0.0-rc.5",
     "@tauri-apps/plugin-dialog": "^2.0.1",
     "@tauri-apps/plugin-fs": "^2.4.4",
