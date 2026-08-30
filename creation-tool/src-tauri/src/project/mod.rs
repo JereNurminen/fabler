@@ -522,6 +522,104 @@ mod tests {
         );
     }
 
+    /// `shared::validation::validate` can only ever see `trash/` pages
+    /// through `PageListItem`, which carries no choices or flag operations
+    /// — so a validator-level test can never express "the trashed page has
+    /// its own broken reference" in a way that would fail if trashing
+    /// stopped hiding it. The real guarantee lives here, one layer up, in
+    /// `read_all_pages()` reading `pages/` only.
+    #[test]
+    fn validate_ignores_problems_inside_a_trashed_page() {
+        let (_tmp, project) = project_with_pages();
+
+        // Genuinely broken: a choice to a page id that does not exist, and a
+        // page-level flag operation on a flag the story does not define.
+        let mut doomed = project.create_page("Doomed").unwrap();
+        doomed.choices.push(shared::models::Choice {
+            id: "c1".into(),
+            text: "Go nowhere".into(),
+            target: "zzz99".into(),
+            flag_operations: vec![],
+            conditions: vec![],
+        });
+        doomed.flag_operations.push(shared::models::FlagOperation {
+            flag_id: "ffffe".into(),
+            operation: "set_true".into(),
+        });
+        project.save_page(&doomed).unwrap();
+
+        // Proves the fixture is real: the problems are visible while the
+        // page is live, before we ever claim trashing hides them.
+        let before = project.validate().unwrap();
+        assert!(
+            before.has_errors(),
+            "the page's own problems must be reported while it is live: {:?}",
+            before.problems
+        );
+
+        project.trash_page(&doomed.id).unwrap();
+
+        let after = project.validate().unwrap();
+        assert!(
+            after.problems.is_empty(),
+            "trashing must hide the page's own problems, got {:?}",
+            after.problems
+        );
+    }
+
+    #[test]
+    fn a_page_reachable_only_through_a_trashed_page_becomes_unreachable() {
+        let (_tmp, project) = project_with_pages();
+        let start_id = project.story().start_page;
+
+        // start -> middle -> far, all real choices, so all three are
+        // genuinely reachable before anything is trashed.
+        let middle = project.create_page("Middle").unwrap();
+        let far = project.create_page("Far").unwrap();
+
+        let mut start = project.read_page(&start_id).unwrap();
+        start.choices.push(shared::models::Choice {
+            id: "c1".into(),
+            text: "Go to Middle".into(),
+            target: middle.id.clone(),
+            flag_operations: vec![],
+            conditions: vec![],
+        });
+        project.save_page(&start).unwrap();
+
+        let mut middle = middle;
+        middle.choices.push(shared::models::Choice {
+            id: "c2".into(),
+            text: "Go to Far".into(),
+            target: far.id.clone(),
+            flag_operations: vec![],
+            conditions: vec![],
+        });
+        project.save_page(&middle).unwrap();
+
+        let before = project.validate().unwrap();
+        assert!(
+            !before
+                .problems
+                .iter()
+                .any(|p| p.detail == shared::validation::ProblemDetail::UnreachablePage),
+            "all three pages must be reachable before trashing: {:?}",
+            before.problems
+        );
+
+        project.trash_page(&middle.id).unwrap();
+
+        let after = project.validate().unwrap();
+        assert!(
+            after.problems.iter().any(|p| {
+                p.page_id.as_deref() == Some(far.id.as_str())
+                    && p.detail == shared::validation::ProblemDetail::UnreachablePage
+            }),
+            "far page must become unreachable once its only path is trashed: {:?}",
+            after.problems
+        );
+    }
+
     #[test]
     fn existing_page_ids_spans_both_live_and_trashed_pages() {
         // Deterministic test for the guard `create_page` relies on: if the

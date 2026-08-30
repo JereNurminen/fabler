@@ -437,41 +437,6 @@ mod tests {
     }
 
     #[test]
-    fn problems_inside_a_trashed_page_are_not_reported_at_all() {
-        // The trashed page is absent from `pages` because it lives in
-        // trash/, so its own broken references are invisible. This is the
-        // requirement "issues in deleted pages should not trigger any errors
-        // or warnings", asserted rather than assumed.
-        let pages = vec![page("aaa11", "Entrance", vec![])];
-        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
-
-        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
-
-        assert!(report.problems.is_empty(), "got {:?}", report.problems);
-    }
-
-    #[test]
-    fn a_page_reachable_only_from_the_trash_is_unreachable() {
-        // Trashing the only page that led here must not keep this page
-        // "reachable" — the trashed page is not a traversal source.
-        let pages = vec![
-            page("aaa11", "Entrance", vec![]),
-            page("ccc33", "Orphan", vec![]),
-        ];
-        let trashed = vec![trashed_item("bbb22", "Dark Tunnel")];
-
-        let report = validate(&story("aaa11", vec![]), &pages, &trashed);
-
-        let unreachable: Vec<&Option<String>> = report
-            .problems
-            .iter()
-            .filter(|p| matches!(p.detail, ProblemDetail::UnreachablePage))
-            .map(|p| &p.page_id)
-            .collect();
-        assert_eq!(unreachable, vec![&Some("ccc33".to_string())]);
-    }
-
-    #[test]
     fn clean_story_has_no_problems() {
         let pages = vec![
             page("aaa11", "Start", vec![choice("c1", "Go", "bbb22")]),
@@ -664,19 +629,42 @@ mod tests {
     }
 
     /// Guards the Rust <-> TypeScript seam: `ProblemDetail::code()` strings
-    /// are mirrored by hand in `creation-tool/src/types.ts` (the `ProblemDetail`
-    /// union) and `creation-tool/src/i18n/translations.ts` (`problemMessages`).
-    /// Nothing in the type system ties those together, so adding a variant
-    /// here without updating both TS files compiles clean and renders
-    /// `undefined` at runtime. This test fails loudly the moment the set of
-    /// codes changes, forcing whoever adds a variant to go update the TS side.
+    /// are mirrored by hand in `creation-tool/src/i18n/translations.ts` (the
+    /// messages) and `creation-tool/src/utilities/problemMessage.ts` (the
+    /// switch over `detail.code`). Nothing in the type system ties those
+    /// together, so a hand-maintained list here that isn't itself checked
+    /// against the enum can silently fall out of sync — which is exactly
+    /// what happened before this test grew the wildcard-free match below.
+    /// The match has no `_` arm, so adding a `ProblemDetail` variant without
+    /// adding an arm here is a compile error, forcing whoever adds one to
+    /// also update `all_details`/`expected` and the two TS files above.
     #[test]
     fn code_set_matches_the_hand_mirrored_typescript_union() {
+        // Compile-time enforcement: exhaustive, no wildcard arm.
+        fn assert_every_variant_is_covered(detail: &ProblemDetail) {
+            match detail {
+                ProblemDetail::DanglingChoiceTarget { .. } => {}
+                ProblemDetail::ChoiceTargetsTrashedPage { .. } => {}
+                ProblemDetail::DanglingPageFlagOperation { .. } => {}
+                ProblemDetail::DanglingChoiceFlagOperation { .. } => {}
+                ProblemDetail::DanglingChoiceCondition { .. } => {}
+                ProblemDetail::StartPageUnset => {}
+                ProblemDetail::StartPageMissing { .. } => {}
+                ProblemDetail::UnreachablePage => {}
+            }
+        }
+
         let all_details = vec![
             ProblemDetail::DanglingChoiceTarget {
                 choice_id: "c".into(),
                 choice_text: "c".into(),
                 target: "t".into(),
+            },
+            ProblemDetail::ChoiceTargetsTrashedPage {
+                choice_id: "c".into(),
+                choice_text: "c".into(),
+                target: "t".into(),
+                target_name: "n".into(),
             },
             ProblemDetail::DanglingPageFlagOperation {
                 flag_id: "f".into(),
@@ -698,11 +686,16 @@ mod tests {
             ProblemDetail::UnreachablePage,
         ];
 
+        for detail in &all_details {
+            assert_every_variant_is_covered(detail);
+        }
+
         let mut codes: Vec<&str> = all_details.iter().map(|d| d.code()).collect();
         codes.sort();
 
         let mut expected = vec![
             "dangling_choice_target",
+            "choice_targets_trashed_page",
             "dangling_page_flag_operation",
             "dangling_choice_flag_operation",
             "dangling_choice_condition",
@@ -714,9 +707,10 @@ mod tests {
 
         assert_eq!(
             codes, expected,
-            "ProblemDetail's set of codes changed — update the mirrored union in \
-             creation-tool/src/types.ts and the messages in \
-             creation-tool/src/i18n/translations.ts, then update `expected` here"
+            "ProblemDetail's set of codes changed — update the messages in \
+             creation-tool/src/i18n/translations.ts and the switch case in \
+             creation-tool/src/utilities/problemMessage.ts, then update \
+             `all_details`/`expected` here"
         );
     }
 
