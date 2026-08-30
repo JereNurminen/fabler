@@ -2,6 +2,7 @@
 export type { Block } from "./src/Block";
 export type { Choice } from "./src/Choice";
 export type { Condition } from "./src/Condition";
+export type { DeleteImpact } from "./src/DeleteImpact";
 export type { Document } from "./src/Document";
 export type { EditorMetadata } from "./src/EditorMetadata";
 export type { Flag } from "./src/Flag";
@@ -9,6 +10,7 @@ export type { FlagOperation } from "./src/FlagOperation";
 export type { GameState } from "./src/GameState";
 export type { GraphEdge } from "./src/GraphEdge";
 export type { GraphNode } from "./src/GraphNode";
+export type { IncomingReference } from "./src/IncomingReference";
 export type { Inline } from "./src/Inline";
 export type { InstalledStory } from "./src/InstalledStory";
 export type { Manifest } from "./src/Manifest";

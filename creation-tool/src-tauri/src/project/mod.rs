@@ -258,6 +258,13 @@ impl Project {
         Ok(shared::graph::build_graph(&story, &pages))
     }
 
+    /// What trashing this page would break, for the confirmation dialog.
+    pub fn delete_impact(&self, id: &str) -> AppResult<shared::impact::DeleteImpact> {
+        let story = self.story();
+        let pages = self.read_all_pages()?;
+        Ok(shared::impact::delete_impact(&story, &pages, id))
+    }
+
     /// Clear every page's saved editor position, in one pass, so the map's
     /// "Auto-arrange" control can return to a clean dagre layout.
     ///
